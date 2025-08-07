@@ -8,12 +8,13 @@ namespace("Alt.AdviceManagement");
  */
 Alt.AdviceManagement.AdviceSummaryCard = function(element, configuration, baseModel) {
     var self = this;
-    var defaults = {
-        refreshInterval: 60000, // Refresh every minute
-        showProgressBar: true,
-        showStats: true,
-        compactMode: false
-    };
+    
+    // Import Foundation Bundle components
+    var Constants = Alt.AdviceManagement.Common.Constants;
+    var EventBus = Alt.AdviceManagement.Common.EventBus;
+    var Cache = Alt.AdviceManagement.Common.CacheManager;
+    
+    var defaults = Constants.WIDGETS.SUMMARY_CARD;
     var options = $.extend(true, {}, defaults, configuration);
     
     // Setup the model with KnockoutJS observables
@@ -67,24 +68,63 @@ Alt.AdviceManagement.AdviceSummaryCard = function(element, configuration, baseMo
         
         self.model.isLoading(true);
         
+        // Check cache first for all data
+        var cachedWorkItem = Cache.get('workItem', self.model.workItemId());
+        var cachedAttributes = Cache.get('workItemAttributes', self.model.workItemId());
+        var cachedHistory = Cache.get('workItemHistory', self.model.workItemId());
+        
+        if (cachedWorkItem && cachedAttributes && cachedHistory) {
+            self.processSummaryData(cachedWorkItem, cachedAttributes, cachedHistory);
+            return;
+        }
+        
         // Load work item details and advice attributes
         $.when(
-            $.ajax({
-                url: '/api/v1/public/workItem/' + self.model.workItemId(),
-                type: 'GET'
+            cachedWorkItem ? $.Deferred().resolve(cachedWorkItem) : $.ajax({
+                url: Constants.API.BASE_URL + '/workItem/' + self.model.workItemId(),
+                type: 'GET',
+                timeout: Constants.API.TIMEOUT
             }),
-            $.ajax({
-                url: '/api/v1/public/workItem/' + self.model.workItemId() + '/attributes',
-                type: 'GET'
+            cachedAttributes ? $.Deferred().resolve(cachedAttributes) : $.ajax({
+                url: Constants.API.BASE_URL + '/workItem/' + self.model.workItemId() + '/attributes',
+                type: 'GET',
+                timeout: Constants.API.TIMEOUT
             }),
-            $.ajax({
-                url: '/api/v1/public/workItem/' + self.model.workItemId() + '/history',
-                type: 'GET'
+            cachedHistory ? $.Deferred().resolve(cachedHistory) : $.ajax({
+                url: Constants.API.BASE_URL + '/workItem/' + self.model.workItemId() + '/history',
+                type: 'GET',
+                timeout: Constants.API.TIMEOUT
             })
         ).done(function(workItemResponse, attributesResponse, historyResponse) {
-            var workItem = workItemResponse[0];
-            var attributes = attributesResponse[0].attributes || {};
-            var history = historyResponse[0].history || [];
+            // Handle both cached and fresh responses
+            var workItem = workItemResponse[0] || workItemResponse;
+            var attributes = (attributesResponse[0] && attributesResponse[0].attributes) || attributesResponse.attributes || attributesResponse || {};
+            var history = (historyResponse[0] && historyResponse[0].history) || historyResponse.history || historyResponse || [];
+            
+            // Cache the fresh data
+            if (!cachedWorkItem && workItem) {
+                Cache.set('workItem', self.model.workItemId(), workItem, Constants.API.CACHE_TTL);
+            }
+            if (!cachedAttributes) {
+                Cache.set('workItemAttributes', self.model.workItemId(), attributes, Constants.API.CACHE_TTL);
+            }
+            if (!cachedHistory) {
+                Cache.set('workItemHistory', self.model.workItemId(), history, Constants.API.CACHE_TTL);
+            }
+            
+            self.processSummaryData(workItem, attributes, history);
+        }).fail(function() {
+            console.error("Failed to load advice summary");
+            self.model.isLoading(false);
+            EventBus.publish(Constants.EVENTS.ADVICE_ERROR, {
+                workItemId: self.model.workItemId(),
+                error: 'Failed to load advice summary'
+            });
+        });
+    };
+    
+    // Process summary data
+    self.processSummaryData = function(workItem, attributes, history) {
             
             // Set work item title
             if (workItem && workItem.title) {
@@ -93,12 +133,20 @@ Alt.AdviceManagement.AdviceSummaryCard = function(element, configuration, baseMo
             
             // Set status
             var adviceStatus = attributes['AdviceStatus'];
-            if (adviceStatus && adviceStatus.toLowerCase() === 'paused') {
-                self.model.status('paused');
+            if (adviceStatus && adviceStatus.toLowerCase() === Constants.STATUS.PAUSED) {
+                self.model.status(Constants.STATUS.PAUSED);
                 self.model.statusLabel('Paused');
+                EventBus.publish(Constants.EVENTS.ADVICE_STATUS_CHANGED, {
+                    workItemId: self.model.workItemId(),
+                    status: Constants.STATUS.PAUSED
+                });
             } else {
-                self.model.status('active');
+                self.model.status(Constants.STATUS.ACTIVE);
                 self.model.statusLabel('Active');
+                EventBus.publish(Constants.EVENTS.ADVICE_STATUS_CHANGED, {
+                    workItemId: self.model.workItemId(),
+                    status: Constants.STATUS.ACTIVE
+                });
             }
             
             // Set last action
@@ -154,12 +202,8 @@ Alt.AdviceManagement.AdviceSummaryCard = function(element, configuration, baseMo
                     self.model.completionValue(0);
                 }
             }
-            
-            self.model.isLoading(false);
-        }).fail(function() {
-            console.error("Failed to load advice summary");
-            self.model.isLoading(false);
-        });
+        
+        self.model.isLoading(false);
     };
     
     // Refresh status
@@ -255,6 +299,14 @@ Alt.AdviceManagement.AdviceSummaryCard.prototype.onDestroy = function() {
             }
         }
     }
+    
+    // Publish widget destroyed event
+    var EventBus = Alt.AdviceManagement.Common.EventBus;
+    var Constants = Alt.AdviceManagement.Common.Constants;
+    EventBus.publish(Constants.EVENTS.WIDGET_DESTROYED, {
+        widget: 'AdviceSummaryCard',
+        workItemId: self.model.workItemId()
+    });
 };
 
 /**
@@ -262,6 +314,14 @@ Alt.AdviceManagement.AdviceSummaryCard.prototype.onDestroy = function() {
  */
 Alt.AdviceManagement.AdviceSummaryCard.prototype.loadAndBind = function() {
     var self = this;
+    
+    // Publish widget loaded event
+    var EventBus = Alt.AdviceManagement.Common.EventBus;
+    var Constants = Alt.AdviceManagement.Common.Constants;
+    EventBus.publish(Constants.EVENTS.WIDGET_LOADED, {
+        widget: 'AdviceSummaryCard',
+        workItemId: self.model.workItemId()
+    });
     
     // Initial load
     self.loadAdviceSummary();

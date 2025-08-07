@@ -8,11 +8,13 @@ namespace("Alt.AdviceManagement");
  */
 Alt.AdviceManagement.AdviceBulkManager = function(element, configuration, baseModel) {
     var self = this;
-    var defaults = {
-        pageSize: 50,
-        autoLoad: true,
-        showFilters: true
-    };
+    
+    // Import Foundation Bundle components
+    var Constants = Alt.AdviceManagement.Common.Constants;
+    var EventBus = Alt.AdviceManagement.Common.EventBus;
+    var Cache = Alt.AdviceManagement.Common.CacheManager;
+    
+    var defaults = Constants.WIDGETS.BULK_MANAGER;
     var options = $.extend(true, {}, defaults, configuration);
     
     // Work Item Model
@@ -138,13 +140,13 @@ Alt.AdviceManagement.AdviceBulkManager = function(element, configuration, baseMo
         
         activeSelectedCount: ko.pureComputed(function() {
             return self.model.selectedItems().filter(function(item) {
-                return item.status() === 'active';
+                return item.status() === Constants.STATUS.ACTIVE;
             }).length;
         }),
         
         pausedSelectedCount: ko.pureComputed(function() {
             return self.model.selectedItems().filter(function(item) {
-                return item.status() === 'paused';
+                return item.status() === Constants.STATUS.PAUSED;
             }).length;
         }),
         
@@ -180,11 +182,21 @@ Alt.AdviceManagement.AdviceBulkManager = function(element, configuration, baseMo
         self.model.isLoading(true);
         self.model.workItems.removeAll();
         
+        // Check cache first
+        var cacheKey = 'bulkAdviceItems';
+        var cached = Cache.get('bulkManager', cacheKey);
+        if (cached) {
+            self.processWorkItems(cached);
+            self.model.isLoading(false);
+            return;
+        }
+        
         // Query for work items with advice
         $.ajax({
-            url: '/api/v1/public/workItem/findByQuery',
+            url: Constants.API.BASE_URL + '/workItem/findByQuery',
             type: 'POST',
             contentType: 'application/json',
+            timeout: Constants.API.TIMEOUT,
             data: JSON.stringify({
                 query: {
                     attributes: {
@@ -196,43 +208,55 @@ Alt.AdviceManagement.AdviceBulkManager = function(element, configuration, baseMo
             }),
             success: function(response) {
                 if (response && response.items) {
-                    var workItems = response.items.map(function(item) {
-                        var attributes = item.attributes || {};
-                        var status = (attributes['AdviceStatus'] || '').toLowerCase();
-                        
-                        // Calculate days active
-                        var daysActive = 0;
-                        if (attributes['AdviceStartDate']) {
-                            daysActive = self.daysBetween(new Date(attributes['AdviceStartDate']), new Date());
-                        }
-                        
-                        // Format last action
-                        var lastAction = 'N/A';
-                        if (attributes['AdviceLastActionDate']) {
-                            var actionType = attributes['AdviceLastActionType'] || 'Updated';
-                            lastAction = actionType + ' ' + self.formatDate(attributes['AdviceLastActionDate']);
-                        }
-                        
-                        return new WorkItemModel({
-                            id: item.id,
-                            title: item.title,
-                            status: status === 'paused' ? 'paused' : 'active',
-                            lastAction: lastAction,
-                            daysActive: daysActive,
-                            pausedReason: attributes['AdvicePausedReason'] || '',
-                            assignee: item.assignee || ''
-                        });
-                    });
-                    
-                    self.model.workItems(workItems);
+                    // Cache the response
+                    Cache.set('bulkManager', cacheKey, response, Constants.API.CACHE_TTL);
+                    self.processWorkItems(response);
                 }
                 self.model.isLoading(false);
             },
             error: function() {
                 console.error("Failed to load work items");
                 self.model.isLoading(false);
+                EventBus.publish(Constants.EVENTS.ADVICE_ERROR, {
+                    error: 'Failed to load work items for bulk management'
+                });
             }
         });
+    };
+    
+    // Process work items response
+    self.processWorkItems = function(response) {
+        if (response && response.items) {
+            var workItems = response.items.map(function(item) {
+                var attributes = item.attributes || {};
+                var status = (attributes['AdviceStatus'] || '').toLowerCase();
+                
+                // Calculate days active
+                var daysActive = 0;
+                if (attributes['AdviceStartDate']) {
+                    daysActive = self.daysBetween(new Date(attributes['AdviceStartDate']), new Date());
+                }
+                
+                // Format last action
+                var lastAction = 'N/A';
+                if (attributes['AdviceLastActionDate']) {
+                    var actionType = attributes['AdviceLastActionType'] || 'Updated';
+                    lastAction = actionType + ' ' + self.formatDate(attributes['AdviceLastActionDate']);
+                }
+                
+                return new WorkItemModel({
+                    id: item.id,
+                    title: item.title,
+                    status: status === Constants.STATUS.PAUSED ? Constants.STATUS.PAUSED : Constants.STATUS.ACTIVE,
+                    lastAction: lastAction,
+                    daysActive: daysActive,
+                    pausedReason: attributes['AdvicePausedReason'] || '',
+                    assignee: item.assignee || ''
+                });
+            });
+            
+            self.model.workItems(workItems);
+        }
     };
     
     // Select all items
@@ -292,12 +316,13 @@ Alt.AdviceManagement.AdviceBulkManager = function(element, configuration, baseMo
         
         itemsToPause.forEach(function(item) {
             promises.push($.ajax({
-                url: '/api/v1/public/workItem/' + item.id() + '/attributes',
+                url: Constants.API.BASE_URL + '/workItem/' + item.id() + '/attributes',
                 type: 'PUT',
                 contentType: 'application/json',
+                timeout: Constants.API.TIMEOUT,
                 data: JSON.stringify({
                     attributes: {
-                        'AdviceStatus': 'paused',
+                        'AdviceStatus': Constants.STATUS.PAUSED,
                         'AdvicePausedDate': new Date().toISOString(),
                         'AdvicePausedReason': reason,
                         'AdviceLastActionDate': new Date().toISOString(),
@@ -309,9 +334,22 @@ Alt.AdviceManagement.AdviceBulkManager = function(element, configuration, baseMo
         
         $.when.apply($, promises).done(function() {
             $('#bulkPauseModal').modal('hide');
+            Cache.clear('bulkManager'); // Clear cache to force refresh
             self.loadWorkItems(); // Reload to get updated status
+            
+            // Publish bulk pause event
+            EventBus.publish(Constants.EVENTS.ADVICE_PAUSED, {
+                items: itemsToPause.map(function(item) { return item.id(); }),
+                reason: reason,
+                count: itemsToPause.length
+            });
+            
+            self.showUndoNotification('Paused ' + itemsToPause.length + ' items', function() {
+                // Undo function
+                self.bulkResume();
+            });
         }).fail(function() {
-            alert('Failed to pause some items');
+            alert(Constants.ERRORS.API_ERROR);
             self.model.isLoading(false);
         });
     };
@@ -335,12 +373,13 @@ Alt.AdviceManagement.AdviceBulkManager = function(element, configuration, baseMo
         
         itemsToResume.forEach(function(item) {
             promises.push($.ajax({
-                url: '/api/v1/public/workItem/' + item.id() + '/attributes',
+                url: Constants.API.BASE_URL + '/workItem/' + item.id() + '/attributes',
                 type: 'PUT',
                 contentType: 'application/json',
+                timeout: Constants.API.TIMEOUT,
                 data: JSON.stringify({
                     attributes: {
-                        'AdviceStatus': 'active',
+                        'AdviceStatus': Constants.STATUS.ACTIVE,
                         'AdviceResumedDate': new Date().toISOString(),
                         'AdviceLastActionDate': new Date().toISOString(),
                         'AdviceLastActionType': 'Resumed'
@@ -350,9 +389,21 @@ Alt.AdviceManagement.AdviceBulkManager = function(element, configuration, baseMo
         });
         
         $.when.apply($, promises).done(function() {
+            Cache.clear('bulkManager'); // Clear cache to force refresh
             self.loadWorkItems(); // Reload to get updated status
+            
+            // Publish bulk resume event
+            EventBus.publish(Constants.EVENTS.ADVICE_RESUMED, {
+                items: itemsToResume.map(function(item) { return item.id(); }),
+                count: itemsToResume.length
+            });
+            
+            self.showUndoNotification('Resumed ' + itemsToResume.length + ' items', function() {
+                // Undo function
+                self.bulkPause();
+            });
         }).fail(function() {
-            alert('Failed to resume some items');
+            alert(Constants.ERRORS.API_ERROR);
             self.model.isLoading(false);
         });
     };
@@ -367,12 +418,13 @@ Alt.AdviceManagement.AdviceBulkManager = function(element, configuration, baseMo
         if (confirm('Resume advice for "' + item.title() + '"?')) {
             self.model.isLoading(true);
             $.ajax({
-                url: '/api/v1/public/workItem/' + item.id() + '/attributes',
+                url: Constants.API.BASE_URL + '/workItem/' + item.id() + '/attributes',
                 type: 'PUT',
                 contentType: 'application/json',
+                timeout: Constants.API.TIMEOUT,
                 data: JSON.stringify({
                     attributes: {
-                        'AdviceStatus': 'active',
+                        'AdviceStatus': Constants.STATUS.ACTIVE,
                         'AdviceResumedDate': new Date().toISOString(),
                         'AdviceLastActionDate': new Date().toISOString(),
                         'AdviceLastActionType': 'Resumed'
@@ -507,6 +559,13 @@ Alt.AdviceManagement.AdviceBulkManager.prototype.onDestroy = function() {
             }
         }
     }
+    
+    // Publish widget destroyed event
+    var EventBus = Alt.AdviceManagement.Common.EventBus;
+    var Constants = Alt.AdviceManagement.Common.Constants;
+    EventBus.publish(Constants.EVENTS.WIDGET_DESTROYED, {
+        widget: 'AdviceBulkManager'
+    });
 };
 
 /**
@@ -514,6 +573,13 @@ Alt.AdviceManagement.AdviceBulkManager.prototype.onDestroy = function() {
  */
 Alt.AdviceManagement.AdviceBulkManager.prototype.loadAndBind = function() {
     var self = this;
+    
+    // Publish widget loaded event
+    var EventBus = Alt.AdviceManagement.Common.EventBus;
+    var Constants = Alt.AdviceManagement.Common.Constants;
+    EventBus.publish(Constants.EVENTS.WIDGET_LOADED, {
+        widget: 'AdviceBulkManager'
+    });
     
     // Auto-load if configured
     if (self.options.autoLoad) {

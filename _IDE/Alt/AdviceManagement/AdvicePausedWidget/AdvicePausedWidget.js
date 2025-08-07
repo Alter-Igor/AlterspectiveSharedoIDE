@@ -8,11 +8,13 @@ namespace("Alt.AdviceManagement");
  */
 Alt.AdviceManagement.AdvicePausedWidget = function(element, configuration, baseModel) {
     var self = this;
-    var defaults = {
-        checkInterval: 30000, // Check every 30 seconds
-        showReason: true,
-        autoRefresh: true
-    };
+    
+    // Import Foundation Bundle components
+    var Constants = Alt.AdviceManagement.Common.Constants;
+    var EventBus = Alt.AdviceManagement.Common.EventBus;
+    var Cache = Alt.AdviceManagement.Common.CacheManager;
+    
+    var defaults = Constants.WIDGETS.PAUSED_WIDGET;
     var options = $.extend(true, {}, defaults, configuration);
     
     // Setup the model with KnockoutJS observables
@@ -60,20 +62,49 @@ Alt.AdviceManagement.AdvicePausedWidget = function(element, configuration, baseM
             return;
         }
         
+        // Check cache first
+        var cached = Cache.get('widgetAdviceStatus', self.model.workItemId());
+        if (cached) {
+            self.processAdviceStatus(cached);
+            return;
+        }
+        
         self.model.isLoading(true);
         
         // Call API to check if advice is paused
         $.ajax({
-            url: '/api/v1/public/workItem/' + self.model.workItemId() + '/attributes',
+            url: Constants.API.BASE_URL + '/workItem/' + self.model.workItemId() + '/attributes',
             type: 'GET',
+            timeout: Constants.API.TIMEOUT,
             success: function(response) {
                 if (response && response.attributes) {
-                    var adviceStatus = response.attributes['AdviceStatus'];
-                    var pausedDate = response.attributes['AdvicePausedDate'];
-                    var pausedReason = response.attributes['AdvicePausedReason'];
-                    var pausedBy = response.attributes['AdvicePausedBy'];
-                    
-                    if (adviceStatus && adviceStatus.toLowerCase() === 'paused' && !self.model.isDismissed()) {
+                    // Cache the response
+                    Cache.set('widgetAdviceStatus', self.model.workItemId(), response, Constants.API.CACHE_TTL);
+                    self.processAdviceStatus(response);
+                }
+                self.model.isLoading(false);
+            },
+            error: function() {
+                console.error("Failed to check advice status");
+                self.model.isLoading(false);
+                self.model.isPaused(false);
+                EventBus.publish(Constants.EVENTS.ADVICE_ERROR, {
+                    workItemId: self.model.workItemId(),
+                    error: 'Failed to check advice status'
+                });
+            }
+        });
+    };
+    
+    // Process advice status response
+    self.processAdviceStatus = function(response) {
+        if (response && response.attributes) {
+            var adviceStatus = response.attributes['AdviceStatus'];
+            var pausedDate = response.attributes['AdvicePausedDate'];
+            var pausedReason = response.attributes['AdvicePausedReason'];
+            var pausedBy = response.attributes['AdvicePausedBy'];
+            
+            if (adviceStatus && adviceStatus.toLowerCase() === Constants.STATUS.PAUSED && !self.model.isDismissed()) {
                         self.model.isPaused(true);
                         
                         // Format the paused date and calculate duration
@@ -85,9 +116,9 @@ Alt.AdviceManagement.AdvicePausedWidget = function(element, configuration, baseM
                             var duration = self.calculateDuration(pausedDate);
                             self.model.pausedDuration("Paused for " + duration);
                             
-                            // Check if urgent (paused for more than 24 hours)
+                            // Check if urgent (based on threshold from constants)
                             var hoursPaused = (new Date() - date) / (1000 * 60 * 60);
-                            self.model.isUrgent(hoursPaused > 24);
+                            self.model.isUrgent(hoursPaused > Constants.WIDGETS.PAUSED_WIDGET.URGENCY_THRESHOLD_HOURS);
                         } else {
                             self.model.pausedDate("Advice is currently paused");
                             self.model.pausedDuration("");
@@ -97,23 +128,23 @@ Alt.AdviceManagement.AdvicePausedWidget = function(element, configuration, baseM
                             self.model.pausedBy(pausedBy);
                         }
                         
-                        if (options.showReason && pausedReason) {
-                            self.model.pausedReason(pausedReason);
-                        }
-                    } else {
-                        // Advice is not paused, hide the widget
-                        self.model.isPaused(false);
-                        self.model.isDismissed(false); // Reset dismiss state
-                    }
+                if (options.showReason && pausedReason) {
+                    self.model.pausedReason(pausedReason);
                 }
-                self.model.isLoading(false);
-            },
-            error: function() {
-                console.error("Failed to check advice status");
-                self.model.isLoading(false);
+                
+                // Publish paused event
+                EventBus.publish(Constants.EVENTS.ADVICE_STATUS_CHANGED, {
+                    workItemId: self.model.workItemId(),
+                    status: Constants.STATUS.PAUSED,
+                    pausedDate: pausedDate,
+                    pausedReason: pausedReason
+                });
+            } else {
+                // Advice is not paused, hide the widget
                 self.model.isPaused(false);
+                self.model.isDismissed(false); // Reset dismiss state
             }
-        });
+        }
     };
     
     // Dismiss notification
@@ -121,9 +152,11 @@ Alt.AdviceManagement.AdvicePausedWidget = function(element, configuration, baseM
         self.model.isDismissed(true);
         self.model.isPaused(false);
         
-        // Store dismiss state in session storage
-        if (self.model.workItemId() && window.sessionStorage) {
-            sessionStorage.setItem('advice-dismissed-' + self.model.workItemId(), 'true');
+        // Store dismiss state in local storage with constant prefix
+        if (self.model.workItemId() && window.localStorage) {
+            var dismissedItems = JSON.parse(localStorage.getItem(Constants.STORAGE.DISMISSED_ITEMS) || '{}');
+            dismissedItems[self.model.workItemId()] = new Date().toISOString();
+            localStorage.setItem(Constants.STORAGE.DISMISSED_ITEMS, JSON.stringify(dismissedItems));
         }
         
         if (event) {
@@ -207,6 +240,14 @@ Alt.AdviceManagement.AdvicePausedWidget.prototype.onDestroy = function() {
             }
         }
     }
+    
+    // Publish widget destroyed event
+    var EventBus = Alt.AdviceManagement.Common.EventBus;
+    var Constants = Alt.AdviceManagement.Common.Constants;
+    EventBus.publish(Constants.EVENTS.WIDGET_DESTROYED, {
+        widget: 'AdvicePausedWidget',
+        workItemId: self.model.workItemId()
+    });
 };
 
 /**
@@ -214,6 +255,14 @@ Alt.AdviceManagement.AdvicePausedWidget.prototype.onDestroy = function() {
  */
 Alt.AdviceManagement.AdvicePausedWidget.prototype.loadAndBind = function() {
     var self = this;
+    
+    // Publish widget loaded event
+    var EventBus = Alt.AdviceManagement.Common.EventBus;
+    var Constants = Alt.AdviceManagement.Common.Constants;
+    EventBus.publish(Constants.EVENTS.WIDGET_LOADED, {
+        widget: 'AdvicePausedWidget',
+        workItemId: self.model.workItemId()
+    });
     
     // Initial check for advice status
     self.checkAdviceStatus();
