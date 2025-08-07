@@ -17,6 +17,24 @@ Alt.AdviceManagement.AdvicePausedWidget = function(element, configuration, baseM
     var defaults = Constants.WIDGETS.PAUSED_WIDGET;
     var options = $.extend(true, {}, defaults, configuration);
     
+    // Get work item ID from context
+    self.getWorkItemId = function() {
+        // Try to get from $ui.pageContext (portal context)
+        if (window.$ui && window.$ui.pageContext) {
+            var sharedoId = window.$ui.pageContext.sharedoId();
+            if (sharedoId) {
+                return sharedoId;
+            }
+        }
+        
+        // Fallback to baseModel if provided
+        if (baseModel && baseModel.workItemId) {
+            return ko.unwrap(baseModel.workItemId);
+        }
+        
+        return null;
+    };
+    
     // Setup the model with KnockoutJS observables
     self.model = {
         isPaused: ko.observable(false),
@@ -26,7 +44,8 @@ Alt.AdviceManagement.AdvicePausedWidget = function(element, configuration, baseM
         pausedDuration: ko.observable(""),
         isUrgent: ko.observable(false),
         isDismissed: ko.observable(false),
-        workItemId: ko.observable(baseModel.workItemId || null),
+        workItemId: ko.observable(self.getWorkItemId()),
+        workItemTitle: ko.observable(''),
         isLoading: ko.observable(false)
     };
     
@@ -181,6 +200,7 @@ Alt.AdviceManagement.AdvicePausedWidget = function(element, configuration, baseM
             modal: true,
             data: {
                 workItemId: self.model.workItemId(),
+                workItemTitle: self.model.workItemTitle(),
                 mode: 'resume'
             },
             onClose: function() {
@@ -189,24 +209,48 @@ Alt.AdviceManagement.AdvicePausedWidget = function(element, configuration, baseM
             }
         };
         
-        // Use ShareDo panel opening mechanism
-        if (window.ShareDo && window.ShareDo.UI && window.ShareDo.UI.openPanel) {
+        // Try multiple methods to open panel
+        if (window.$ui && window.$ui.openPanel) {
+            // New portal UI method
+            window.$ui.openPanel(panelOptions);
+        } else if (window.ShareDo && window.ShareDo.UI && window.ShareDo.UI.openPanel) {
+            // Standard ShareDo method
             window.ShareDo.UI.openPanel(panelOptions);
         } else if (window.parent && window.parent.ShareDo && window.parent.ShareDo.UI && window.parent.ShareDo.UI.openPanel) {
+            // Parent frame ShareDo method
             window.parent.ShareDo.UI.openPanel(panelOptions);
+        } else if (window.top && window.top.ShareDo && window.top.ShareDo.UI && window.top.ShareDo.UI.openPanel) {
+            // Top frame ShareDo method
+            window.top.ShareDo.UI.openPanel(panelOptions);
         } else {
-            console.error("Unable to open panel - ShareDo.UI.openPanel not available");
+            console.error("Unable to open panel - No panel opening mechanism available");
         }
     };
     
     // Subscribe to work item changes
-    if (baseModel && baseModel.workItemId) {
+    if (window.$ui && window.$ui.pageContext && window.$ui.pageContext.sharedoId) {
+        // Subscribe to ShareDo ID changes from page context
+        window.$ui.pageContext.sharedoId.subscribe(function(newSharedoId) {
+            self.model.workItemId(newSharedoId);
+            self.model.isDismissed(false); // Reset dismiss state on context change
+            self.checkAdviceStatus();
+        });
+        
+        // Also get the title from context if available
+        if (window.$ui.pageContext.sharedoName) {
+            self.model.workItemTitle(window.$ui.pageContext.sharedoName());
+            window.$ui.pageContext.sharedoName.subscribe(function(newTitle) {
+                self.model.workItemTitle(newTitle);
+            });
+        }
+    } else if (baseModel && baseModel.workItemId) {
+        // Fallback to baseModel subscription
         self.model.workItemId(baseModel.workItemId);
         
-        // Subscribe to work item changes if available
         if (baseModel.workItemId.subscribe) {
             baseModel.workItemId.subscribe(function(newWorkItemId) {
                 self.model.workItemId(newWorkItemId);
+                self.model.isDismissed(false);
                 self.checkAdviceStatus();
             });
         }

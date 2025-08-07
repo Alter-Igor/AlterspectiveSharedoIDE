@@ -17,6 +17,18 @@ Alt.AdviceManagement.AdviceBulkManager = function(element, configuration, baseMo
     var defaults = Constants.WIDGETS.BULK_MANAGER;
     var options = $.extend(true, {}, defaults, configuration);
     
+    // Get current context work type filter if available
+    self.getCurrentWorkType = function() {
+        // Try to get from $ui.pageContext (portal context)
+        if (window.$ui && window.$ui.pageContext && window.$ui.pageContext.matterSummary) {
+            var workType = window.$ui.pageContext.matterSummary.workType;
+            if (workType) {
+                return workType();
+            }
+        }
+        return null;
+    };
+    
     // Work Item Model
     function WorkItemModel(data) {
         var item = this;
@@ -191,6 +203,19 @@ Alt.AdviceManagement.AdviceBulkManager = function(element, configuration, baseMo
             return;
         }
         
+        // Build query based on context
+        var query = {
+            attributes: {
+                'AdviceStatus': { $exists: true }
+            }
+        };
+        
+        // Add work type filter if in work type context
+        var currentWorkType = self.getCurrentWorkType();
+        if (currentWorkType) {
+            query.workType = currentWorkType;
+        }
+        
         // Query for work items with advice
         $.ajax({
             url: Constants.API.BASE_URL + '/workItem/findByQuery',
@@ -198,12 +223,8 @@ Alt.AdviceManagement.AdviceBulkManager = function(element, configuration, baseMo
             contentType: 'application/json',
             timeout: Constants.API.TIMEOUT,
             data: JSON.stringify({
-                query: {
-                    attributes: {
-                        'AdviceStatus': { $exists: true }
-                    }
-                },
-                limit: options.pageSize,
+                query: query,
+                limit: options.pageSize || Constants.WIDGETS.BULK_MANAGER.PAGE_SIZE,
                 includeAttributes: true
             }),
             success: function(response) {

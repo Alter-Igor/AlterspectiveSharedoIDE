@@ -47,6 +47,11 @@
             });
         }
         
+        // UIHelpers are ready
+        if (Alt.AdviceManagement.Common.UIHelpers) {
+            console.log('[AdviceManagement] ✓ UIHelpers loaded');
+        }
+        
         // Set up global error handler for advice events
         window.addEventListener('error', function(event) {
             if (event.error && event.error.stack && 
@@ -64,7 +69,7 @@
         
         // Broadcast that foundation is ready
         Alt.AdviceManagement.Common.EventBus.publish('foundation:ready', {
-            modules: ['Constants', 'EventBus', 'CacheManager'],
+            modules: ['Constants', 'EventBus', 'CacheManager', 'UIHelpers'],
             timestamp: new Date().toISOString()
         });
         
@@ -80,6 +85,7 @@ if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
         Constants: Alt.AdviceManagement.Common.Constants,
         EventBus: Alt.AdviceManagement.Common.EventBus,
-        CacheManager: Alt.AdviceManagement.Common.CacheManager
+        CacheManager: Alt.AdviceManagement.Common.CacheManager,
+        UIHelpers: Alt.AdviceManagement.Common.UIHelpers
     };
 }

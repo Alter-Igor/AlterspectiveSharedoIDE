@@ -17,13 +17,50 @@ Alt.AdviceManagement.AdviceSummaryCard = function(element, configuration, baseMo
     var defaults = Constants.WIDGETS.SUMMARY_CARD;
     var options = $.extend(true, {}, defaults, configuration);
     
+    // Get work item ID and title from context
+    self.getWorkItemContext = function() {
+        var context = {
+            id: null,
+            title: 'Loading...',
+            reference: ''
+        };
+        
+        // Try to get from $ui.pageContext (portal context)
+        if (window.$ui && window.$ui.pageContext) {
+            var pageContext = window.$ui.pageContext;
+            
+            if (pageContext.sharedoId) {
+                context.id = pageContext.sharedoId();
+            }
+            
+            if (pageContext.sharedoName) {
+                context.title = pageContext.sharedoName() || 'Loading...';
+            }
+            
+            // Get matter reference if available
+            if (pageContext.matterSummary && pageContext.matterSummary.matterReference) {
+                context.reference = pageContext.matterSummary.matterReference();
+            }
+        }
+        
+        // Fallback to baseModel if provided
+        if (!context.id && baseModel && baseModel.workItemId) {
+            context.id = ko.unwrap(baseModel.workItemId);
+        }
+        
+        return context;
+    };
+    
+    var initialContext = self.getWorkItemContext();
+    
     // Setup the model with KnockoutJS observables
     self.model = {
         // Status
         status: ko.observable('active'), // 'active' or 'paused'
         statusLabel: ko.observable('Active'),
-        workItemId: ko.observable(baseModel.workItemId || null),
-        workItemTitle: ko.observable('Loading...'),
+        workItemId: ko.observable(initialContext.id),
+        workItemTitle: ko.observable(initialContext.title),
+        workItemReference: ko.observable(initialContext.reference),
         
         // Action tracking
         lastAction: ko.observable(''),
@@ -126,8 +163,8 @@ Alt.AdviceManagement.AdviceSummaryCard = function(element, configuration, baseMo
     // Process summary data
     self.processSummaryData = function(workItem, attributes, history) {
             
-            // Set work item title
-            if (workItem && workItem.title) {
+            // Set work item title if not already set from context
+            if (workItem && workItem.title && (!window.$ui || !window.$ui.pageContext || !window.$ui.pageContext.sharedoName)) {
                 self.model.workItemTitle(workItem.title);
             }
             
@@ -260,7 +297,33 @@ Alt.AdviceManagement.AdviceSummaryCard = function(element, configuration, baseMo
     };
     
     // Subscribe to work item changes
-    if (baseModel && baseModel.workItemId) {
+    if (window.$ui && window.$ui.pageContext) {
+        var pageContext = window.$ui.pageContext;
+        
+        // Subscribe to ShareDo ID changes
+        if (pageContext.sharedoId && pageContext.sharedoId.subscribe) {
+            pageContext.sharedoId.subscribe(function(newSharedoId) {
+                self.model.workItemId(newSharedoId);
+                self.loadAdviceSummary();
+            });
+        }
+        
+        // Subscribe to title changes
+        if (pageContext.sharedoName && pageContext.sharedoName.subscribe) {
+            pageContext.sharedoName.subscribe(function(newTitle) {
+                self.model.workItemTitle(newTitle || 'Loading...');
+            });
+        }
+        
+        // Subscribe to reference changes if available
+        if (pageContext.matterSummary && pageContext.matterSummary.matterReference && 
+            pageContext.matterSummary.matterReference.subscribe) {
+            pageContext.matterSummary.matterReference.subscribe(function(newRef) {
+                self.model.workItemReference(newRef);
+            });
+        }
+    } else if (baseModel && baseModel.workItemId) {
+        // Fallback to baseModel subscription
         self.model.workItemId(baseModel.workItemId);
         
         if (baseModel.workItemId.subscribe) {
