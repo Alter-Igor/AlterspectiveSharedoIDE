@@ -9,6 +9,22 @@ namespace("Alt.AdviceManagement");
 Alt.AdviceManagement.AdviceBulkManager = function(element, configuration, baseModel) {
     var self = this;
     
+    // Check if Foundation Bundle is loaded
+    if (!Alt.AdviceManagement.Common || !Alt.AdviceManagement.Common.Constants) {
+        console.error('[AdviceBulkManager] Foundation Bundle not loaded. Please ensure common modules are included.');
+        // Provide fallback defaults
+        Alt.AdviceManagement.Common = Alt.AdviceManagement.Common || {};
+        Alt.AdviceManagement.Common.Constants = Alt.AdviceManagement.Common.Constants || {
+            WIDGETS: { BULK_MANAGER: { PAGE_SIZE: 10, AUTO_LOAD: true, SHOW_FILTERS: true, EXPORT_BATCH_SIZE: 100 } },
+            API: { BASE_URL: '/api/v1/public', TIMEOUT: 30000, CACHE_TTL: 5000 },
+            STATUS: { PAUSED: 'paused', ACTIVE: 'active' },
+            EVENTS: { ADVICE_PAUSED: 'advice:paused', ADVICE_RESUMED: 'advice:resumed', ADVICE_ERROR: 'advice:error', WIDGET_LOADED: 'widget:loaded', WIDGET_DESTROYED: 'widget:destroyed' },
+            ERRORS: { API_ERROR: 'API error occurred. Please contact support.' }
+        };
+        Alt.AdviceManagement.Common.EventBus = Alt.AdviceManagement.Common.EventBus || { publish: function() {}, subscribe: function() { return { unsubscribe: function() {} }; } };
+        Alt.AdviceManagement.Common.CacheManager = Alt.AdviceManagement.Common.CacheManager || { get: function() { return null; }, set: function() {}, remove: function() {}, clear: function() {} };
+    }
+    
     // Import Foundation Bundle components
     var Constants = Alt.AdviceManagement.Common.Constants;
     var EventBus = Alt.AdviceManagement.Common.EventBus;

@@ -9,6 +9,21 @@ namespace("Alt.AdviceManagement");
 Alt.AdviceManagement.AdviceSummaryCard = function(element, configuration, baseModel) {
     var self = this;
     
+    // Check if Foundation Bundle is loaded
+    if (!Alt.AdviceManagement.Common || !Alt.AdviceManagement.Common.Constants) {
+        console.error('[AdviceSummaryCard] Foundation Bundle not loaded. Please ensure common modules are included.');
+        // Provide fallback defaults
+        Alt.AdviceManagement.Common = Alt.AdviceManagement.Common || {};
+        Alt.AdviceManagement.Common.Constants = Alt.AdviceManagement.Common.Constants || {
+            WIDGETS: { SUMMARY_CARD: { REFRESH_INTERVAL: 60000, SHOW_PROGRESS_BAR: true, SHOW_STATS: true, COMPACT_MODE: false } },
+            API: { BASE_URL: '/api/v1/public', TIMEOUT: 30000, CACHE_TTL: 5000 },
+            STATUS: { PAUSED: 'paused', ACTIVE: 'active' },
+            EVENTS: { ADVICE_STATUS_CHANGED: 'advice:statusChanged', ADVICE_ERROR: 'advice:error', WIDGET_LOADED: 'widget:loaded', WIDGET_DESTROYED: 'widget:destroyed' }
+        };
+        Alt.AdviceManagement.Common.EventBus = Alt.AdviceManagement.Common.EventBus || { publish: function() {}, subscribe: function() { return { unsubscribe: function() {} }; } };
+        Alt.AdviceManagement.Common.CacheManager = Alt.AdviceManagement.Common.CacheManager || { get: function() { return null; }, set: function() {}, remove: function() {} };
+    }
+    
     // Import Foundation Bundle components
     var Constants = Alt.AdviceManagement.Common.Constants;
     var EventBus = Alt.AdviceManagement.Common.EventBus;

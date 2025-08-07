@@ -18,6 +18,10 @@
         }
     },
     "scripts": [
+        "/_ideFiles/Alt/AdviceManagement/common/Constants.js",
+        "/_ideFiles/Alt/AdviceManagement/common/EventBus.js",
+        "/_ideFiles/Alt/AdviceManagement/common/CacheManager.js",
+        "/_ideFiles/Alt/AdviceManagement/common/UIHelpers.js",
         "/_ideFiles/Alt/AdviceManagement/AdviceSummaryCard/AdviceSummaryCard.js"
     ],
     "styles": [

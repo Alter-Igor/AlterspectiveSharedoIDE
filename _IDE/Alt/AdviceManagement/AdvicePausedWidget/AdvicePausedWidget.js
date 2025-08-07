@@ -9,6 +9,22 @@ namespace("Alt.AdviceManagement");
 Alt.AdviceManagement.AdvicePausedWidget = function(element, configuration, baseModel) {
     var self = this;
     
+    // Check if Foundation Bundle is loaded
+    if (!Alt.AdviceManagement.Common || !Alt.AdviceManagement.Common.Constants) {
+        console.error('[AdvicePausedWidget] Foundation Bundle not loaded. Please ensure common modules are included.');
+        // Provide fallback defaults
+        Alt.AdviceManagement.Common = Alt.AdviceManagement.Common || {};
+        Alt.AdviceManagement.Common.Constants = Alt.AdviceManagement.Common.Constants || {
+            WIDGETS: { PAUSED_WIDGET: { CHECK_INTERVAL: 30000, SHOW_REASON: true, AUTO_REFRESH: true, URGENCY_THRESHOLD_HOURS: 24 } },
+            API: { BASE_URL: '/api/v1/public', TIMEOUT: 30000, CACHE_TTL: 5000 },
+            STATUS: { PAUSED: 'paused', ACTIVE: 'active' },
+            EVENTS: { ADVICE_STATUS_CHANGED: 'advice:statusChanged', ADVICE_ERROR: 'advice:error', WIDGET_LOADED: 'widget:loaded', WIDGET_DESTROYED: 'widget:destroyed' },
+            STORAGE: { DISMISSED_ITEMS: 'advice_dismissed_items' }
+        };
+        Alt.AdviceManagement.Common.EventBus = Alt.AdviceManagement.Common.EventBus || { publish: function() {}, subscribe: function() { return { unsubscribe: function() {} }; } };
+        Alt.AdviceManagement.Common.CacheManager = Alt.AdviceManagement.Common.CacheManager || { get: function() { return null; }, set: function() {}, remove: function() {} };
+    }
+    
     // Import Foundation Bundle components
     var Constants = Alt.AdviceManagement.Common.Constants;
     var EventBus = Alt.AdviceManagement.Common.EventBus;
