@@ -1,0 +1,21 @@
+{
+    "id": "BasicExamplesOfAllIdeComponents.BasicBlade",
+    "priority": 6000, 
+    "width": 600,
+    "scripts":
+    [
+        "/_ideFiles/BasicExamplesOfAllIdeComponents/BasicBlade/BasicBlade.js"
+    ],
+    "styles":
+    [
+        "/_ideFiles/BasicExamplesOfAllIdeComponents/BasicBlade/BasicBlade.css"
+    ],
+    "templates":
+    [
+        "/_ideFiles/BasicExamplesOfAllIdeComponents/BasicBlade/BasicBlade.html"
+    ],
+    "components":
+    [
+        "Sharedo.UI.Framework.Components.RibbonBar"
+    ]
+}

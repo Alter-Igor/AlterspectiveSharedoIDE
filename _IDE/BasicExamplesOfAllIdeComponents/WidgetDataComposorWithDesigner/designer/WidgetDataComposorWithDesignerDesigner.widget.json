@@ -1,0 +1,27 @@
+{
+    "id": "BasicExamplesOfAllIdeComponents.WidgetDataComposorWithDesignerDesigner",
+    "priority": 6000,
+    "designer":
+    {
+        "allowInPortalDesigner": false,
+        "allowInSharedoPortalDesigner": false
+    },
+    "scripts":
+    [
+        "/_ideFiles/BasicExamplesOfAllIdeComponents/WidgetDataComposorWithDesigner/designer/WidgetDataComposorWithDesignerDesigner.js"
+    ],
+    "styles":
+    [
+        "/_ideFiles/BasicExamplesOfAllIdeComponents/WidgetDataComposorWithDesigner/designer/WidgetDataComposorWithDesignerDesigner.css"
+    ],
+    "templates":
+    [
+        "/_ideFiles/BasicExamplesOfAllIdeComponents/WidgetDataComposorWithDesigner/designer/WidgetDataComposorWithDesignerDesigner.html"
+    ],
+    "menuTemplates":
+    [
+    ],
+    "components":
+    [
+    ]
+}

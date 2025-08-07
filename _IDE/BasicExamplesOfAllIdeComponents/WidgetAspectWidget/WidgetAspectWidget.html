@@ -1,0 +1,30 @@
+<div class="BasicExamplesOfAllIdeComponents-WidgetAspectWidget">
+
+    <div data-bind="widgetChrome:{icon:'fa-cog', title:'Custom aspect widget - info'}">
+
+        <div class="alert alert-danger">
+            TODO: Build your aspect view widget here
+        </div>
+
+    </div>
+
+    <div data-bind="widgetChrome:{icon:'fa-cog', title:'Custom aspect widget - binding'}">
+
+        <div><strong>Title</strong></div>
+        <div data-bind="text:model.title"></div>
+
+        <div><strong>Custom message</strong></div>
+        <div class="mb-4" data-bind="text:model.todoMessage"></div>
+
+    </div>
+
+    <div data-bind="widgetChrome:{icon:'fa-cog', title:'Custom aspect widget - debug'}">
+        
+        <div class="btn btn-primary" data-bind="click:refreshClicked">Refresh JSON</div>
+        
+        <pre class="mt-4 mb-4" data-bind="text:model.json"></pre>
+
+    </div>
+
+</div>
+

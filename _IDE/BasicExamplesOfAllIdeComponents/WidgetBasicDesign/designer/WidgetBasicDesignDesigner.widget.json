@@ -1,0 +1,27 @@
+{
+    "id": "BasicExamplesOfAllIdeComponents.WidgetBasicDesignDesigner",
+    "priority": 6000,
+    "designer":
+    {
+        "allowInPortalDesigner": false,
+        "allowInSharedoPortalDesigner": false
+    },
+    "scripts":
+    [
+        "/_ideFiles/BasicExamplesOfAllIdeComponents/WidgetBasicDesign/designer/WidgetBasicDesignDesigner.js"
+    ],
+    "styles":
+    [
+        "/_ideFiles/BasicExamplesOfAllIdeComponents/WidgetBasicDesign/designer/WidgetBasicDesignDesigner.css"
+    ],
+    "templates":
+    [
+        "/_ideFiles/BasicExamplesOfAllIdeComponents/WidgetBasicDesign/designer/WidgetBasicDesignDesigner.html"
+    ],
+    "menuTemplates":
+    [
+    ],
+    "components":
+    [
+    ]
+}

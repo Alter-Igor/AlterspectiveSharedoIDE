@@ -1,0 +1,42 @@
+{
+    // The system name for the type of node
+    "systemName": "VisualWorkflowActionCreateItem",
+
+    // The category to show this in the toolbox
+    "category": "Uncategorised IDE actions",
+
+    // The display info
+    "name": "TODO: Name VisualWorkflowActionCreateItem",
+    "icon": "fa-cog",
+    "description": "TODO: Describe VisualWorkflowActionCreateItem",
+
+    // The widget used to configure this node type
+    "configWidget": "BasicExamplesOfAllIdeComponents.VisualWorkflowActionCreateItemDesigner",
+
+    // Any other scripts to include that are used by the factory
+    "factoryIncludes": 
+    [
+        // Required for the assignment component
+        "/plugins/sharedo.core.case/workflowEditor/WFAssignmentComponent/model.js",
+        // Required for the phase outlet selector component
+        "/plugins/sharedo.core.case/workflowEditor/WFPhaseOutletComponent/model.js"
+    ],
+
+    // The factory for creating a node of this type
+    "factoryScript": "/_ideFiles/BasicExamplesOfAllIdeComponents/VisualWorkflowActionCreateItem/VisualWorkflowActionCreateItem-factory.js",
+
+    // The template for generating the code for this type
+    "templateScript": "/_ideFiles/BasicExamplesOfAllIdeComponents/VisualWorkflowActionCreateItem/VisualWorkflowActionCreateItem-template.js",
+
+    // Any additional helper scripts to load and run before the main generated script runs
+    "helperScripts":  
+    [
+        "StringHelpers"
+    ],
+
+    // Declare any required variable types your step expects to use - e.g. /Identifier or /Identifier/Ods Entity Identifier
+  "requiredTypes": [
+    "/Identifier/Work Item Identifier",
+    "/Identifier/Ods Entity Identifier"
+  ] 
+}

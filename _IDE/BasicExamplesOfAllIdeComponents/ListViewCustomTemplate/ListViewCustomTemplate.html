@@ -1,0 +1,94 @@
+<!-- 
+  Custom list view card template
+-->
+<script type="text/template" id="lv-template-ListViewCustomTemplate">
+    <!-- ko if: loading.page() -->
+    <div class="text-center">Loading...</div>
+    <!-- /ko -->
+    
+    <!-- ko if: !loading.page() -->
+    
+    <!-- ko if: rows().length < 1 -->
+    <!-- ko template: { name: "listview-empty-state" } -->
+    <!-- /ko -->
+    <!-- /ko -->
+    
+    <!-- ko foreach: rows -->
+    <div class="my-listview-card" data-bind="css: {'clv-has-view-command':viewCommand, 'active':active},
+                    style: { borderLeftColor: colour },
+                    clicks: {
+                        single: invokeViewCommand,
+                        double: invokeOpenCommand
+                    }">
+
+        <div class="my-listview-card-title">
+
+            <!-- ko if: cardBulkCell -->
+            <div class="my-listview-card-title-text-bulk" data-bind="css: cardBulkCell.cellCss">
+                <!-- ko template: { name: cardBulkCell.column.formatter, data:cardBulkCell }-->
+                <!-- /ko -->
+            </div>
+            <!-- /ko -->
+            
+            <!-- ko if: icon -->
+            <div class="my-listview-card-title-icon">
+                <span class="fa fa-fw fa-2x" data-bind="css:icon"></span>
+            </div>
+            <!-- /ko -->
+
+            <div class="my-listview-card-title-text">
+                <h4 data-bind="text:title"></h4>
+            </div>
+        </div>
+    
+        <!-- ko if: cardCells.length > 0 -->
+        <div class="my-listview-card-body">
+            <!-- ko foreach: cardCells -->
+            <div class="my-listview-card-field">
+                <div class="my-listview-card-label">
+                    <!-- ko if: column.icon -->
+                    <span class="fa fa-fw" data-bind="css:column.icon"></span>
+                    <!-- /ko -->
+                    <span data-bind="text:column.title, textAsTitle: true"></span>
+                </div>
+                <div class="my-listview-card-value" data-bind="css: cellCss">
+                    <!-- ko template: { name: column.formatter } -->
+                    <!-- /ko -->
+                </div>
+            </div>
+            <!-- /ko -->
+        </div>
+        <!-- /ko -->
+        
+        <!-- ko if: cardActionsCell || cardActions.length -->
+        <div class="my-listview-card-actions">
+        
+            <!-- ko foreach: cardActions --> 
+            <!-- ko if: command -->
+            <div>
+                <a href="#" data-bind="click:$parent.invokeCommand.bind($parent, command), preventEventBubble:'click'">
+                    <!-- ko if: navIcon -->
+                    <span class="fa fa-fw text-default" data-bind="css:navIcon"></span>
+                    <!-- /ko -->
+                    <!-- ko if: navCaption -->
+                    <span data-bind="text:navCaption"></span>
+                    <!-- /ko -->
+                </a>
+            </div>
+            <!-- /ko -->
+            <!-- /ko -->
+
+            <!-- ko if: cardActionsCell -->
+            <div class="my-listview-card-actions-burger" data-bind="css:cardActionsCell.cellCss">
+                <!-- ko template: { name:cardActionsCell.column.formatter, data:cardActionsCell }-->
+                <!-- /ko -->
+            </div>
+            <!-- /ko -->
+        </div>
+        <!-- /ko -->        
+        
+    </div>
+    <!-- /ko -->
+    
+    <!-- /ko -->
+</script>

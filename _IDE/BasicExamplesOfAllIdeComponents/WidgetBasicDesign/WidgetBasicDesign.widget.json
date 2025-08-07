@@ -1,0 +1,37 @@
+{
+    "id": "BasicExamplesOfAllIdeComponents.WidgetBasicDesign",
+    "priority": 6000,
+    "designer":
+    {
+        "allowInPortalDesigner": true,
+        "allowInSharedoPortalDesigner": true,
+        "title": "TODO: Name widget WidgetBasicDesign",
+        "icon": "fa-cog",
+        "description": "TODO: Describe your widget",
+        "categories":
+        [
+            "TODO Categorise WidgetBasicDesign"
+        ],
+        "isConfigurable": true,
+        "configurationWidget": "BasicExamplesOfAllIdeComponents.WidgetBasicDesignDesigner"
+    },
+    "scripts":
+    [
+        "/_ideFiles/BasicExamplesOfAllIdeComponents/WidgetBasicDesign/WidgetBasicDesign.js"
+    ],
+    "styles":
+    [
+        "/_ideFiles/BasicExamplesOfAllIdeComponents/WidgetBasicDesign/WidgetBasicDesign.css"
+    ],
+    "templates":
+    [
+        "/_ideFiles/BasicExamplesOfAllIdeComponents/WidgetBasicDesign/WidgetBasicDesign.html"
+    ],
+    "menuTemplates":
+    [
+        "/_ideFiles/BasicExamplesOfAllIdeComponents/WidgetBasicDesign/WidgetBasicDesignMenu.html"
+    ],
+    "components":
+    [
+    ]
+}

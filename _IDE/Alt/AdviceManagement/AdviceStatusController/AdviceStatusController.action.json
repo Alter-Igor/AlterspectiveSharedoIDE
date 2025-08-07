@@ -1,0 +1,120 @@
+{
+    "id": "Alt.AdviceManagement.AdviceStatusController",
+    "version": "1.0.0",
+    "type": "workflowAction",
+    "priority": 8000,
+    "metadata": {
+        "name": "Advice Status Controller",
+        "description": "Workflow action that checks work item advice status and performs conditional actions (pause/resume/toggle)",
+        "category": "Advice Management",
+        "icon": "fa-code-fork",
+        "author": "Alterspective",
+        "documentation": "Controls advice workflow status based on configurable conditions"
+    },
+    "designer": {
+        "allowInWorkflowDesigner": true,
+        "allowInVisualWorkflow": true,
+        "configurable": true,
+        "configurationComponent": "Alt.AdviceManagement.AdviceStatusControllerDesigner",
+        "inputs": [
+            {
+                "name": "workItemId",
+                "type": "string",
+                "required": true,
+                "description": "ID of the work item to check"
+            }
+        ],
+        "outputs": [
+            {
+                "name": "actionTaken",
+                "type": "string",
+                "description": "Action that was performed (none/paused/resumed/toggled)"
+            },
+            {
+                "name": "previousStatus",
+                "type": "string",
+                "description": "Status before action"
+            },
+            {
+                "name": "currentStatus",
+                "type": "string",
+                "description": "Status after action"
+            },
+            {
+                "name": "success",
+                "type": "boolean",
+                "description": "Whether the action completed successfully"
+            },
+            {
+                "name": "errorMessage",
+                "type": "string",
+                "description": "Error message if action failed"
+            }
+        ],
+        "branches": [
+            {
+                "id": "success",
+                "label": "Success",
+                "color": "#28a745"
+            },
+            {
+                "id": "paused",
+                "label": "Advice Paused",
+                "color": "#ffc107"
+            },
+            {
+                "id": "resumed",
+                "label": "Advice Resumed",
+                "color": "#17a2b8"
+            },
+            {
+                "id": "noAction",
+                "label": "No Action Taken",
+                "color": "#6c757d"
+            },
+            {
+                "id": "error",
+                "label": "Error",
+                "color": "#dc3545"
+            }
+        ]
+    },
+    "configuration": {
+        "defaultAction": "checkOnly",
+        "conditions": [
+            {
+                "when": "active",
+                "then": "doNothing"
+            },
+            {
+                "when": "paused",
+                "then": "doNothing"
+            },
+            {
+                "when": "none",
+                "then": "doNothing"
+            }
+        ],
+        "pauseReason": "Workflow automated pause",
+        "requireConfirmation": false,
+        "enableLogging": true,
+        "retryOnFailure": true,
+        "maxRetries": 3,
+        "retryDelay": 1000,
+        "timeout": 30000
+    },
+    "scripts": [
+        "/_ideFiles/Alt/AdviceManagement/AdviceStatusController/AdviceStatusController.js",
+        "/_ideFiles/Alt/AdviceManagement/AdviceStatusController/services/AdviceService.js"
+    ],
+    "styles": [
+        "/_ideFiles/Alt/AdviceManagement/AdviceStatusController/AdviceStatusController.css"
+    ],
+    "templates": [
+        "/_ideFiles/Alt/AdviceManagement/AdviceStatusController/AdviceStatusController.html"
+    ],
+    "dependencies": [
+        "jquery",
+        "knockout"
+    ]
+}

@@ -1,0 +1,47 @@
+<div class="Alt-AdvicePausedWidgetDesigner">
+    <div class="form-horizontal">
+        <div class="form-group">
+            <label class="col-sm-4 control-label">Auto Refresh</label>
+            <div class="col-sm-8">
+                <div class="checkbox">
+                    <label>
+                        <input type="checkbox" data-bind="checked: model.autoRefresh" />
+                        Enable automatic status checking
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ko if: model.autoRefresh() -->
+        <div class="form-group">
+            <label class="col-sm-4 control-label">Check Interval</label>
+            <div class="col-sm-8">
+                <select class="form-control" data-bind="value: model.checkInterval">
+                    <option value="10000">Every 10 seconds</option>
+                    <option value="30000">Every 30 seconds</option>
+                    <option value="60000">Every minute</option>
+                    <option value="300000">Every 5 minutes</option>
+                    <option value="600000">Every 10 minutes</option>
+                </select>
+                <span class="help-block">How often to check if advice is paused</span>
+            </div>
+        </div>
+        <!-- /ko -->
+        
+        <div class="form-group">
+            <label class="col-sm-4 control-label">Show Pause Reason</label>
+            <div class="col-sm-8">
+                <div class="checkbox">
+                    <label>
+                        <input type="checkbox" data-bind="checked: model.showReason" />
+                        Display the reason why advice was paused
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="alert alert-info">
+            <i class="fa fa-info-circle"></i> This widget will only be visible when advice is paused. When advice is active, the widget will be hidden automatically.
+        </div>
+    </div>
+</div>

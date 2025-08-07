@@ -1,0 +1,77 @@
+<div class="Alt-AdviceSummaryCard">
+    <div class="advice-card" data-bind="css: { 'status-active': model.status() === 'active', 'status-paused': model.status() === 'paused' }">
+        <div class="advice-card-header">
+            <div class="advice-status-indicator">
+                <!-- ko if: model.status() === 'active' -->
+                <i class="fa fa-check-circle status-icon-active"></i>
+                <!-- /ko -->
+                <!-- ko if: model.status() === 'paused' -->
+                <i class="fa fa-pause-circle status-icon-paused"></i>
+                <!-- /ko -->
+                <span class="status-label" data-bind="text: model.statusLabel"></span>
+            </div>
+            <div class="advice-card-actions">
+                <button class="btn btn-sm btn-link" data-bind="click: refreshStatus" title="Refresh">
+                    <i class="fa fa-refresh" data-bind="css: { 'fa-spin': model.isLoading() }"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="advice-card-body">
+            <div class="advice-info-row">
+                <span class="info-label">Work Item:</span>
+                <span class="info-value" data-bind="text: model.workItemTitle"></span>
+            </div>
+            
+            <div class="advice-info-row">
+                <span class="info-label">Last Action:</span>
+                <span class="info-value" data-bind="text: model.lastAction"></span>
+            </div>
+            
+            <!-- ko if: model.nextScheduledAction() -->
+            <div class="advice-info-row">
+                <span class="info-label">Next Action:</span>
+                <span class="info-value" data-bind="text: model.nextScheduledAction"></span>
+            </div>
+            <!-- /ko -->
+            
+            <div class="advice-stats">
+                <div class="stat-item">
+                    <div class="stat-value" data-bind="text: model.daysActive"></div>
+                    <div class="stat-label">Days Active</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" data-bind="text: model.timesPaused"></div>
+                    <div class="stat-label">Times Paused</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" data-bind="text: model.completionPercent"></div>
+                    <div class="stat-label">Progress</div>
+                </div>
+            </div>
+            
+            <div class="advice-progress-bar">
+                <div class="progress">
+                    <div class="progress-bar" data-bind="style: { width: model.completionPercent() }, css: { 'progress-bar-success': model.status() === 'active', 'progress-bar-warning': model.status() === 'paused' }">
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="advice-card-footer">
+            <!-- ko if: model.status() === 'active' -->
+            <button class="btn btn-sm btn-warning" data-bind="click: pauseAdvice">
+                <i class="fa fa-pause"></i> Pause Advice
+            </button>
+            <!-- /ko -->
+            <!-- ko if: model.status() === 'paused' -->
+            <button class="btn btn-sm btn-success" data-bind="click: resumeAdvice">
+                <i class="fa fa-play"></i> Resume Advice
+            </button>
+            <!-- /ko -->
+            <button class="btn btn-sm btn-default" data-bind="click: viewDetails">
+                <i class="fa fa-info-circle"></i> Details
+            </button>
+        </div>
+    </div>
+</div>

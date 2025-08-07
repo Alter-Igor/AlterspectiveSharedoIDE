@@ -1,0 +1,31 @@
+{
+    "id": "Alt.AdviceManagement.AdviceSummaryCard",
+    "priority": 7100,
+    "designer": {
+        "allowInPortalDesigner": true,
+        "allowInSharedoPortalDesigner": true,
+        "allowAspectAdapter": false,
+        "title": "Advice Summary Card",
+        "icon": "fa-id-card",
+        "description": "Compact card showing current advice state with quick stats and actions",
+        "categories": ["Advice Management", "Summary"],
+        "isConfigurable": false,
+        "defaultConfigurationJson": {
+            "refreshInterval": 60000,
+            "showProgressBar": true,
+            "showStats": true,
+            "compactMode": false
+        }
+    },
+    "scripts": [
+        "/_ideFiles/Alt/AdviceManagement/AdviceSummaryCard/AdviceSummaryCard.js"
+    ],
+    "styles": [
+        "/_ideFiles/Alt/AdviceManagement/AdviceSummaryCard/AdviceSummaryCard.css"
+    ],
+    "templates": [
+        "/_ideFiles/Alt/AdviceManagement/AdviceSummaryCard/AdviceSummaryCard.html"
+    ],
+    "menuTemplates": [],
+    "components": []
+}

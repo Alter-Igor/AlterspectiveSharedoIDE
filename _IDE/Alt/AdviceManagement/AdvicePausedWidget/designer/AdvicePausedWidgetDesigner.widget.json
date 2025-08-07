@@ -1,0 +1,20 @@
+{
+    "id": "Alt.AdviceManagement.AdvicePausedWidgetDesigner",
+    "priority": 7001,
+    "designer": {
+        "allowInPortalDesigner": false,
+        "allowInSharedoPortalDesigner": false,
+        "allowAspectAdapter": false
+    },
+    "scripts": [
+        "/_ideFiles/Alt/AdviceManagement/AdvicePausedWidget/designer/AdvicePausedWidgetDesigner.js"
+    ],
+    "styles": [
+        "/_ideFiles/Alt/AdviceManagement/AdvicePausedWidget/designer/AdvicePausedWidgetDesigner.css"
+    ],
+    "templates": [
+        "/_ideFiles/Alt/AdviceManagement/AdvicePausedWidget/designer/AdvicePausedWidgetDesigner.html"
+    ],
+    "menuTemplates": [],
+    "components": []
+}

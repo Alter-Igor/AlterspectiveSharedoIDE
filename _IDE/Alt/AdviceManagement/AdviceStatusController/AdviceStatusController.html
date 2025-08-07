@@ -1,0 +1,109 @@
+<div class="advice-status-controller">
+    <div class="controller-header">
+        <i class="fa fa-code-fork controller-icon"></i>
+        <h3>Advice Status Controller</h3>
+    </div>
+    
+    <!-- Status Display -->
+    <div class="status-display" data-bind="visible: model.showStatus()">
+        <div class="status-row">
+            <span class="status-label">Current Status:</span>
+            <span class="status-value" data-bind="text: model.currentStatus, css: 'status-' + model.currentStatus()"></span>
+        </div>
+        <!-- ko if: model.lastAction() -->
+        <div class="status-row">
+            <span class="status-label">Last Action:</span>
+            <span class="status-value" data-bind="text: model.lastAction"></span>
+        </div>
+        <!-- /ko -->
+    </div>
+    
+    <!-- Loading State -->
+    <div class="loading-state" data-bind="visible: model.isProcessing()">
+        <i class="fa fa-spinner fa-spin"></i>
+        <span>Processing advice status...</span>
+        <div class="progress-bar">
+            <div class="progress-fill" data-bind="style: { width: model.progress() + '%' }"></div>
+        </div>
+    </div>
+    
+    <!-- Action Preview -->
+    <div class="action-preview" data-bind="visible: model.showPreview() && !model.isProcessing()">
+        <h4>Action Preview</h4>
+        <div class="preview-content">
+            <div class="preview-item">
+                <i class="fa fa-info-circle"></i>
+                <span>Status Check: </span>
+                <strong data-bind="text: model.detectedStatus"></strong>
+            </div>
+            <div class="preview-item">
+                <i class="fa fa-arrow-right"></i>
+                <span>Planned Action: </span>
+                <strong data-bind="text: model.plannedAction"></strong>
+            </div>
+            <!-- ko if: model.requiresConfirmation() -->
+            <div class="confirmation-required">
+                <i class="fa fa-exclamation-triangle"></i>
+                This action requires confirmation
+            </div>
+            <!-- /ko -->
+        </div>
+    </div>
+    
+    <!-- Error Display -->
+    <div class="error-display" data-bind="visible: model.hasError()">
+        <div class="error-header">
+            <i class="fa fa-exclamation-circle"></i>
+            <span>Error Occurred</span>
+        </div>
+        <div class="error-message" data-bind="text: model.errorMessage"></div>
+        <!-- ko if: model.canRetry() -->
+        <button class="btn btn-sm btn-warning" data-bind="click: retry">
+            <i class="fa fa-refresh"></i> Retry
+        </button>
+        <!-- /ko -->
+    </div>
+    
+    <!-- Success Display -->
+    <div class="success-display" data-bind="visible: model.showSuccess()">
+        <div class="success-header">
+            <i class="fa fa-check-circle"></i>
+            <span>Action Completed Successfully</span>
+        </div>
+        <div class="success-details">
+            <div class="detail-row">
+                <span>Action Taken:</span>
+                <strong data-bind="text: model.actionTaken"></strong>
+            </div>
+            <div class="detail-row">
+                <span>New Status:</span>
+                <strong data-bind="text: model.currentStatus"></strong>
+            </div>
+            <!-- ko if: model.showUndo() -->
+            <button class="btn btn-sm btn-info" data-bind="click: undoAction">
+                <i class="fa fa-undo"></i> Undo
+            </button>
+            <!-- /ko -->
+        </div>
+    </div>
+    
+    <!-- Logs Panel (Debug Mode) -->
+    <!-- ko if: model.debugMode() -->
+    <div class="logs-panel">
+        <div class="logs-header">
+            <i class="fa fa-list"></i>
+            <span>Action Logs</span>
+            <button class="btn btn-xs btn-link" data-bind="click: clearLogs">Clear</button>
+        </div>
+        <div class="logs-content">
+            <!-- ko foreach: model.logs -->
+            <div class="log-entry" data-bind="css: 'log-' + level">
+                <span class="log-time" data-bind="text: timestamp"></span>
+                <span class="log-level" data-bind="text: '[' + level.toUpperCase() + ']'"></span>
+                <span class="log-message" data-bind="text: message"></span>
+            </div>
+            <!-- /ko -->
+        </div>
+    </div>
+    <!-- /ko -->
+</div>

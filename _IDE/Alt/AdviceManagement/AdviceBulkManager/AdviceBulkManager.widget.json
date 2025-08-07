@@ -1,0 +1,30 @@
+{
+    "id": "Alt.AdviceManagement.AdviceBulkManager",
+    "priority": 7200,
+    "designer": {
+        "allowInPortalDesigner": true,
+        "allowInSharedoPortalDesigner": true,
+        "allowAspectAdapter": false,
+        "title": "Advice Bulk Manager",
+        "icon": "fa-tasks",
+        "description": "Manage multiple advice items with bulk pause/resume actions and export capabilities",
+        "categories": ["Advice Management", "Bulk Operations"],
+        "isConfigurable": false,
+        "defaultConfigurationJson": {
+            "pageSize": 50,
+            "autoLoad": true,
+            "showFilters": true
+        }
+    },
+    "scripts": [
+        "/_ideFiles/Alt/AdviceManagement/AdviceBulkManager/AdviceBulkManager.js"
+    ],
+    "styles": [
+        "/_ideFiles/Alt/AdviceManagement/AdviceBulkManager/AdviceBulkManager.css"
+    ],
+    "templates": [
+        "/_ideFiles/Alt/AdviceManagement/AdviceBulkManager/AdviceBulkManager.html"
+    ],
+    "menuTemplates": [],
+    "components": []
+}

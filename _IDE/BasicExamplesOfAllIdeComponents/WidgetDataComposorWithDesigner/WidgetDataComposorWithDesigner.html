@@ -1,0 +1,54 @@
+<div class="BasicExamplesOfAllIdeComponents-WidgetDataComposorWithDesigner">
+
+    <p>
+        This is a scaffolded example widget demonstrating using the work
+        item API to obtain and then render data
+    </p>
+    
+    <div data-bind="text:model.todoMessage"></div>
+
+    <table class="standard-list table-striped">
+        <tbody>
+        <tr>
+            <td><strong>Title</strong></td>
+            <td data-bind="text:model.title"></td>
+        </tr>
+        <tr>
+            <td><strong>Reference</strong></td>
+            <td data-bind="text:model.reference"></td>
+        </tr>
+        <tr>
+            <td><strong>Client</strong></td>
+            <td data-bind="text:model.client"></td>
+        </tr>
+        <tr>
+            <td><strong>Created</strong></td>
+            <td data-bind="date:model.createdDate"></td>
+        </tr>
+        <tr>
+            <td><strong>Updated</strong></td>
+            <td data-bind="date:model.updatedDate"></td>
+        </tr>
+        <tr>
+            <td><strong>Owner</strong></td>
+            <td data-bind="text:model.owner"></td>
+        </tr>
+        </tbody>
+    </table>
+    
+    <p>Below is a list of known associates from an external service</p>
+    
+    <table class="standard-list table-striped">
+        <tbody data-bind="foreach:model.knownAssociates">
+        <tr>
+            <td width="50">
+                <img data-bind="attr:{ src:picture }" style="max-width:50px"/>
+            </td>
+            <td width="*">
+                <strong data-bind="text:name"></strong><br/>
+                <span data-bind="text:email"></span>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>

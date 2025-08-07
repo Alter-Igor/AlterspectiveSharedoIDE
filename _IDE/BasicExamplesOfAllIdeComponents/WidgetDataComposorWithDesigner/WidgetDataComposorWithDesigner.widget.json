@@ -1,0 +1,37 @@
+{
+    "id": "BasicExamplesOfAllIdeComponents.WidgetDataComposorWithDesigner",
+    "priority": 6000,
+    "designer":
+    {
+        "allowInPortalDesigner": false,
+        "allowInSharedoPortalDesigner": true,
+        "title": "TODO: Name widget WidgetDataComposorWithDesigner",
+        "icon": "fa-cog",
+        "description": "TODO: Describe your widget",
+        "categories":
+        [
+            "TODO Categorise WidgetDataComposorWithDesigner"
+        ],
+        "isConfigurable": true,
+        "configurationWidget": "BasicExamplesOfAllIdeComponents.WidgetDataComposorWithDesignerDesigner"
+    },
+    "scripts":
+    [
+        "/_ideFiles/BasicExamplesOfAllIdeComponents/WidgetDataComposorWithDesigner/WidgetDataComposorWithDesignerAgent.js",
+        "/_ideFiles/BasicExamplesOfAllIdeComponents/WidgetDataComposorWithDesigner/WidgetDataComposorWithDesigner.js"
+    ],
+    "styles":
+    [
+        "/_ideFiles/BasicExamplesOfAllIdeComponents/WidgetDataComposorWithDesigner/WidgetDataComposorWithDesigner.css"
+    ],
+    "templates":
+    [
+        "/_ideFiles/BasicExamplesOfAllIdeComponents/WidgetDataComposorWithDesigner/WidgetDataComposorWithDesigner.html"
+    ],
+    "menuTemplates":
+    [
+    ],
+    "components":
+    [
+    ]
+}

@@ -1,0 +1,288 @@
+/*
+    RICH TEXT EDITOR CUSTOM STYLES
+    ==============================
+    
+    * As this is a global include, ensure that all css class names are unique otherwise this could affect the appearance of sharedo.
+
+    * 'table' and 'image' and reserved css class names.
+
+    * Images and tables get wrapped in a <figure> element so any styling targetting these elements should be aware that the HTML structure will be
+      <figure><img /></figure> and <figure><table>...</table></figure>.
+
+    * As sharedo has a built-in theme that styles many of the elements in the rich text editor, it may be necessary to either increase the 
+      specificity of the selector - for example, .ck-content .table-style1 > table vs .table-style1 table - or use !important to ensure
+      your styles are applied.
+
+    Below is an example of a creating a style for a borderless table.
+*/
+.ck-content .table-borderless {
+    width: 100%;
+}
+
+.ck-content figure.table-borderless,
+.ck-content figure.table-borderless table,
+.ck-content figure.table-borderless table td,
+.ck-content figure.table-borderless table th {
+    border: none;
+}
+/* highlight in editor only so it's not invisible*/
+.ck-editor .ck-content figure.table-borderless table td,
+.ck-editor .ck-content figure.table-borderless table th {
+    border: dashed 1px #aaa;
+}
+
+/*
+    RICH TEXT EDITOR CONTENT STYLES
+    ==============================
+
+    The default content styles for some of elements in the text editor commented out below. If you would like to change, for example, how 
+    images look by default, you can uncomment and modify these styles.
+
+    As these styles are also being loaded by the editor, you may have to use '!important' to override certain properties. 
+*/
+
+/*
+.ck-content .sde-field-number {
+    width: 50px;
+    display: inline-block;
+}
+
+.ck-content .image.image_resized {
+    max-width: 100%;
+    display: block;
+    box-sizing: border-box;
+}
+    
+    .ck-content .image.image_resized img {
+        width: 100%;
+    }
+    
+    .ck-content .image.image_resized > figcaption {
+        display: block;
+    }
+
+.ck-content .image > figcaption {
+    display: table-caption;
+    caption-side: bottom;
+    word-break: break-word;
+    color: var(--ck-color-image-caption-text);
+    background-color: var(--ck-color-image-caption-background);
+    padding: .6em;
+    font-size: .75em;
+    outline-offset: -1px;
+}
+
+.ck-content .image {
+    display: table;
+    clear: both;
+    text-align: center;
+    margin: 0.9em auto;
+    min-width: 50px;
+}
+    
+    .ck-content .image img {
+        display: block;
+        margin: 0 auto;
+        max-width: 100%;
+        min-width: 100%;
+    }
+
+.ck-content .image-inline {
+    display: inline-flex;
+    max-width: 100%;
+    align-items: flex-start;
+}
+    
+    .ck-content .image-inline picture {
+        display: flex;
+    }
+    
+    .ck-content .image-inline picture,
+    .ck-content .image-inline img {
+        flex-grow: 1;
+        flex-shrink: 1;
+        max-width: 100%;
+    }
+
+.ck-content .image-style-block-align-left,
+.ck-content .image-style-block-align-right {
+    max-width: calc(100% - var(--ck-image-style-spacing));
+}
+
+.ck-content .image-style-align-left,
+.ck-content .image-style-align-right {
+    clear: none;
+}
+
+.ck-content .image-style-side {
+    float: right;
+    margin-left: var(--ck-image-style-spacing);
+    max-width: 50%;
+}
+
+.ck-content .image-style-align-left {
+    float: left;
+    margin-right: var(--ck-image-style-spacing);
+}
+
+.ck-content .image-style-align-center {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.ck-content .image-style-align-right {
+    float: right;
+    margin-left: var(--ck-image-style-spacing);
+}
+
+.ck-content .image-style-block-align-right {
+    margin-right: 0;
+    margin-left: auto;
+}
+
+.ck-content .image-style-block-align-left {
+    margin-left: 0;
+    margin-right: auto;
+}
+
+.ck-content p + .image-style-align-left,
+.ck-content p + .image-style-align-right,
+.ck-content p + .image-style-side {
+    margin-top: 0;
+}
+
+.ck-content .image-inline.image-style-align-left,
+.ck-content .image-inline.image-style-align-right {
+    margin-top: var(--ck-inline-image-style-spacing);
+    margin-bottom: var(--ck-inline-image-style-spacing);
+}
+
+.ck-content .image-inline.image-style-align-left {
+    margin-right: var(--ck-inline-image-style-spacing);
+}
+
+.ck-content .image-inline.image-style-align-right {
+    margin-left: var(--ck-inline-image-style-spacing);
+}
+
+.ck-content .table > figcaption {
+    display: table-caption;
+    caption-side: top;
+    word-break: break-word;
+    text-align: center;
+    color: var(--ck-color-table-caption-text);
+    background-color: var(--ck-color-table-caption-background);
+    padding: .6em;
+    font-size: .75em;
+    outline-offset: -1px;
+}
+
+.ck-content .table {
+    margin: 0.9em auto;
+    display: table;
+}
+    
+    .ck-content .table table {
+        border-collapse: collapse;
+        border-spacing: 0;
+        width: 100%;
+        height: 100%;
+        border: 1px double hsl(0, 0%, 70%);
+    }
+        
+        .ck-content .table table td,
+        .ck-content .table table th {
+            min-width: 2em;
+            padding: .4em;
+            border: 1px solid hsl(0, 0%, 75%);
+        }
+        
+        .ck-content .table table th {
+            font-weight: bold;
+            background: hsla(0, 0%, 0%, 5%);
+        }
+
+.ck-content[dir="rtl"] .table th {
+    text-align: right;
+}
+
+.ck-content[dir="ltr"] .table th {
+    text-align: left;
+}
+
+.ck-content .mention {
+    background: var(--ck-color-mention-background);
+    color: var(--ck-color-mention-text);
+}
+*/
+
+/*
+    EMAIL CONTENT STYLES
+    ==============================
+
+    Some styles may need to be changed to compensate for limited HTML and CSS in certain email clients such as Outlook.
+
+    Emails get the 'sd-email' class added to the body element so to ensure you are only targetting emails with your styles, always
+    prefix selectors with '.sd-email'.
+
+    - Heading field numbers - as Outlook does not support proper width and alignment on spans, the generation engine converts numbered
+    headings to tables with the following structure:
+
+    <table class="sd-email-table-list sd-email-table-h1">
+        <tr>
+            <td class="sd-email-field-number"></td>
+            <td class="sd-email-table-list-content"></td>
+        </tr>
+    </table>
+
+    The first cell has the number and the second the text content of the heading. The second class is dependant on the type of heading, for example, if 
+    the element is a h4, it would be 'sd-email-table-h4'.
+*/
+/*
+.sd-email .sd-email-table-h1,
+.sd-email .sd-email-table-h2,
+.sd-email .sd-email-table-h3,
+.sd-email .sd-email-table-h4,
+.sd-email .sd-email-table-h5,
+.sd-email .sd-email-table-h6 {
+    margin-left: 0;
+    margin-right: 0;
+    font-weight: bold;
+}
+
+.sd-email .sd-email-table-h1 {
+    font-size: 2em;
+    margin-top: 0.67em;
+    margin-bottom: 0.67em;
+}
+.sd-email .sd-email-table-h2 {
+    font-size: 1.5em;
+    margin-top: 0.83em;
+    margin-bottom: 0.83em;
+}
+.sd-email .sd-email-table-h3 {
+    font-size: 1.17em;
+    margin-top: 1em;
+    margin-bottom: 1em;
+}
+.sd-email .sd-email-table-h4 {
+    font-size: 1em;
+    margin-top: 1.33em;
+    margin-bottom: 1.33em;
+}
+.sd-email .sd-email-table-h5 {
+    font-size: .83em;
+    margin-top: 1.67em;
+    margin-bottom: 1.67em;
+}
+.sd-email .sd-email-table-h6 {
+    font-size: .67em;
+    margin-top: 2.33em;
+    margin-bottom: 2.33em;
+}
+
+.sd-email .sd-email-field-number {
+    vertical-align: top;
+    width: 50px;
+}
+*/

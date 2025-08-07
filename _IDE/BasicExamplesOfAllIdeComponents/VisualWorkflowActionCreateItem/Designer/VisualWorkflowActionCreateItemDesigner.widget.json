@@ -1,0 +1,31 @@
+{
+    "id":  "BasicExamplesOfAllIdeComponents.VisualWorkflowActionCreateItemDesigner", 
+    "priority": 6000, 
+    "designer":
+    {
+        "allowInPortalDesigner": false,
+        "allowInSharedoPortalDesigner": false
+    },
+    "scripts":
+    [
+        "/_ideFiles/BasicExamplesOfAllIdeComponents/VisualWorkflowActionCreateItem/designer/VisualWorkflowActionCreateItemDesigner.js"
+    ],
+    "styles":
+    [
+        "/_ideFiles/BasicExamplesOfAllIdeComponents/VisualWorkflowActionCreateItem/designer/VisualWorkflowActionCreateItemDesigner.css"
+    ],
+    "templates":
+    [
+        "/_ideFiles/BasicExamplesOfAllIdeComponents/VisualWorkflowActionCreateItem/designer/VisualWorkflowActionCreateItemDesigner.html"
+    ],
+    "menuTemplates":
+    [
+    ],
+    "components":
+    [
+        "Sharedo.Core.Case.Components.SharedoTypePicker",
+        "Sharedo.UI.Framework.Components.Toggle",
+        "Sharedo.Core.Case.WorkflowEditor.WFAssignmentComponent",
+        "Sharedo.Core.Case.WorkflowEditor.WFPhaseOutletComponent"
+    ]
+}

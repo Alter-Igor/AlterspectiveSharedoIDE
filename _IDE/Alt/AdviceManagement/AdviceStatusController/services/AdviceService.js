@@ -1,0 +1,388 @@
+namespace("Alt.AdviceManagement");
+
+/**
+ * AdviceService - Service layer for advice management API calls
+ */
+Alt.AdviceManagement.AdviceService = function() {
+    var self = this;
+    
+    // Configuration
+    self.config = {
+        baseUrl: '/api/v1/public',
+        timeout: 30000,
+        retryAttempts: 3,
+        retryDelay: 1000
+    };
+    
+    // Cache for performance
+    self.cache = {
+        statuses: {},
+        ttl: 5000 // 5 seconds
+    };
+    
+    /**
+     * Get advice status for a work item
+     */
+    self.getAdviceStatus = function(workItemId, callback) {
+        if (!workItemId) {
+            callback(false, 'Work item ID is required');
+            return;
+        }
+        
+        // Check cache
+        var cached = self.getCachedStatus(workItemId);
+        if (cached) {
+            callback(true, cached);
+            return;
+        }
+        
+        // Make API call
+        self.makeRequest({
+            url: self.config.baseUrl + '/workItem/' + workItemId + '/attributes',
+            method: 'GET',
+            success: function(response) {
+                var status = self.extractAdviceStatus(response);
+                self.cacheStatus(workItemId, status);
+                callback(true, status);
+            },
+            error: function(error) {
+                console.error('Failed to get advice status:', error);
+                callback(false, error.message || 'Failed to retrieve advice status');
+            }
+        });
+    };
+    
+    /**
+     * Pause advice for a work item
+     */
+    self.pauseAdvice = function(workItemId, reason, callback) {
+        if (!workItemId) {
+            callback(false, 'Work item ID is required');
+            return;
+        }
+        
+        var attributes = {
+            'AdviceStatus': 'paused',
+            'AdvicePausedDate': new Date().toISOString(),
+            'AdvicePausedReason': reason || 'Paused by workflow',
+            'AdvicePausedBy': self.getCurrentUser(),
+            'AdviceLastActionDate': new Date().toISOString(),
+            'AdviceLastActionType': 'Paused'
+        };
+        
+        self.updateAdviceAttributes(workItemId, attributes, function(success, data) {
+            if (success) {
+                self.clearCache(workItemId);
+                self.logAction('pause', workItemId, reason);
+            }
+            callback(success, data);
+        });
+    };
+    
+    /**
+     * Resume advice for a work item
+     */
+    self.resumeAdvice = function(workItemId, callback) {
+        if (!workItemId) {
+            callback(false, 'Work item ID is required');
+            return;
+        }
+        
+        var attributes = {
+            'AdviceStatus': 'active',
+            'AdviceResumedDate': new Date().toISOString(),
+            'AdviceResumedBy': self.getCurrentUser(),
+            'AdviceLastActionDate': new Date().toISOString(),
+            'AdviceLastActionType': 'Resumed',
+            'AdvicePausedReason': null,
+            'AdvicePausedDate': null,
+            'AdvicePausedBy': null
+        };
+        
+        self.updateAdviceAttributes(workItemId, attributes, function(success, data) {
+            if (success) {
+                self.clearCache(workItemId);
+                self.logAction('resume', workItemId, null);
+            }
+            callback(success, data);
+        });
+    };
+    
+    /**
+     * Update advice attributes
+     */
+    self.updateAdviceAttributes = function(workItemId, attributes, callback) {
+        self.makeRequest({
+            url: self.config.baseUrl + '/workItem/' + workItemId + '/attributes',
+            method: 'PUT',
+            data: JSON.stringify({ attributes: attributes }),
+            contentType: 'application/json',
+            success: function(response) {
+                callback(true, response);
+            },
+            error: function(error) {
+                console.error('Failed to update advice attributes:', error);
+                callback(false, error.message || 'Failed to update advice status');
+            }
+        });
+    };
+    
+    /**
+     * Get advice history for a work item
+     */
+    self.getAdviceHistory = function(workItemId, callback) {
+        self.makeRequest({
+            url: self.config.baseUrl + '/workItem/' + workItemId + '/history',
+            method: 'GET',
+            data: { filter: 'advice' },
+            success: function(response) {
+                var history = self.parseAdviceHistory(response);
+                callback(true, history);
+            },
+            error: function(error) {
+                console.error('Failed to get advice history:', error);
+                callback(false, []);
+            }
+        });
+    };
+    
+    /**
+     * Make AJAX request with retry logic
+     */
+    self.makeRequest = function(options, attempt) {
+        attempt = attempt || 1;
+        
+        var ajaxOptions = {
+            url: options.url,
+            type: options.method || 'GET',
+            timeout: self.config.timeout,
+            success: function(response) {
+                if (options.success) {
+                    options.success(response);
+                }
+            },
+            error: function(xhr, status, error) {
+                // Retry logic
+                if (attempt < self.config.retryAttempts && self.shouldRetry(xhr.status)) {
+                    setTimeout(function() {
+                        self.makeRequest(options, attempt + 1);
+                    }, self.config.retryDelay * attempt);
+                } else {
+                    if (options.error) {
+                        options.error({
+                            status: xhr.status,
+                            message: error || status,
+                            response: xhr.responseText
+                        });
+                    }
+                }
+            }
+        };
+        
+        // Add data if provided
+        if (options.data) {
+            ajaxOptions.data = options.data;
+        }
+        
+        // Add content type if provided
+        if (options.contentType) {
+            ajaxOptions.contentType = options.contentType;
+        }
+        
+        // Add authorization header if available
+        var authToken = self.getAuthToken();
+        if (authToken) {
+            ajaxOptions.headers = {
+                'Authorization': 'Bearer ' + authToken
+            };
+        }
+        
+        $.ajax(ajaxOptions);
+    };
+    
+    /**
+     * Determine if request should be retried
+     */
+    self.shouldRetry = function(statusCode) {
+        // Retry on network errors or server errors
+        return statusCode === 0 || statusCode >= 500;
+    };
+    
+    /**
+     * Extract advice status from response
+     */
+    self.extractAdviceStatus = function(response) {
+        var attributes = response.attributes || {};
+        var status = attributes['AdviceStatus'] || 'none';
+        
+        return {
+            status: status.toLowerCase(),
+            pausedDate: attributes['AdvicePausedDate'],
+            pausedReason: attributes['AdvicePausedReason'],
+            pausedBy: attributes['AdvicePausedBy'],
+            resumedDate: attributes['AdviceResumedDate'],
+            resumedBy: attributes['AdviceResumedBy'],
+            lastAction: attributes['AdviceLastActionType'],
+            lastActionDate: attributes['AdviceLastActionDate']
+        };
+    };
+    
+    /**
+     * Parse advice history from response
+     */
+    self.parseAdviceHistory = function(response) {
+        var history = response.history || [];
+        return history.filter(function(event) {
+            return event.action && event.action.indexOf('advice') !== -1;
+        }).map(function(event) {
+            return {
+                action: event.action,
+                date: event.date,
+                user: event.user,
+                details: event.details
+            };
+        });
+    };
+    
+    /**
+     * Get cached status
+     */
+    self.getCachedStatus = function(workItemId) {
+        var cached = self.cache.statuses[workItemId];
+        if (cached && (Date.now() - cached.timestamp < self.cache.ttl)) {
+            return cached.data;
+        }
+        return null;
+    };
+    
+    /**
+     * Cache status
+     */
+    self.cacheStatus = function(workItemId, status) {
+        self.cache.statuses[workItemId] = {
+            data: status,
+            timestamp: Date.now()
+        };
+    };
+    
+    /**
+     * Clear cache for work item
+     */
+    self.clearCache = function(workItemId) {
+        delete self.cache.statuses[workItemId];
+    };
+    
+    /**
+     * Get current user
+     */
+    self.getCurrentUser = function() {
+        // Try to get from ShareDo context
+        if (window.ShareDo && window.ShareDo.currentUser) {
+            return window.ShareDo.currentUser.name || window.ShareDo.currentUser.email;
+        }
+        
+        // Try to get from workflow context
+        if (window.workflowContext && window.workflowContext.user) {
+            return window.workflowContext.user;
+        }
+        
+        return 'System';
+    };
+    
+    /**
+     * Get auth token
+     */
+    self.getAuthToken = function() {
+        // Try to get from ShareDo
+        if (window.ShareDo && window.ShareDo.authToken) {
+            return window.ShareDo.authToken;
+        }
+        
+        // Try to get from local storage
+        if (window.localStorage) {
+            return localStorage.getItem('authToken');
+        }
+        
+        return null;
+    };
+    
+    /**
+     * Log action for audit trail
+     */
+    self.logAction = function(action, workItemId, details) {
+        try {
+            var logEntry = {
+                timestamp: new Date().toISOString(),
+                action: 'advice_' + action,
+                workItemId: workItemId,
+                user: self.getCurrentUser(),
+                details: details
+            };
+            
+            // Send to audit service if available
+            if (window.AuditService) {
+                window.AuditService.log(logEntry);
+            }
+            
+            // Console log for debugging
+            console.log('[AdviceService] Action logged:', logEntry);
+        } catch (e) {
+            console.error('Failed to log action:', e);
+        }
+    };
+    
+    /**
+     * Validate work item exists
+     */
+    self.validateWorkItem = function(workItemId, callback) {
+        self.makeRequest({
+            url: self.config.baseUrl + '/workItem/' + workItemId,
+            method: 'GET',
+            success: function(response) {
+                callback(true, response);
+            },
+            error: function(error) {
+                callback(false, null);
+            }
+        });
+    };
+    
+    /**
+     * Batch update multiple work items
+     */
+    self.batchUpdateAdvice = function(workItemIds, action, reason, callback) {
+        var completed = 0;
+        var errors = [];
+        var results = [];
+        
+        workItemIds.forEach(function(workItemId) {
+            var processItem = function() {
+                if (action === 'pause') {
+                    self.pauseAdvice(workItemId, reason, handleResult);
+                } else if (action === 'resume') {
+                    self.resumeAdvice(workItemId, handleResult);
+                }
+            };
+            
+            var handleResult = function(success, data) {
+                completed++;
+                
+                if (success) {
+                    results.push({ workItemId: workItemId, success: true });
+                } else {
+                    errors.push({ workItemId: workItemId, error: data });
+                }
+                
+                if (completed === workItemIds.length) {
+                    callback(errors.length === 0, {
+                        results: results,
+                        errors: errors
+                    });
+                }
+            };
+            
+            // Stagger requests to avoid overwhelming the server
+            setTimeout(processItem, completed * 100);
+        });
+    };
+};

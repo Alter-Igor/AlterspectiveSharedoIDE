@@ -1,0 +1,35 @@
+<div class="Alt-AdvicePausedWidget">
+    <!-- ko if: model.isPaused() -->
+    <div class="advice-paused-notification" data-bind="click: openResumePanel, attr: { 'aria-label': 'Advice paused. Click to resume.' }" role="button" tabindex="0">
+        <button class="advice-dismiss-btn" data-bind="click: dismissNotification, clickBubble: false" title="Dismiss notification" aria-label="Dismiss">
+            <i class="fa fa-times"></i>
+        </button>
+        <div class="advice-paused-icon" data-bind="css: { 'urgent': model.isUrgent() }">
+            <i class="fa fa-pause-circle fa-2x"></i>
+        </div>
+        <div class="advice-paused-content">
+            <div class="advice-paused-title">
+                Advice Paused
+                <!-- ko if: model.isUrgent() -->
+                <span class="urgency-badge">Urgent</span>
+                <!-- /ko -->
+            </div>
+            <div class="advice-paused-details">
+                <span data-bind="text: model.pausedDate"></span>
+                <!-- ko if: model.pausedDuration() -->
+                <span class="paused-duration" data-bind="text: '(' + model.pausedDuration() + ')'"></span>
+                <!-- /ko -->
+                <!-- ko if: model.pausedBy() -->
+                <div class="paused-by">by <span data-bind="text: model.pausedBy"></span></div>
+                <!-- /ko -->
+                <!-- ko if: model.pausedReason() -->
+                <div class="advice-paused-reason" data-bind="text: model.pausedReason"></div>
+                <!-- /ko -->
+            </div>
+            <div class="advice-paused-action">
+                <span class="advice-resume-link">Click to resume <i class="fa fa-play-circle"></i></span>
+            </div>
+        </div>
+    </div>
+    <!-- /ko -->
+</div>

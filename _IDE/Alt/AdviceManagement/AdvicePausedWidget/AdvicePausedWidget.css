@@ -1,0 +1,209 @@
+.Alt-AdvicePausedWidget {
+    position: relative;
+    width: 100%;
+}
+
+.advice-paused-notification {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+    border: 2px solid #ffc107;
+    border-radius: 8px;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(255, 193, 7, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    position: relative;
+}
+
+.advice-dismiss-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid #ffc107;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 1;
+}
+
+.advice-dismiss-btn:hover {
+    background: #fff;
+    transform: scale(1.1);
+}
+
+.advice-dismiss-btn i {
+    font-size: 12px;
+    color: #856404;
+}
+
+.advice-paused-notification:hover {
+    background: linear-gradient(135deg, #ffeaa7 0%, #ffd93d 100%);
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+    transform: translateY(-2px);
+}
+
+.advice-paused-icon {
+    flex-shrink: 0;
+    color: #f39c12;
+    animation: pulse 2s infinite;
+}
+
+.advice-paused-icon.urgent {
+    color: #dc3545;
+    animation: urgentPulse 1s infinite;
+}
+
+@keyframes urgentPulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.8;
+        transform: scale(1.1);
+    }
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(1.05);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.advice-paused-content {
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.advice-paused-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #856404;
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.urgency-badge {
+    background: #dc3545;
+    color: white;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    font-weight: 700;
+    animation: blink 1.5s infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+.advice-paused-details {
+    font-size: 13px;
+    color: #6c5802;
+    margin-bottom: 8px;
+}
+
+.paused-duration {
+    color: #856404;
+    font-weight: 600;
+    margin-left: 5px;
+}
+
+.paused-by {
+    margin-top: 3px;
+    font-style: italic;
+    color: #6c5802;
+}
+
+.paused-by span {
+    font-weight: 600;
+}
+
+.advice-paused-reason {
+    margin-top: 5px;
+    font-style: italic;
+    padding: 5px 10px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 4px;
+    border-left: 3px solid #f39c12;
+}
+
+.advice-paused-action {
+    font-size: 12px;
+    margin-top: 8px;
+}
+
+.advice-resume-link {
+    color: #0056b3;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.advice-resume-link:hover {
+    color: #004085;
+    text-decoration: underline;
+}
+
+.advice-resume-link i {
+    font-size: 14px;
+    color: #28a745;
+}
+
+/* Responsive adjustments for smaller widgets */
+@media (max-width: 400px) {
+    .advice-paused-notification {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .advice-paused-icon {
+        margin-bottom: 10px;
+    }
+}
+
+/* Loading state */
+.Alt-AdvicePausedWidget.loading .advice-paused-notification {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* Animation for when the notification appears */
+.advice-paused-notification {
+    animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

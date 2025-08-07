@@ -1,0 +1,27 @@
+{
+    "id":  "BasicExamplesOfAllIdeComponents.VisualWorkflowActionWithDesignerDesigner", 
+    "priority": 6000, 
+    "designer":
+    {
+        "allowInPortalDesigner": false,
+        "allowInSharedoPortalDesigner": false
+    },
+    "scripts":
+    [
+        "/_ideFiles/BasicExamplesOfAllIdeComponents/VisualWorkflowActionWithDesigner/designer/VisualWorkflowActionWithDesignerDesigner.js"
+    ],
+    "styles":
+    [
+        "/_ideFiles/BasicExamplesOfAllIdeComponents/VisualWorkflowActionWithDesigner/designer/VisualWorkflowActionWithDesignerDesigner.css"
+    ],
+    "templates":
+    [
+        "/_ideFiles/BasicExamplesOfAllIdeComponents/VisualWorkflowActionWithDesigner/designer/VisualWorkflowActionWithDesignerDesigner.html"
+    ],
+    "menuTemplates":
+    [
+    ],
+    "components":
+    [
+    ]
+}

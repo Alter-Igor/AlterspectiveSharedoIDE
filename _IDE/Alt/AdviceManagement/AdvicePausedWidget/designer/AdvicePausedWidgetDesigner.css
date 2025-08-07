@@ -1,0 +1,31 @@
+.Alt-AdvicePausedWidgetDesigner {
+    padding: 15px;
+}
+
+.Alt-AdvicePausedWidgetDesigner .form-group {
+    margin-bottom: 20px;
+}
+
+.Alt-AdvicePausedWidgetDesigner .control-label {
+    font-weight: 600;
+    color: #333;
+}
+
+.Alt-AdvicePausedWidgetDesigner .help-block {
+    font-size: 12px;
+    color: #777;
+    margin-top: 5px;
+}
+
+.Alt-AdvicePausedWidgetDesigner .checkbox label {
+    font-weight: normal;
+}
+
+.Alt-AdvicePausedWidgetDesigner .alert {
+    margin-top: 20px;
+    font-size: 13px;
+}
+
+.Alt-AdvicePausedWidgetDesigner .alert i {
+    margin-right: 5px;
+}

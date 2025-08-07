@@ -1,0 +1,18 @@
+{
+    "id": "Alt.AdviceManagement.AdvicePauseResumeBlade",
+    "priority": 6000,
+    "width": 600,
+    "scripts": [
+        "/_ideFiles/Alt/AdviceManagement/AdvicePauseResumeBlade/helpers/namespace.js",
+        "/_ideFiles/Alt/AdviceManagement/AdvicePauseResumeBlade/models/OngoingAdviceModel.js",
+        "/_ideFiles/Alt/AdviceManagement/AdvicePauseResumeBlade/services/AttributeApiService.js",
+        "/_ideFiles/Alt/AdviceManagement/AdvicePauseResumeBlade/blade.js"
+    ],
+    "styles": [],
+    "templates": [
+        "/_ideFiles/Alt/AdviceManagement/AdvicePauseResumeBlade/blade.html"
+    ],
+    "components": [
+        "Sharedo.UI.Framework.Components.RibbonBar"
+    ]
+}

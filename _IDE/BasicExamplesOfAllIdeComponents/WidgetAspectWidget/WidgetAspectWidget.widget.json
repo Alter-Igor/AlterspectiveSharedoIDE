@@ -1,0 +1,37 @@
+{
+    "id": "BasicExamplesOfAllIdeComponents.WidgetAspectWidget",
+    "priority": 6000,
+    "designer":
+    {
+        "allowInPortalDesigner": false,
+        "allowInSharedoPortalDesigner": false,
+        "allowAspectAdapter": true,  
+        "title": null,
+        "icon": "fa-cog",
+        "description": null,
+        "categories": 
+        [
+        ],
+        "isConfigurable": true,
+        "configurationWidget": null,
+        "defaultConfigurationJson": { "todoMessage": "Customise config JSON" } 
+    },
+    "scripts":
+    [
+        "/_ideFiles/BasicExamplesOfAllIdeComponents/WidgetAspectWidget/WidgetAspectWidget.js"
+    ],
+    "styles":
+    [
+        "/_ideFiles/BasicExamplesOfAllIdeComponents/WidgetAspectWidget/WidgetAspectWidget.css"
+    ],
+    "templates":
+    [
+        "/_ideFiles/BasicExamplesOfAllIdeComponents/WidgetAspectWidget/WidgetAspectWidget.html"
+    ],
+    "menuTemplates":
+    [
+    ],
+    "components":
+    [
+    ]
+}
