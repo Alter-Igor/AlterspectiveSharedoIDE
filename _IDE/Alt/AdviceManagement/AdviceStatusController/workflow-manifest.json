@@ -1,0 +1,71 @@
+{
+    "manifestVersion": "1.0",
+    "id": "Alt.AdviceManagement.AdviceStatusController",
+    "name": "Advice Status Controller",
+    "description": "Controls advice workflow status based on configurable conditions",
+    "version": "1.0.0",
+    "author": "Alterspective",
+    "category": "Advice Management",
+    "integration": {
+        "type": "workflow-action",
+        "designer": {
+            "enabled": true,
+            "palette": {
+                "section": "Actions",
+                "group": "Advice Management",
+                "position": 10,
+                "icon": "fa-code-fork",
+                "color": "#17a2b8",
+                "badge": "NEW"
+            },
+            "canvas": {
+                "width": 200,
+                "height": 80,
+                "resizable": false,
+                "connectablePoints": {
+                    "input": ["top", "left"],
+                    "output": ["bottom", "right", "error"]
+                }
+            },
+            "properties": {
+                "configurable": true,
+                "deletable": true,
+                "duplicatable": true,
+                "helpUrl": "/help/advice-status-controller"
+            }
+        },
+        "runtime": {
+            "handler": "Alt.AdviceManagement.AdviceStatusController",
+            "timeout": 30000,
+            "retryable": true
+        }
+    },
+    "files": {
+        "action": "AdviceStatusController.action.json",
+        "script": "AdviceStatusController.js",
+        "service": "services/AdviceService.js",
+        "designer": "designer/AdviceStatusControllerDesigner.js",
+        "styles": [
+            "AdviceStatusController.css",
+            "designer/AdviceStatusControllerDesigner.css"
+        ],
+        "templates": [
+            "AdviceStatusController.html",
+            "designer/AdviceStatusControllerDesigner.html"
+        ]
+    },
+    "dependencies": {
+        "jquery": ">=3.0.0",
+        "knockout": ">=3.4.0"
+    },
+    "compatibility": {
+        "sharedo": ">=5.0.0",
+        "browsers": ["chrome", "firefox", "edge", "safari"]
+    },
+    "features": {
+        "supportsUndo": true,
+        "supportsValidation": true,
+        "supportsPreview": true,
+        "supportsBatchProcessing": false
+    }
+}
