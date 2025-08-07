@@ -6,18 +6,17 @@ namespace("Alt.AdviceManagement");
 Alt.AdviceManagement.AdviceService = function() {
     var self = this;
     
-    // Configuration
-    self.config = {
-        baseUrl: '/api/v1/public',
-        timeout: 30000,
-        retryAttempts: 3,
-        retryDelay: 1000
-    };
+    // Use common constants
+    var Constants = Alt.AdviceManagement.Common.Constants;
+    var Cache = Alt.AdviceManagement.Common.CacheManager;
+    var EventBus = Alt.AdviceManagement.Common.EventBus;
     
-    // Cache for performance
-    self.cache = {
-        statuses: {},
-        ttl: 5000 // 5 seconds
+    // Configuration from constants
+    self.config = {
+        baseUrl: Constants.API.BASE_URL,
+        timeout: Constants.API.TIMEOUT,
+        retryAttempts: Constants.API.RETRY_ATTEMPTS,
+        retryDelay: Constants.API.RETRY_DELAY
     };
     
     /**
@@ -74,6 +73,10 @@ Alt.AdviceManagement.AdviceService = function() {
             if (success) {
                 self.clearCache(workItemId);
                 self.logAction('pause', workItemId, reason);
+                EventBus.publish(Constants.EVENTS.ADVICE_PAUSED, {
+                    workItemId: workItemId,
+                    reason: reason
+                });
             }
             callback(success, data);
         });
@@ -103,6 +106,9 @@ Alt.AdviceManagement.AdviceService = function() {
             if (success) {
                 self.clearCache(workItemId);
                 self.logAction('resume', workItemId, null);
+                EventBus.publish(Constants.EVENTS.ADVICE_RESUMED, {
+                    workItemId: workItemId
+                });
             }
             callback(success, data);
         });
@@ -248,28 +254,21 @@ Alt.AdviceManagement.AdviceService = function() {
      * Get cached status
      */
     self.getCachedStatus = function(workItemId) {
-        var cached = self.cache.statuses[workItemId];
-        if (cached && (Date.now() - cached.timestamp < self.cache.ttl)) {
-            return cached.data;
-        }
-        return null;
+        return Cache.get('workItemStatus', workItemId);
     };
     
     /**
      * Cache status
      */
     self.cacheStatus = function(workItemId, status) {
-        self.cache.statuses[workItemId] = {
-            data: status,
-            timestamp: Date.now()
-        };
+        Cache.set('workItemStatus', workItemId, status);
     };
     
     /**
      * Clear cache for work item
      */
     self.clearCache = function(workItemId) {
-        delete self.cache.statuses[workItemId];
+        Cache.remove('workItemStatus', workItemId);
     };
     
     /**
