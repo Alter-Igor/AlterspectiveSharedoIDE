@@ -39,170 +39,194 @@
         <!-- Main Content - Only show when loaded -->
         <div data-bind="visible: model.loaded() && !model.loading()">
             
-            <!-- Current Status Widget -->
-            <div data-bind="widgetChrome:{ icon:'fa-info-circle', title:'Current Status' }" style="margin-bottom: 20px;">
-                <form class="form-horizontal">
-                    <!-- Status Display -->
-                    <div class="form-group">
-                        <label class="col-sm-3 control-label">Status:</label>
-                        <div class="col-sm-9">
-                            <p class="form-control-static">
-                                <i data-bind="css: 'fa ' + model.currentStatusIcon()"></i>
-                                <strong data-bind="text: model.currentStatusText, css: model.currentStatusClass"></strong>
-                            </p>
-                        </div>
-                    </div>
-                    
-                    <!-- Last Modified -->
-                    <div class="form-group">
-                        <label class="col-sm-3 control-label">Last Modified:</label>
-                        <div class="col-sm-9">
-                            <p class="form-control-static" data-bind="text: model.lastModifiedText"></p>
-                        </div>
-                    </div>
-                    
-                    <!-- Last Reason (if exists) -->
-                    <div class="form-group" data-bind="visible: model.lastReason">
-                        <label class="col-sm-3 control-label">Reason:</label>
-                        <div class="col-sm-9">
-                            <p class="form-control-static" data-bind="text: model.lastReason"></p>
-                        </div>
-                    </div>
-                    
-                    <!-- Next Advice Date -->
-                    <div class="form-group">
-                        <label class="col-sm-3 control-label">Next Advice Date:</label>
-                        <div class="col-sm-9">
-                            <p class="form-control-static" data-bind="text: model.formattedNextAdviceDate"></p>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            
-            <!-- Action Form Widget -->
-            <div data-bind="widgetChrome:{ icon: model.actionButtonIcon(), title: model.actionButtonText() }">
-                <form class="form-horizontal">
-                    
-                    <!-- Pause Warning -->
-                    <div data-bind="visible: model.showPauseFields" class="alert alert-warning">
-                        <i class="fa fa-exclamation-triangle"></i>
-                        <strong>Note:</strong> Pausing ongoing advice will prevent automatic advice generation and notifications for this work item until resumed.
-                    </div>
-                    
-                    <!-- Resume Info -->
-                    <div data-bind="visible: model.showResumeFields" class="alert alert-info">
+            <!-- Current Status Panel -->
+            <div class="panel panel-default" style="margin-bottom: 20px;">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
                         <i class="fa fa-info-circle"></i>
-                        <strong>Note:</strong> Resuming ongoing advice will re-enable automatic advice generation and notifications for this work item.
-                    </div>
-                    
-                    <!-- Reason Input -->
-                    <div class="form-group">
-                        <label class="col-sm-3 control-label">
-                            Reason:
-                            <span class="text-muted">(optional)</span>
-                        </label>
-                        <div class="col-sm-9">
-                            <textarea class="form-control" 
-                                    rows="3"
-                                    placeholder="Enter reason for this action..."
-                                    data-bind="value: model.reasonInput, enable: model.canPerformAction"
-                                    maxlength="500"></textarea>
-                            <span class="help-block">
-                                <span data-bind="text: (model.reasonInput() || '').length"></span> / 500 characters
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <!-- Next Advice Date (when resuming) -->
-                    <div data-bind="visible: model.showResumeFields" class="form-group">
-                        <label class="col-sm-3 control-label">
-                            Next Advice Date:
-                            <span class="text-muted">(optional)</span>
-                        </label>
-                        <div class="col-sm-9">
-                            <input type="date" 
-                                   class="form-control"
-                                   data-bind="value: model.nextAdviceDateInput, enable: model.canPerformAction">
-                            <span class="help-block text-danger" data-bind="visible: !model.nextAdviceDateValid()">
-                                Please enter a valid future date.
-                            </span>
-                            <span class="help-block" data-bind="visible: model.nextAdviceDateValid()">
-                                When should the next ongoing advice review occur?
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <!-- Action Buttons -->
-                    <div class="form-group">
-                        <div class="col-sm-offset-3 col-sm-9">
-                            <button type="button" 
-                                    data-bind="css: 'btn ' + model.actionButtonClass(), 
-                                             click: toggleOngoingAdvice, 
-                                             enable: model.canPerformAction() && !model.saving()">
-                                <i data-bind="css: model.saving() ? 'fa fa-spinner fa-spin' : 'fa ' + model.actionButtonIcon()"></i>
-                                <span data-bind="text: model.saving() ? 'Processing...' : model.actionButtonText()"></span>
-                            </button>
-                            
-                            <button type="button" 
-                                    class="btn btn-default"
-                                    data-bind="click: clearForm, enable: !model.saving()">
-                                <i class="fa fa-eraser"></i> Clear Form
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <!-- Validation Summary -->
-                    <div data-bind="visible: !model.canPerformAction() && model.loaded()" class="form-group">
-                        <div class="col-sm-offset-3 col-sm-9">
-                            <div class="alert alert-warning">
-                                <strong><i class="fa fa-exclamation-triangle"></i> Action cannot be performed:</strong>
-                                <ul class="list-unstyled" style="margin-top: 10px;">
-                                    <li data-bind="visible: !model.nextAdviceDateValid() && model.showResumeFields()">
-                                        • Please enter a valid future date for next advice
-                                    </li>
-                                    <li data-bind="visible: !model.reasonValid()">
-                                        • Reason cannot exceed 500 characters
-                                    </li>
-                                    <li data-bind="visible: !model.workItemId()">
-                                        • No work item selected
-                                    </li>
-                                </ul>
+                        Current Status
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <form class="form-horizontal">
+                        <!-- Status Display -->
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">Status:</label>
+                            <div class="col-sm-9">
+                                <p class="form-control-static">
+                                    <i data-bind="css: 'fa ' + model.currentStatusIcon()"></i>
+                                    <strong data-bind="text: model.currentStatusText, css: model.currentStatusClass"></strong>
+                                </p>
                             </div>
                         </div>
-                    </div>
-                    
-                </form>
+                        
+                        <!-- Last Modified -->
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">Last Modified:</label>
+                            <div class="col-sm-9">
+                                <p class="form-control-static" data-bind="text: model.lastModifiedText"></p>
+                            </div>
+                        </div>
+                        
+                        <!-- Last Reason (if exists) -->
+                        <div class="form-group" data-bind="visible: model.lastReason">
+                            <label class="col-sm-3 control-label">Reason:</label>
+                            <div class="col-sm-9">
+                                <p class="form-control-static" data-bind="text: model.lastReason"></p>
+                            </div>
+                        </div>
+                        
+                        <!-- Next Advice Date -->
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">Next Advice Date:</label>
+                            <div class="col-sm-9">
+                                <p class="form-control-static" data-bind="text: model.formattedNextAdviceDate"></p>
+                            </div>
+                        </div>
+                    </form>
+                </div>
             </div>
             
-            <!-- Debug Info Widget (Development Only) -->
+            <!-- Action Form Panel -->
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <i data-bind="css: 'fa ' + model.actionButtonIcon()"></i>
+                        <span data-bind="text: model.actionButtonText()"></span>
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <form class="form-horizontal">
+                        
+                        <!-- Pause Warning -->
+                        <div data-bind="visible: model.showPauseFields" class="alert alert-warning">
+                            <i class="fa fa-exclamation-triangle"></i>
+                            <strong>Note:</strong> Pausing ongoing advice will prevent automatic advice generation and notifications for this work item until resumed.
+                        </div>
+                        
+                        <!-- Resume Info -->
+                        <div data-bind="visible: model.showResumeFields" class="alert alert-info">
+                            <i class="fa fa-info-circle"></i>
+                            <strong>Note:</strong> Resuming ongoing advice will re-enable automatic advice generation and notifications for this work item.
+                        </div>
+                        
+                        <!-- Reason Input -->
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">
+                                Reason:
+                                <span class="text-muted">(optional)</span>
+                            </label>
+                            <div class="col-sm-9">
+                                <textarea class="form-control" 
+                                        rows="3"
+                                        placeholder="Enter reason for this action..."
+                                        data-bind="value: model.reasonInput, enable: model.canPerformAction"
+                                        maxlength="500"></textarea>
+                                <span class="help-block">
+                                    <span data-bind="text: (model.reasonInput() || '').length"></span> / 500 characters
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <!-- Next Advice Date (when resuming) -->
+                        <div data-bind="visible: model.showResumeFields" class="form-group">
+                            <label class="col-sm-3 control-label">
+                                Next Advice Date:
+                                <span class="text-muted">(optional)</span>
+                            </label>
+                            <div class="col-sm-9">
+                                <input type="date" 
+                                       class="form-control"
+                                       data-bind="value: model.nextAdviceDateInput, enable: model.canPerformAction">
+                                <span class="help-block text-danger" data-bind="visible: !model.nextAdviceDateValid()">
+                                    Please enter a valid future date.
+                                </span>
+                                <span class="help-block" data-bind="visible: model.nextAdviceDateValid()">
+                                    When should the next ongoing advice review occur?
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="form-group">
+                            <div class="col-sm-offset-3 col-sm-9">
+                                <button type="button" 
+                                        data-bind="css: 'btn ' + model.actionButtonClass(), 
+                                                 click: toggleOngoingAdvice, 
+                                                 enable: model.canPerformAction() && !model.saving()">
+                                    <i data-bind="css: model.saving() ? 'fa fa-spinner fa-spin' : 'fa ' + model.actionButtonIcon()"></i>
+                                    <span data-bind="text: model.saving() ? 'Processing...' : model.actionButtonText()"></span>
+                                </button>
+                                
+                                <button type="button" 
+                                        class="btn btn-default"
+                                        data-bind="click: clearForm, enable: !model.saving()">
+                                    <i class="fa fa-eraser"></i> Clear Form
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Validation Summary -->
+                        <div data-bind="visible: !model.canPerformAction() && model.loaded()" class="form-group">
+                            <div class="col-sm-offset-3 col-sm-9">
+                                <div class="alert alert-warning">
+                                    <strong><i class="fa fa-exclamation-triangle"></i> Action cannot be performed:</strong>
+                                    <ul class="list-unstyled" style="margin-top: 10px;">
+                                        <li data-bind="visible: !model.nextAdviceDateValid() && model.showResumeFields()">
+                                            • Please enter a valid future date for next advice
+                                        </li>
+                                        <li data-bind="visible: !model.reasonValid()">
+                                            • Reason cannot exceed 500 characters
+                                        </li>
+                                        <li data-bind="visible: !model.workItemId()">
+                                            • No work item selected
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Debug Info Panel (Development Only) -->
             <!-- ko if: window.location.href.indexOf('debug=true') > -1 -->
-            <div data-bind="widgetChrome:{ icon:'fa-bug', title:'Debug Information' }" style="margin-top: 20px;">
-                <form class="form-horizontal">
-                    <div class="form-group">
-                        <label class="col-sm-3 control-label">Work Item ID:</label>
-                        <div class="col-sm-9">
-                            <p class="form-control-static" data-bind="text: model.workItemId"></p>
+            <div class="panel panel-info" style="margin-top: 20px;">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <i class="fa fa-bug"></i>
+                        Debug Information
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <form class="form-horizontal">
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">Work Item ID:</label>
+                            <div class="col-sm-9">
+                                <p class="form-control-static" data-bind="text: model.workItemId"></p>
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="col-sm-3 control-label">Work Type ID:</label>
-                        <div class="col-sm-9">
-                            <p class="form-control-static" data-bind="text: model.workTypeId"></p>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">Work Type ID:</label>
+                            <div class="col-sm-9">
+                                <p class="form-control-static" data-bind="text: model.workTypeId"></p>
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="col-sm-3 control-label">Enabled:</label>
-                        <div class="col-sm-9">
-                            <p class="form-control-static" data-bind="text: model.enabled"></p>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">Enabled:</label>
+                            <div class="col-sm-9">
+                                <p class="form-control-static" data-bind="text: model.enabled"></p>
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="col-sm-3 control-label">Current User:</label>
-                        <div class="col-sm-9">
-                            <p class="form-control-static" data-bind="text: model.currentUser() ? model.currentUser().name : 'Unknown'"></p>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">Current User:</label>
+                            <div class="col-sm-9">
+                                <p class="form-control-static" data-bind="text: model.currentUser() ? model.currentUser().name : 'Unknown'"></p>
+                            </div>
                         </div>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
             <!-- /ko -->
             

@@ -73,13 +73,11 @@ BasicExamplesOfAllIdeComponents.WidgetDataComposorWithDesignerAgent = function()
     {
         var appId = "[[YOUR-APP-ID]]";
 
-        // Return the jQuery AJAX promise directly as we're not going to mutate the data here
-        return $.ajax(
-            {
-                url: "https://dummyapi.io/data/api/user?limit=3",
-                headers: { "app-id": appId }
-            }
-        );
+        // Use $ajax for external API call to maintain consistency
+        // Note: For external APIs, we need to pass full URL
+        return $ajax.api.get("https://dummyapi.io/data/api/user?limit=3", {
+            headers: { "app-id": appId }
+        });
     }
     
     return {

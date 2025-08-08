@@ -1,3 +1,21 @@
+// Ensure namespace function exists
+if (typeof namespace !== 'function') {
+    window.namespace = function(namespaceString) {
+        var parts = namespaceString.split('.');
+        var parent = window;
+        var currentPart = '';
+        
+        for (var i = 0, length = parts.length; i < length; i++) {
+            currentPart = parts[i];
+            parent[currentPart] = parent[currentPart] || {};
+            parent = parent[currentPart];
+        }
+        
+        return parent;
+    };
+}
+
+// Create namespace
 namespace("Alt.AdviceManagement");
 
 /**
@@ -67,6 +85,7 @@ Alt.AdviceManagement.AdviceBulkManager = function(element, configuration, baseMo
         // Filtering
         filterStatus: ko.observable('all'),
         searchTerm: ko.observable(''),
+        searchTermDebounced: ko.observable('').extend({ rateLimit: { timeout: 500, method: "notifyWhenChangesStop" } }),
         
         // Pagination
         currentPage: ko.observable(1),
@@ -219,44 +238,172 @@ Alt.AdviceManagement.AdviceBulkManager = function(element, configuration, baseMo
             return;
         }
         
-        // Build query based on context
-        var query = {
-            attributes: {
-                'AdviceStatus': { $exists: true }
+        // Get current work type filter if available
+        var currentWorkType = self.getCurrentWorkType();
+        
+        // Build search criteria using correct FindByQuery structure
+        var searchCriteria = {
+            // Filter for items with advice attributes
+            attributes: [{
+                key: 'alt_ongoing_advice_enabled',
+                selectedValues: ['true', 'false'] // Get both active and paused
+            }],
+            
+            // Include only open phases
+            phase: {
+                includeOpen: true,
+                includeClosed: false,
+                includeRemoved: false
+            },
+            
+            // Pagination
+            page: {
+                page: 1,
+                rowsPerPage: options.pageSize || Constants.WIDGETS.BULK_MANAGER.PAGE_SIZE || 50
             }
+            
+            // Note: Sorting removed - will use default ordering
+            // If sorting is needed, use valid field paths like 'title' or 'reference'
         };
         
         // Add work type filter if in work type context
-        var currentWorkType = self.getCurrentWorkType();
         if (currentWorkType) {
-            query.workType = currentWorkType;
+            searchCriteria.types = {
+                includeTypes: [currentWorkType]
+            };
         }
         
-        // Query for work items with advice
-        $.ajax({
-            url: Constants.API.BASE_URL + '/workItem/findByQuery',
-            type: 'POST',
-            contentType: 'application/json',
-            timeout: Constants.API.TIMEOUT,
-            data: JSON.stringify({
-                query: query,
-                limit: options.pageSize || Constants.WIDGETS.BULK_MANAGER.PAGE_SIZE,
-                includeAttributes: true
-            }),
-            success: function(response) {
-                if (response && response.items) {
-                    // Cache the response
-                    Cache.set('bulkManager', cacheKey, response, Constants.API.CACHE_TTL);
-                    self.processWorkItems(response);
-                }
-                self.model.isLoading(false);
-            },
-            error: function() {
-                console.error("Failed to load work items");
-                self.model.isLoading(false);
-                EventBus.publish(Constants.EVENTS.ADVICE_ERROR, {
-                    error: 'Failed to load work items for bulk management'
+        // Define fields to enrich - try simpler paths
+        var enrichFields = [
+            { path: 'title' },
+            { path: 'reference' }
+            // Note: aspectData/formBuilder fields might not be enrichable
+            // We'll fetch full details if needed
+        ];
+        
+        // Build proper FindByQuery request
+        var request = {
+            search: searchCriteria,
+            enrich: enrichFields
+        };
+        
+        // Query for work items with advice using correct API structure
+        $ajax.api.post('/api/v1/public/workItem/findByQuery', request)
+        .then(function(response) {
+            if (response && response.results) {
+                console.log('[AdviceBulkManager] FindByQuery returned ' + response.results.length + ' results');
+                
+                // Check if we need to fetch full details (when data is empty)
+                var needsFullDetails = response.results.some(function(result) {
+                    return !result.data || Object.keys(result.data).length === 0;
                 });
+                
+                if (needsFullDetails) {
+                    console.log('[AdviceBulkManager] Data is empty, fetching full work item details...');
+                    
+                    // Fetch full details for each work item
+                    var detailPromises = response.results.map(function(result) {
+                        return $ajax.api.get('/api/v1/public/workItem/' + result.id)
+                            .then(function(workItemResponse) {
+                                // Extract advice attributes from aspectData.formBuilder.formData
+                                var formData = workItemResponse.aspectData && 
+                                              workItemResponse.aspectData.formBuilder && 
+                                              workItemResponse.aspectData.formBuilder.formData || {};
+                                
+                                return {
+                                    id: result.id,
+                                    score: result.score,
+                                    title: workItemResponse.workItem ? workItemResponse.workItem.title : 'Untitled',
+                                    reference: workItemResponse.workItem ? workItemResponse.workItem.reference : '',
+                                    // Map formData attributes to expected structure
+                                    'attributes.alt_ongoing_advice_enabled': formData.alt_ongoing_advice_enabled,
+                                    'attributes.alt_ongoing_advice_paused_date': formData.alt_ongoing_advice_paused_date,
+                                    'attributes.alt_ongoing_advice_resumed_date': formData.alt_ongoing_advice_resumed_date,
+                                    'attributes.alt_ongoing_advice_pause_reason': formData.alt_ongoing_advice_pause_reason,
+                                    'attributes.alt_ongoing_advice_paused_by': formData.alt_ongoing_advice_paused_by,
+                                    'attributes.alt_ongoing_advice_resumed_by': formData.alt_ongoing_advice_resumed_by
+                                };
+                            })
+                            .catch(function(error) {
+                                console.error('[AdviceBulkManager] Failed to fetch details for item ' + result.id, error);
+                                // Return basic item even if details fetch fails
+                                return {
+                                    id: result.id,
+                                    score: result.score,
+                                    title: result.data && result.data.title || 'Unknown',
+                                    reference: result.data && result.data.reference || ''
+                                };
+                            });
+                    });
+                    
+                    // Wait for all detail fetches to complete
+                    return $.when.apply($, detailPromises).then(function() {
+                        // Convert arguments to array
+                        var items = Array.prototype.slice.call(arguments);
+                        
+                        var transformedResponse = {
+                            totalCount: response.totalCount,
+                            tookMs: response.tookMs,
+                            items: items
+                        };
+                        
+                        // Cache the enriched response
+                        Cache.set('bulkManager', cacheKey, transformedResponse, Constants.API.CACHE_TTL);
+                        self.processWorkItems(transformedResponse);
+                        
+                        console.log('[AdviceBulkManager] Fetched full details for ' + items.length + ' items');
+                    });
+                } else {
+                    // Data is already enriched, use it directly
+                    var transformedResponse = {
+                        totalCount: response.totalCount,
+                        tookMs: response.tookMs,
+                        items: response.results.map(function(result) {
+                            var item = result.data || {};
+                            item.id = result.id;
+                            item.score = result.score;
+                            return item;
+                        })
+                    };
+                    
+                    // Cache the transformed response
+                    Cache.set('bulkManager', cacheKey, transformedResponse, Constants.API.CACHE_TTL);
+                    self.processWorkItems(transformedResponse);
+                    
+                    // Log performance metrics
+                    if (response.tookMs) {
+                        console.log('[AdviceBulkManager] Query completed in ' + response.tookMs + 'ms, found ' + response.totalCount + ' items');
+                    }
+                }
+            } else {
+                // Handle empty response
+                self.model.workItems.removeAll();
+                console.warn('[AdviceBulkManager] No results returned from FindByQuery');
+            }
+            self.model.isLoading(false);
+        })
+        .catch(function(error) {
+            console.error("[AdviceBulkManager] Failed to load work items", error);
+            self.model.isLoading(false);
+            
+            // Provide user-friendly error message
+            var errorMessage = 'Failed to load work items';
+            if (error.status === 401 || error.status === 403) {
+                errorMessage = 'You do not have permission to view these items';
+            } else if (error.status === 400) {
+                errorMessage = 'Invalid search criteria';
+            } else if (error.status >= 500) {
+                errorMessage = 'Server error. Please try again later';
+            }
+            
+            EventBus.publish(Constants.EVENTS.ADVICE_ERROR, {
+                error: errorMessage,
+                details: error
+            });
+            
+            // Show error to user
+            if (window.$ui && window.$ui.showError) {
+                window.$ui.showError(errorMessage);
             }
         });
     };
@@ -265,34 +412,68 @@ Alt.AdviceManagement.AdviceBulkManager = function(element, configuration, baseMo
     self.processWorkItems = function(response) {
         if (response && response.items) {
             var workItems = response.items.map(function(item) {
+                // Handle both nested and flat attribute structures
                 var attributes = item.attributes || {};
-                var status = (attributes['AdviceStatus'] || '').toLowerCase();
                 
-                // Calculate days active
-                var daysActive = 0;
-                if (attributes['AdviceStartDate']) {
-                    daysActive = self.daysBetween(new Date(attributes['AdviceStartDate']), new Date());
+                // Check if attributes are nested under 'attributes' property
+                // This handles the FindByQuery response structure
+                if (typeof attributes === 'object' && !attributes['alt_ongoing_advice_enabled']) {
+                    // Check if the advice attributes are at the item level
+                    if (item['attributes.alt_ongoing_advice_enabled'] !== undefined) {
+                        // Attributes were flattened in the response
+                        attributes = {
+                            'alt_ongoing_advice_enabled': item['attributes.alt_ongoing_advice_enabled'],
+                            'alt_ongoing_advice_paused_date': item['attributes.alt_ongoing_advice_paused_date'],
+                            'alt_ongoing_advice_resumed_date': item['attributes.alt_ongoing_advice_resumed_date'],
+                            'alt_ongoing_advice_pause_reason': item['attributes.alt_ongoing_advice_pause_reason'],
+                            'alt_ongoing_advice_paused_by': item['attributes.alt_ongoing_advice_paused_by'],
+                            'alt_ongoing_advice_resumed_by': item['attributes.alt_ongoing_advice_resumed_by']
+                        };
+                    }
                 }
                 
-                // Format last action
+                var isEnabled = attributes['alt_ongoing_advice_enabled'];
+                var status = isEnabled === 'false' ? 'paused' : 'active';
+                
+                // Calculate days active from resume date or creation
+                var daysActive = 0;
+                var resumedDate = attributes['alt_ongoing_advice_resumed_date'];
+                if (resumedDate) {
+                    daysActive = self.daysBetween(new Date(resumedDate), new Date());
+                } else if (item.createdDate) {
+                    daysActive = self.daysBetween(new Date(item.createdDate), new Date());
+                }
+                
+                // Format last action from pause/resume dates
                 var lastAction = 'N/A';
-                if (attributes['AdviceLastActionDate']) {
-                    var actionType = attributes['AdviceLastActionType'] || 'Updated';
-                    lastAction = actionType + ' ' + self.formatDate(attributes['AdviceLastActionDate']);
+                var pausedDate = attributes['alt_ongoing_advice_paused_date'];
+                
+                if (pausedDate || resumedDate) {
+                    var pausedTime = pausedDate ? new Date(pausedDate).getTime() : 0;
+                    var resumedTime = resumedDate ? new Date(resumedDate).getTime() : 0;
+                    
+                    if (pausedTime > resumedTime && pausedDate) {
+                        lastAction = 'Paused ' + self.formatDate(pausedDate);
+                    } else if (resumedTime > 0 && resumedDate) {
+                        lastAction = 'Resumed ' + self.formatDate(resumedDate);
+                    }
                 }
                 
                 return new WorkItemModel({
-                    id: item.id,
-                    title: item.title,
-                    status: status === Constants.STATUS.PAUSED ? Constants.STATUS.PAUSED : Constants.STATUS.ACTIVE,
+                    id: item.id || item.Id,  // Handle different casing
+                    title: item.title || item.Title || 'Untitled',
+                    status: status,
                     lastAction: lastAction,
                     daysActive: daysActive,
-                    pausedReason: attributes['AdvicePausedReason'] || '',
-                    assignee: item.assignee || ''
+                    pausedReason: attributes['alt_ongoing_advice_pause_reason'] || '',
+                    assignee: item.assignee || item.Assignee || ''
                 });
             });
             
             self.model.workItems(workItems);
+        } else {
+            console.warn('[AdviceBulkManager] No items in response');
+            self.model.workItems.removeAll();
         }
     };
     
@@ -324,13 +505,21 @@ Alt.AdviceManagement.AdviceBulkManager = function(element, configuration, baseMo
     
     // Show bulk pause modal
     self.showBulkPauseModal = function() {
-        $('#bulkPauseModal').modal('show');
+        if (window.$ui && window.$ui.showModal) {
+            window.$ui.showModal('#bulkPauseModal');
+        } else {
+            $('#bulkPauseModal').modal('show');
+        }
     };
     
     // Show bulk assign modal
     self.showBulkAssignModal = function() {
         // Implementation for reassignment modal
-        alert('Reassignment feature coming soon');
+        if (window.$ui && window.$ui.showNotification) {
+            window.$ui.showNotification('Reassignment feature coming soon', 'info');
+        } else {
+            alert('Reassignment feature coming soon');
+        }
     };
     
     // Bulk pause
@@ -352,25 +541,25 @@ Alt.AdviceManagement.AdviceBulkManager = function(element, configuration, baseMo
         var promises = [];
         
         itemsToPause.forEach(function(item) {
-            promises.push($.ajax({
-                url: Constants.API.BASE_URL + '/workItem/' + item.id() + '/attributes',
-                type: 'PUT',
-                contentType: 'application/json',
-                timeout: Constants.API.TIMEOUT,
-                data: JSON.stringify({
+            promises.push(
+                $ajax.api.put('/api/v1/public/workItem/' + item.id() + '/attributes', {
                     attributes: {
-                        'AdviceStatus': Constants.STATUS.PAUSED,
-                        'AdvicePausedDate': new Date().toISOString(),
-                        'AdvicePausedReason': reason,
-                        'AdviceLastActionDate': new Date().toISOString(),
-                        'AdviceLastActionType': 'Paused'
+                        'alt_ongoing_advice_enabled': 'false',
+                        'alt_ongoing_advice_paused_date': new Date().toISOString(),
+                        'alt_ongoing_advice_paused_by': window.$ui && window.$ui.currentUser ? window.$ui.currentUser.id : 'unknown',
+                        'alt_ongoing_advice_pause_reason': reason,
+                        'alt_ongoing_advice_next_date': '' // Clear next date when pausing
                     }
                 })
-            }));
+            );
         });
         
         $.when.apply($, promises).done(function() {
-            $('#bulkPauseModal').modal('hide');
+            if (window.$ui && window.$ui.hideModal) {
+                window.$ui.hideModal('#bulkPauseModal');
+            } else {
+                $('#bulkPauseModal').modal('hide');
+            }
             Cache.clear('bulkManager'); // Clear cache to force refresh
             self.loadWorkItems(); // Reload to get updated status
             
@@ -386,7 +575,11 @@ Alt.AdviceManagement.AdviceBulkManager = function(element, configuration, baseMo
                 self.bulkResume();
             });
         }).fail(function() {
-            alert(Constants.ERRORS.API_ERROR);
+            if (window.$ui && window.$ui.showError) {
+                window.$ui.showError(Constants.ERRORS.API_ERROR);
+            } else {
+                alert(Constants.ERRORS.API_ERROR);
+            }
             self.model.isLoading(false);
         });
     };
@@ -401,7 +594,12 @@ Alt.AdviceManagement.AdviceBulkManager = function(element, configuration, baseMo
             return;
         }
         
-        if (!confirm('Resume ' + itemsToResume.length + ' paused advice items?')) {
+        var confirmMessage = 'Resume ' + itemsToResume.length + ' paused advice items?';
+        if (window.$ui && window.$ui.showConfirm) {
+            if (!window.$ui.showConfirm(confirmMessage)) {
+                return;
+            }
+        } else if (!confirm(confirmMessage)) {
             return;
         }
         
@@ -409,20 +607,16 @@ Alt.AdviceManagement.AdviceBulkManager = function(element, configuration, baseMo
         var promises = [];
         
         itemsToResume.forEach(function(item) {
-            promises.push($.ajax({
-                url: Constants.API.BASE_URL + '/workItem/' + item.id() + '/attributes',
-                type: 'PUT',
-                contentType: 'application/json',
-                timeout: Constants.API.TIMEOUT,
-                data: JSON.stringify({
+            promises.push(
+                $ajax.api.put('/api/v1/public/workItem/' + item.id() + '/attributes', {
                     attributes: {
-                        'AdviceStatus': Constants.STATUS.ACTIVE,
-                        'AdviceResumedDate': new Date().toISOString(),
-                        'AdviceLastActionDate': new Date().toISOString(),
-                        'AdviceLastActionType': 'Resumed'
+                        'alt_ongoing_advice_enabled': 'true',
+                        'alt_ongoing_advice_resumed_date': new Date().toISOString(),
+                        'alt_ongoing_advice_resumed_by': window.$ui && window.$ui.currentUser ? window.$ui.currentUser.id : 'unknown',
+                        'alt_ongoing_advice_resume_reason': 'Bulk resume action'
                     }
                 })
-            }));
+            );
         });
         
         $.when.apply($, promises).done(function() {
@@ -440,7 +634,11 @@ Alt.AdviceManagement.AdviceBulkManager = function(element, configuration, baseMo
                 self.bulkPause();
             });
         }).fail(function() {
-            alert(Constants.ERRORS.API_ERROR);
+            if (window.$ui && window.$ui.showError) {
+                window.$ui.showError(Constants.ERRORS.API_ERROR);
+            } else {
+                alert(Constants.ERRORS.API_ERROR);
+            }
             self.model.isLoading(false);
         });
     };
@@ -452,28 +650,29 @@ Alt.AdviceManagement.AdviceBulkManager = function(element, configuration, baseMo
     
     // Resume single item
     self.resumeSingle = function(item) {
-        if (confirm('Resume advice for "' + item.title() + '"?')) {
+        var confirmMessage = 'Resume advice for "' + item.title() + '"?';
+        var shouldResume = window.$ui && window.$ui.showConfirm ? 
+            window.$ui.showConfirm(confirmMessage) : confirm(confirmMessage);
+        if (shouldResume) {
             self.model.isLoading(true);
-            $.ajax({
-                url: Constants.API.BASE_URL + '/workItem/' + item.id() + '/attributes',
-                type: 'PUT',
-                contentType: 'application/json',
-                timeout: Constants.API.TIMEOUT,
-                data: JSON.stringify({
-                    attributes: {
-                        'AdviceStatus': Constants.STATUS.ACTIVE,
-                        'AdviceResumedDate': new Date().toISOString(),
-                        'AdviceLastActionDate': new Date().toISOString(),
-                        'AdviceLastActionType': 'Resumed'
-                    }
-                }),
-                success: function() {
-                    self.loadWorkItems();
-                },
-                error: function() {
-                    alert('Failed to resume advice');
-                    self.model.isLoading(false);
+            $ajax.api.put('/api/v1/public/workItem/' + item.id() + '/attributes', {
+                attributes: {
+                    'alt_ongoing_advice_enabled': 'true',
+                    'alt_ongoing_advice_resumed_date': new Date().toISOString(),
+                    'alt_ongoing_advice_resumed_by': window.$ui && window.$ui.currentUser ? window.$ui.currentUser.id : 'unknown',
+                    'alt_ongoing_advice_resume_reason': 'Individual resume action'
                 }
+            })
+            .then(function() {
+                self.loadWorkItems();
+            })
+            .catch(function(error) {
+                if (window.$ui && window.$ui.showError) {
+                    window.$ui.showError('Failed to resume advice');
+                } else {
+                    alert('Failed to resume advice');
+                }
+                self.model.isLoading(false);
             });
         }
     };
@@ -500,12 +699,53 @@ Alt.AdviceManagement.AdviceBulkManager = function(element, configuration, baseMo
             }
         };
         
-        if (window.ShareDo && window.ShareDo.UI && window.ShareDo.UI.openPanel) {
+        // Try multiple methods to open panel
+        var panelOpened = false;
+        
+        if (window.$ui && window.$ui.stacks && window.$ui.stacks.openPanel) {
+            // Stack manager method - primary method for ShareDo panels
+            console.log('[AdviceBulkManager] Opening panel using $ui.stacks.openPanel');
+            
+            var stackConfig = panelOptions.data || {};
+            stackConfig.bladeWidth = panelOptions.width;
+            
+            var events = {
+                closing: function(resultData) {
+                    if (panelOptions.onClose) {
+                        panelOptions.onClose(resultData);
+                    }
+                },
+                cancelled: function() {
+                    if (panelOptions.onClose) {
+                        panelOptions.onClose({ cancelled: true });
+                    }
+                }
+            };
+            
+            window.$ui.stacks.openPanel(
+                panelOptions.panelId,
+                stackConfig,
+                events,
+                false,  // isInNewWindow
+                false   // refreshExisting
+            );
+            panelOpened = true;
+        } else if (window.$ui && window.$ui.openPanel) {
+            // Standard UI method
+            window.$ui.openPanel(panelOptions);
+            panelOpened = true;
+        } else if (window.ShareDo && window.ShareDo.UI && window.ShareDo.UI.openPanel) {
             window.ShareDo.UI.openPanel(panelOptions);
+            panelOpened = true;
         } else if (window.parent && window.parent.ShareDo && window.parent.ShareDo.UI && window.parent.ShareDo.UI.openPanel) {
             window.parent.ShareDo.UI.openPanel(panelOptions);
+            panelOpened = true;
         } else {
-            console.error("Unable to open panel");
+            console.error("[AdviceBulkManager] Unable to open panel - no panel opening mechanism available");
+        }
+        
+        if (panelOpened) {
+            console.log('[AdviceBulkManager] Panel opened successfully');
         }
     };
     
@@ -550,11 +790,170 @@ Alt.AdviceManagement.AdviceBulkManager = function(element, configuration, baseMo
         self.model.showUndo(false);
     };
     
+    // Search work items using FindByQuery free text search
+    self.searchWorkItems = function(searchText) {
+        if (!searchText || searchText.length < 3) {
+            return;
+        }
+        
+        self.model.isLoading(true);
+        
+        // Get current work type filter if available
+        var currentWorkType = self.getCurrentWorkType();
+        
+        // Build search criteria with free text search
+        var searchCriteria = {
+            // Free text search
+            freeText: {
+                input: searchText,
+                wildcardStart: true,
+                wildCardEnd: true
+            },
+            
+            // Filter for items with advice attributes
+            attributes: [{
+                key: 'alt_ongoing_advice_enabled',
+                selectedValues: ['true', 'false'] // Get both active and paused
+            }],
+            
+            // Include only open phases
+            phase: {
+                includeOpen: true,
+                includeClosed: false,
+                includeRemoved: false
+            },
+            
+            // Pagination
+            page: {
+                page: 1,
+                rowsPerPage: 100 // Get more results for search
+            }
+            
+            // Note: When using freeText search, results are automatically sorted by relevance
+            // No need to specify sort explicitly
+        };
+        
+        // Add work type filter if in work type context
+        if (currentWorkType) {
+            searchCriteria.types = {
+                includeTypes: [currentWorkType]
+            };
+        }
+        
+        // Define fields to enrich - keep simple as API might not support complex paths
+        var enrichFields = [
+            { path: 'title' },
+            { path: 'reference' }
+        ];
+        
+        // Build request
+        var request = {
+            search: searchCriteria,
+            enrich: enrichFields
+        };
+        
+        // Execute search
+        $ajax.api.post('/api/v1/public/workItem/findByQuery', request)
+        .then(function(response) {
+            if (response && response.results) {
+                // Check if we need to fetch full details
+                var needsFullDetails = response.results.some(function(result) {
+                    return !result.data || Object.keys(result.data).length === 0;
+                });
+                
+                if (needsFullDetails && response.results.length <= 10) {
+                    // Only fetch details for small result sets to avoid too many API calls
+                    console.log('[AdviceBulkManager] Fetching full details for search results...');
+                    
+                    var detailPromises = response.results.map(function(result) {
+                        return $ajax.api.get('/api/v1/public/workItem/' + result.id)
+                            .then(function(workItemResponse) {
+                                var formData = workItemResponse.aspectData && 
+                                              workItemResponse.aspectData.formBuilder && 
+                                              workItemResponse.aspectData.formBuilder.formData || {};
+                                
+                                return {
+                                    id: result.id,
+                                    score: result.score,
+                                    title: workItemResponse.workItem ? workItemResponse.workItem.title : 'Untitled',
+                                    reference: workItemResponse.workItem ? workItemResponse.workItem.reference : '',
+                                    'attributes.alt_ongoing_advice_enabled': formData.alt_ongoing_advice_enabled,
+                                    'attributes.alt_ongoing_advice_paused_date': formData.alt_ongoing_advice_paused_date,
+                                    'attributes.alt_ongoing_advice_resumed_date': formData.alt_ongoing_advice_resumed_date,
+                                    'attributes.alt_ongoing_advice_pause_reason': formData.alt_ongoing_advice_pause_reason,
+                                    'attributes.alt_ongoing_advice_paused_by': formData.alt_ongoing_advice_paused_by,
+                                    'attributes.alt_ongoing_advice_resumed_by': formData.alt_ongoing_advice_resumed_by
+                                };
+                            })
+                            .catch(function(error) {
+                                console.error('[AdviceBulkManager] Failed to fetch search result details', error);
+                                return {
+                                    id: result.id,
+                                    score: result.score,
+                                    title: 'Unknown'
+                                };
+                            });
+                    });
+                    
+                    return $.when.apply($, detailPromises).then(function() {
+                        var items = Array.prototype.slice.call(arguments);
+                        var transformedResponse = {
+                            totalCount: response.totalCount,
+                            tookMs: response.tookMs,
+                            items: items
+                        };
+                        self.processWorkItems(transformedResponse);
+                        console.log('[AdviceBulkManager] Search with details completed');
+                    });
+                } else {
+                    // Use data as-is or show limited info for large result sets
+                    var transformedResponse = {
+                        totalCount: response.totalCount,
+                        tookMs: response.tookMs,
+                        items: response.results.map(function(result) {
+                            var item = result.data || {};
+                            item.id = result.id;
+                            item.score = result.score;
+                            // For large result sets without data, show minimal info
+                            if (Object.keys(item).length === 2) {
+                                item.title = 'Loading...';
+                                item['attributes.alt_ongoing_advice_enabled'] = 'unknown';
+                            }
+                            return item;
+                        })
+                    };
+                    
+                    self.processWorkItems(transformedResponse);
+                    
+                    // Log search performance
+                    console.log('[AdviceBulkManager] Search for "' + searchText + '" completed in ' + 
+                               (response.tookMs || 'unknown') + 'ms, found ' + response.totalCount + ' items');
+                }
+            } else {
+                self.model.workItems.removeAll();
+            }
+            self.model.isLoading(false);
+        })
+        .catch(function(error) {
+            console.error('[AdviceBulkManager] Search failed', error);
+            self.model.isLoading(false);
+            
+            // Show error to user
+            if (window.$ui && window.$ui.showError) {
+                window.$ui.showError('Search failed. Please try again.');
+            }
+        });
+    };
+    
     // Export to CSV
     self.exportSelected = function() {
         var items = self.model.selectedItems();
         if (items.length === 0) {
-            alert('No items selected for export');
+            if (window.$ui && window.$ui.showNotification) {
+                window.$ui.showNotification('No items selected for export', 'warning');
+            } else {
+                alert('No items selected for export');
+            }
             return;
         }
         
@@ -569,17 +968,42 @@ Alt.AdviceManagement.AdviceBulkManager = function(element, configuration, baseMo
             csv += '"' + (item.pausedReason() || '').replace(/"/g, '""') + '"\n';
         });
         
-        // Download CSV
-        var blob = new Blob([csv], { type: 'text/csv' });
-        var url = window.URL.createObjectURL(blob);
-        var a = document.createElement('a');
-        a.href = url;
-        a.download = 'advice-items-' + new Date().toISOString().split('T')[0] + '.csv';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
+        // Download CSV using $ui service
+        if (window.$ui && window.$ui.downloadFile) {
+            window.$ui.downloadFile({
+                content: csv,
+                filename: 'advice-items-' + new Date().toISOString().split('T')[0] + '.csv',
+                mimeType: 'text/csv'
+            });
+        } else {
+            // Fallback for older environments
+            var blob = new Blob([csv], { type: 'text/csv' });
+            var url = window.URL.createObjectURL(blob);
+            var a = window.$ui ? window.$ui.createElement('a') : document.createElement('a');
+            a.href = url;
+            a.download = 'advice-items-' + new Date().toISOString().split('T')[0] + '.csv';
+            var container = window.$ui && window.$ui.getContainer ? window.$ui.getContainer() : document.body;
+            container.appendChild(a);
+            a.click();
+            container.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
     };
+};
+
+/**
+ * Refresh the current view (either search results or full list)
+ */
+Alt.AdviceManagement.AdviceBulkManager.prototype.refreshCurrentView = function() {
+    var self = this;
+    
+    // If there's a search term, re-run the search
+    if (self.model.searchTerm() && self.model.searchTerm().length >= 3) {
+        self.searchWorkItems(self.model.searchTerm());
+    } else {
+        // Otherwise reload the full list
+        self.loadWorkItems();
+    }
 };
 
 /**
@@ -587,6 +1011,9 @@ Alt.AdviceManagement.AdviceBulkManager = function(element, configuration, baseMo
  */
 Alt.AdviceManagement.AdviceBulkManager.prototype.onDestroy = function() {
     var self = this;
+    
+    // Clean up event subscriptions
+    self.cleanupEventSubscriptions();
     
     // Clean up subscriptions
     if (self.model) {
@@ -618,8 +1045,78 @@ Alt.AdviceManagement.AdviceBulkManager.prototype.loadAndBind = function() {
         widget: 'AdviceBulkManager'
     });
     
+    // Setup search term subscription with debouncing
+    self.model.searchTerm.subscribe(function(value) {
+        self.model.searchTermDebounced(value);
+    });
+    
+    // Subscribe to debounced search term to trigger search
+    self.model.searchTermDebounced.subscribe(function(value) {
+        if (value && value.length >= 3) {
+            // Perform search with FindByQuery when user types
+            self.searchWorkItems(value);
+        } else if (!value) {
+            // Reset to full list when search is cleared
+            self.loadWorkItems();
+        }
+    });
+    
     // Auto-load if configured
     if (self.options.autoLoad) {
         self.loadWorkItems();
     }
+    
+    // Subscribe to advice status change events using ShareDo native event system
+    self.initializeEventSubscriptions();
+};
+
+/**
+ * Initialize event subscriptions using ShareDo native event system
+ */
+Alt.AdviceManagement.AdviceBulkManager.prototype.initializeEventSubscriptions = function() {
+    var self = this;
+    
+    if (!window.$ui || !window.$ui.events) {
+        console.warn('[AdviceBulkManager] ShareDo events not available');
+        return;
+    }
+    
+    // Store subscription IDs for cleanup
+    self.eventSubscriptions = [];
+    
+    // Helper function to handle all events
+    var handleEvent = function(eventName) {
+        return function(data) {
+            console.log('[AdviceBulkManager] Received ' + eventName + ' event:', data);
+            // Refresh the list to show updated status
+            self.refreshCurrentView();
+        };
+    };
+    
+    // Subscribe to all relevant events
+    var events = ['advice:paused', 'advice:resumed', 'advice:statusChanged', 'advice:statusLoaded'];
+    events.forEach(function(eventName) {
+        var subscriptionId = $ui.events.subscribe(eventName, 
+            handleEvent(eventName), self);
+        self.eventSubscriptions.push(subscriptionId);
+    });
+    
+    console.log('[AdviceBulkManager] Subscribed to ShareDo events:', events);
+};
+
+/**
+ * Clean up event subscriptions
+ */
+Alt.AdviceManagement.AdviceBulkManager.prototype.cleanupEventSubscriptions = function() {
+    var self = this;
+    
+    if (window.$ui && window.$ui.events && self.eventSubscriptions) {
+        self.eventSubscriptions.forEach(function(subscriptionId) {
+            if (subscriptionId) {
+                $ui.events.unsubscribe(subscriptionId);
+            }
+        });
+        console.log('[AdviceBulkManager] Cleaned up event subscriptions');
+    }
+    self.eventSubscriptions = [];
 };

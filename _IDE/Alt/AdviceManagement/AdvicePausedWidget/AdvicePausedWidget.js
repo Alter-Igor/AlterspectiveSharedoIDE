@@ -1,3 +1,21 @@
+// Ensure namespace function exists
+if (typeof namespace !== 'function') {
+    window.namespace = function(namespaceString) {
+        var parts = namespaceString.split('.');
+        var parent = window;
+        var currentPart = '';
+        
+        for (var i = 0, length = parts.length; i < length; i++) {
+            currentPart = parts[i];
+            parent[currentPart] = parent[currentPart] || {};
+            parent = parent[currentPart];
+        }
+        
+        return parent;
+    };
+}
+
+// Create namespace
 namespace("Alt.AdviceManagement");
 
 /**
@@ -107,39 +125,36 @@ Alt.AdviceManagement.AdvicePausedWidget = function(element, configuration, baseM
         self.model.isLoading(true);
         
         // Call API to check if advice is paused
-        $.ajax({
-            url: Constants.API.BASE_URL + '/workItem/' + self.model.workItemId() + '/attributes',
-            type: 'GET',
-            timeout: Constants.API.TIMEOUT,
-            success: function(response) {
-                if (response && response.attributes) {
-                    // Cache the response
-                    Cache.set('widgetAdviceStatus', self.model.workItemId(), response, Constants.API.CACHE_TTL);
-                    self.processAdviceStatus(response);
-                }
-                self.model.isLoading(false);
-            },
-            error: function() {
-                console.error("Failed to check advice status");
-                self.model.isLoading(false);
-                self.model.isPaused(false);
-                EventBus.publish(Constants.EVENTS.ADVICE_ERROR, {
-                    workItemId: self.model.workItemId(),
-                    error: 'Failed to check advice status'
-                });
+        $ajax.api.get('/api/v1/public/workItem/' + self.model.workItemId() + '/attributes')
+        .then(function(response) {
+            // Response IS the attributes object directly
+            if (response) {
+                // Cache the response
+                Cache.set('widgetAdviceStatus', self.model.workItemId(), response, Constants.API.CACHE_TTL);
+                self.processAdviceStatus(response);
             }
+            self.model.isLoading(false);
+        })
+        .catch(function(error) {
+            console.error("Failed to check advice status", error);
+            self.model.isLoading(false);
+            self.model.isPaused(false);
+            EventBus.publish(Constants.EVENTS.ADVICE_ERROR, {
+                workItemId: self.model.workItemId(),
+                error: 'Failed to check advice status'
+            });
         });
     };
     
     // Process advice status response
-    self.processAdviceStatus = function(response) {
-        if (response && response.attributes) {
-            var adviceStatus = response.attributes['AdviceStatus'];
-            var pausedDate = response.attributes['AdvicePausedDate'];
-            var pausedReason = response.attributes['AdvicePausedReason'];
-            var pausedBy = response.attributes['AdvicePausedBy'];
+    self.processAdviceStatus = function(attributes) {
+        if (attributes) {
+            var adviceEnabled = attributes['alt_ongoing_advice_enabled'];
+            var pausedDate = attributes['alt_ongoing_advice_paused_date'];
+            var pausedReason = attributes['alt_ongoing_advice_pause_reason'];
+            var pausedBy = attributes['alt_ongoing_advice_paused_by'];
             
-            if (adviceStatus && adviceStatus.toLowerCase() === Constants.STATUS.PAUSED && !self.model.isDismissed()) {
+            if (adviceEnabled === 'false' && !self.model.isDismissed()) {
                         self.model.isPaused(true);
                         
                         // Format the paused date and calculate duration
@@ -159,6 +174,7 @@ Alt.AdviceManagement.AdvicePausedWidget = function(element, configuration, baseM
                             self.model.pausedDuration("");
                         }
                         
+                        // pausedBy now contains the name directly
                         if (pausedBy) {
                             self.model.pausedBy(pausedBy);
                         }
@@ -201,10 +217,21 @@ Alt.AdviceManagement.AdvicePausedWidget = function(element, configuration, baseM
     };
     
     // Function to open the resume panel
-    self.openResumePanel = function() {
+    self.openResumePanel = function(data, event) {
+        console.log('[AdvicePausedWidget] Opening resume panel for work item:', self.model.workItemId());
+        
         if (!self.model.workItemId()) {
-            console.warn("No work item ID available");
-            return;
+            console.warn("[AdvicePausedWidget] No work item ID available");
+            if (window.$ui && window.$ui.showNotification) {
+                window.$ui.showNotification('No work item selected', 'warning');
+            }
+            return false;
+        }
+        
+        // Stop event propagation to prevent any parent handlers
+        if (event) {
+            event.stopPropagation();
+            event.preventDefault();
         }
         
         // Open the AdvicePauseResumeBlade panel
@@ -212,35 +239,153 @@ Alt.AdviceManagement.AdvicePausedWidget = function(element, configuration, baseM
             panelId: "Alt.AdviceManagement.AdvicePauseResumeBlade",
             title: "Resume Advice",
             width: 600,
-            height: 400,
+            height: 500,
             modal: true,
             data: {
                 workItemId: self.model.workItemId(),
-                workItemTitle: self.model.workItemTitle(),
-                mode: 'resume'
+                workItemTitle: self.model.workItemTitle() || 'Work Item',
+                mode: 'resume',
+                // Pass additional context
+                pausedDate: self.model.pausedDate(),
+                pausedReason: self.model.pausedReason(),
+                pausedBy: self.model.pausedBy()
             },
-            onClose: function() {
+            onClose: function(result) {
+                console.log('[AdvicePausedWidget] Panel closed with result:', result);
                 // Refresh status after panel closes
                 self.checkAdviceStatus();
+                
+                // If advice was resumed, dismiss the notification
+                if (result && result.resumed) {
+                    self.model.isPaused(false);
+                    self.model.isDismissed(false);
+                }
+            },
+            onError: function(error) {
+                console.error('[AdvicePausedWidget] Panel error:', error);
+                if (window.$ui && window.$ui.showError) {
+                    window.$ui.showError('Failed to open resume panel: ' + error);
+                }
             }
         };
         
+        // Flag to track if panel was opened
+        var panelOpened = false;
+        
         // Try multiple methods to open panel
-        if (window.$ui && window.$ui.openPanel) {
-            // New portal UI method
-            window.$ui.openPanel(panelOptions);
-        } else if (window.ShareDo && window.ShareDo.UI && window.ShareDo.UI.openPanel) {
-            // Standard ShareDo method
-            window.ShareDo.UI.openPanel(panelOptions);
-        } else if (window.parent && window.parent.ShareDo && window.parent.ShareDo.UI && window.parent.ShareDo.UI.openPanel) {
-            // Parent frame ShareDo method
-            window.parent.ShareDo.UI.openPanel(panelOptions);
-        } else if (window.top && window.top.ShareDo && window.top.ShareDo.UI && window.top.ShareDo.UI.openPanel) {
-            // Top frame ShareDo method
-            window.top.ShareDo.UI.openPanel(panelOptions);
-        } else {
-            console.error("Unable to open panel - No panel opening mechanism available");
+        try {
+            if (window.$ui && window.$ui.stacks && window.$ui.stacks.openPanel) {
+                // Stack manager method - primary method for ShareDo panels
+                console.log('[AdvicePausedWidget] Opening panel using $ui.stacks.openPanel');
+                
+                // Stack manager uses different parameter structure
+                var stackConfig = panelOptions.data || {};
+                stackConfig.bladeWidth = panelOptions.width;
+                
+                // Event handlers for stack manager
+                var events = {
+                    closing: function(resultData) {
+                        console.log('[AdvicePausedWidget] Panel closing with data:', resultData);
+                        if (panelOptions.onClose) {
+                            panelOptions.onClose(resultData);
+                        }
+                    },
+                    cancelled: function() {
+                        console.log('[AdvicePausedWidget] Panel cancelled');
+                        if (panelOptions.onClose) {
+                            panelOptions.onClose({ cancelled: true });
+                        }
+                    },
+                    onShow: function(stack) {
+                        console.log('[AdvicePausedWidget] Panel shown, stack:', stack);
+                    }
+                };
+                
+                // Call openPanel with proper parameters: systemName, configuration, events, isInNewWindow, refreshExisting
+                window.$ui.stacks.openPanel(
+                    panelOptions.panelId,  // systemName
+                    stackConfig,           // configuration
+                    events,               // events
+                    false,               // isInNewWindow
+                    false               // refreshExisting
+                );
+                panelOpened = true;
+            } else if (window.$ui && window.$ui.panels && window.$ui.panels.open) {
+                // New portal UI panels method
+                console.log('[AdvicePausedWidget] Opening panel using $ui.panels.open');
+                window.$ui.panels.open(panelOptions);
+                panelOpened = true;
+            } else if (window.$ui && window.$ui.openPanel) {
+                // Standard portal UI method
+                console.log('[AdvicePausedWidget] Opening panel using $ui.openPanel');
+                window.$ui.openPanel(panelOptions);
+                panelOpened = true;
+            } else if (window.ShareDo && window.ShareDo.UI && window.ShareDo.UI.openPanel) {
+                // Standard ShareDo method
+                console.log('[AdvicePausedWidget] Opening panel using ShareDo.UI.openPanel');
+                window.ShareDo.UI.openPanel(panelOptions);
+                panelOpened = true;
+            } else if (window.parent && window.parent.ShareDo && window.parent.ShareDo.UI && window.parent.ShareDo.UI.openPanel) {
+                // Parent frame ShareDo method
+                console.log('[AdvicePausedWidget] Opening panel using parent.ShareDo.UI.openPanel');
+                window.parent.ShareDo.UI.openPanel(panelOptions);
+                panelOpened = true;
+            } else if (window.top && window.top.ShareDo && window.top.ShareDo.UI && window.top.ShareDo.UI.openPanel) {
+                // Top frame ShareDo method
+                console.log('[AdvicePausedWidget] Opening panel using top.ShareDo.UI.openPanel');
+                window.top.ShareDo.UI.openPanel(panelOptions);
+                panelOpened = true;
+            } else if (window.$ui && window.$ui.bladeManager && window.$ui.bladeManager.open) {
+                // Blade manager method
+                console.log('[AdvicePausedWidget] Opening panel using $ui.bladeManager.open');
+                window.$ui.bladeManager.open({
+                    blade: panelOptions.panelId,
+                    title: panelOptions.title,
+                    width: panelOptions.width,
+                    height: panelOptions.height,
+                    modal: panelOptions.modal,
+                    data: panelOptions.data,
+                    onClose: panelOptions.onClose
+                });
+                panelOpened = true;
+            } else {
+                console.error("[AdvicePausedWidget] Unable to open panel - No panel opening mechanism available");
+                console.log('[AdvicePausedWidget] Available window properties:', Object.keys(window));
+                if (window.$ui) {
+                    console.log('[AdvicePausedWidget] Available $ui properties:', Object.keys(window.$ui));
+                }
+                
+                // Last resort - try to show an alert with instructions
+                if (window.$ui && window.$ui.showNotification) {
+                    window.$ui.showNotification('Please open the Advice Management panel from the main menu to resume advice.', 'info');
+                } else {
+                    alert('Please open the Advice Management panel from the main menu to resume advice.');
+                }
+            }
+        } catch (error) {
+            console.error('[AdvicePausedWidget] Error opening panel:', error);
+            if (window.$ui && window.$ui.showError) {
+                window.$ui.showError('Failed to open resume panel: ' + error.message);
+            } else {
+                alert('Failed to open resume panel. Please try again or contact support.');
+            }
         }
+        
+        // Log success if panel was opened
+        if (panelOpened) {
+            console.log('[AdvicePausedWidget] Panel opened successfully');
+            
+            // Publish event for tracking
+            var EventBus = Alt.AdviceManagement.Common.EventBus;
+            if (EventBus && EventBus.publish) {
+                EventBus.publish('advice:resumePanelOpened', {
+                    workItemId: self.model.workItemId(),
+                    from: 'AdvicePausedWidget'
+                });
+            }
+        }
+        
+        return false; // Prevent default click behavior
     };
     
     // Subscribe to work item changes
@@ -278,6 +423,62 @@ Alt.AdviceManagement.AdvicePausedWidget = function(element, configuration, baseM
             self.checkAdviceStatus();
         }, options.checkInterval);
     }
+    
+    // Subscribe to advice status change events using ShareDo native event system
+    self.initializeEventSubscriptions();
+};
+
+/**
+ * Initialize event subscriptions using ShareDo native event system
+ * Simplified to use only $ui.events for better performance
+ */
+Alt.AdviceManagement.AdvicePausedWidget.prototype.initializeEventSubscriptions = function() {
+    var self = this;
+    
+    if (!window.$ui || !window.$ui.events) {
+        console.warn('[AdvicePausedWidget] ShareDo events not available');
+        return;
+    }
+    
+    // Store subscription IDs for cleanup
+    self.eventSubscriptions = [];
+    
+    // Helper function to handle events with work item filtering
+    var createEventHandler = function(eventName) {
+        return function(data) {
+            console.log('[AdvicePausedWidget] Received ' + eventName + ' event:', data);
+            if (data && data.workItemId === self.model.workItemId()) {
+                self.checkAdviceStatus();
+            }
+        };
+    };
+    
+    // Subscribe to all relevant events
+    var events = ['advice:paused', 'advice:resumed', 'advice:statusChanged', 'advice:statusLoaded'];
+    events.forEach(function(eventName) {
+        var subscriptionId = $ui.events.subscribe(eventName, 
+            createEventHandler(eventName), self);
+        self.eventSubscriptions.push(subscriptionId);
+    });
+    
+    console.log('[AdvicePausedWidget] Subscribed to ShareDo events:', events);
+};
+
+/**
+ * Clean up event subscriptions
+ */
+Alt.AdviceManagement.AdvicePausedWidget.prototype.cleanupEventSubscriptions = function() {
+    var self = this;
+    
+    if (window.$ui && window.$ui.events && self.eventSubscriptions) {
+        self.eventSubscriptions.forEach(function(subscriptionId) {
+            if (subscriptionId) {
+                $ui.events.unsubscribe(subscriptionId);
+            }
+        });
+        console.log('[AdvicePausedWidget] Cleaned up event subscriptions');
+    }
+    self.eventSubscriptions = [];
 };
 
 /**
@@ -291,6 +492,12 @@ Alt.AdviceManagement.AdvicePausedWidget.prototype.onDestroy = function() {
         clearInterval(self.checkIntervalId);
         self.checkIntervalId = null;
     }
+    
+    // Remove keyboard event handlers
+    $(self.element).off('keydown', '.advice-paused-notification');
+    
+    // Unsubscribe from ShareDo EventManager events
+    self.cleanupEventSubscriptions();
     
     // Clean up subscriptions
     if (self.model) {
@@ -322,6 +529,15 @@ Alt.AdviceManagement.AdvicePausedWidget.prototype.loadAndBind = function() {
     EventBus.publish(Constants.EVENTS.WIDGET_LOADED, {
         widget: 'AdvicePausedWidget',
         workItemId: self.model.workItemId()
+    });
+    
+    // Add keyboard support for accessibility
+    $(self.element).on('keydown', '.advice-paused-notification', function(e) {
+        // Handle Enter and Space keys to open panel
+        if (e.which === 13 || e.which === 32) {
+            e.preventDefault();
+            self.openResumePanel(null, e);
+        }
     });
     
     // Initial check for advice status

@@ -16,6 +16,13 @@ window.namespace = window.namespace || function(namespaceString) {
     return parent;
 };
 
+// Ensure required namespaces exist
+namespace("Alt.AdviceManagement");
+namespace("Alt.AdviceManagement.Services");
+namespace("Alt.OngoingAdvice");
+namespace("Alt.OngoingAdvice.Models");
+namespace("Alt.OngoingAdvice.Services");
+
 /**
  * Utility functions for ShareDo integration
  * Note: ShareDo's $ajax handles authentication automatically

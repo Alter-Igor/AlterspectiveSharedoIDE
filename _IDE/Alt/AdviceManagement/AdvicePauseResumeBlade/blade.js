@@ -124,19 +124,20 @@ Alt.AdviceManagement.AdvicePauseResumeBlade.prototype.loadAndBind = function() {
     // Get current user from ShareDo page context (no API call needed)
     if (window.$ui && window.$ui.pageContext && window.$ui.pageContext.user) {
         var pageUser = window.$ui.pageContext.user;
+        var firstName = typeof pageUser.firstname === 'function' ? pageUser.firstname() : pageUser.firstname || '';
+        var lastName = typeof pageUser.lastname === 'function' ? pageUser.lastname() : pageUser.lastname || '';
+        var displayName = (firstName + ' ' + lastName).trim() || 'Current User';
+        
         self.model.currentUser({
-            id: pageUser.userid(),
-            username: pageUser.username(),
-            name: pageUser.firstname() + ' ' + pageUser.lastname(),
-            firstname: pageUser.firstname(),
-            lastname: pageUser.lastname(),
-            displayName: pageUser.firstname() + ' ' + pageUser.lastname()
+            name: displayName,
+            firstname: firstName,
+            lastname: lastName,
+            displayName: displayName
         });
         console.log("Current user from page context:", self.model.currentUser());
     } else {
         // Fallback if page context not available
         self.model.currentUser({
-            id: 'unknown',
             name: 'Current User',
             displayName: 'Current User'
         });
@@ -163,6 +164,28 @@ Alt.AdviceManagement.AdvicePauseResumeBlade.prototype.loadAndBind = function() {
             .done(function(attributes) {
                 console.log("Ongoing advice attributes loaded:", attributes);
                 self.model.updateFromAttributes(attributes);
+                
+                // Broadcast current status on load (in case it changed elsewhere)
+                var currentStatus = attributes.enabled ? 'active' : 'paused';
+                var eventData = {
+                    workItemId: self.workItemId,
+                    workItemReference: self.workItemReference,
+                    workItemTitle: self.workItemTitle,
+                    status: currentStatus,
+                    action: 'statusLoaded',
+                    source: 'AdvicePauseResumeBlade',
+                    pausedDate: attributes.pausedDate,
+                    pausedBy: attributes.pausedBy,
+                    pauseReason: attributes.pauseReason,
+                    resumedDate: attributes.resumedDate,
+                    resumedBy: attributes.resumedBy,
+                    nextDate: attributes.nextDate
+                };
+                
+                // Broadcast status loaded event using ShareDo native system
+                if (window.$ui && window.$ui.events) {
+                    $ui.events.broadcast('advice:statusLoaded', eventData);
+                }
             })
             .fail(function(xhr, status, error) {
                 console.error("Failed to load attributes:", error);
@@ -187,6 +210,64 @@ Alt.AdviceManagement.AdvicePauseResumeBlade.prototype.refreshStatus = function()
     console.log("Refreshing status...");
     self.model.clearMessages();
     self.loadAndBind();
+};
+
+/**
+ * Broadcast status change using ShareDo native event system
+ * Simplified to use only $ui.events for better performance and maintainability
+ */
+Alt.AdviceManagement.AdvicePauseResumeBlade.prototype.broadcastStatusChange = function(action, options, result) {
+    var self = this;
+    
+    // Prepare complete event data
+    var eventData = {
+        workItemId: self.workItemId,
+        workItemReference: self.workItemReference,
+        workItemTitle: self.workItemTitle,
+        workTypeSystemName: self.workTypeSystemName,
+        participantId: self.participantId,
+        participantRoleId: self.participantRoleId,
+        status: action === 'paused' ? 'paused' : 'active',
+        action: action,
+        changedBy: options.userName,
+        changedDate: new Date().toISOString(),
+        reason: options.reason || '',
+        source: 'AdvicePauseResumeBlade'
+    };
+    
+    // Add action-specific data
+    if (action === 'paused') {
+        eventData.pausedDate = eventData.changedDate;
+        eventData.pausedBy = options.userName;
+        eventData.pauseReason = options.reason;
+    } else if (action === 'resumed') {
+        eventData.resumedDate = eventData.changedDate;
+        eventData.resumedBy = options.userName;
+        eventData.resumeReason = options.reason;
+        if (options.nextAdviceDate) {
+            eventData.nextAdviceDate = options.nextAdviceDate;
+        }
+    }
+    
+    // Include result updates if available
+    if (result && result.updates) {
+        eventData.updates = result.updates;
+    }
+    
+    var eventName = action === 'paused' ? 'advice:paused' : 'advice:resumed';
+    
+    // Single broadcast to ShareDo native event system only
+    if (window.$ui && window.$ui.events) {
+        try {
+            $ui.events.broadcast(eventName, eventData);
+            $ui.events.broadcast('advice:statusChanged', eventData);
+            console.log('[AdvicePauseResumeBlade] Event broadcast:', eventName, eventData);
+        } catch (error) {
+            console.error('[AdvicePauseResumeBlade] Error broadcasting event:', error);
+        }
+    } else {
+        console.error('[AdvicePauseResumeBlade] ShareDo events not available');
+    }
 };
 
 /**
@@ -215,6 +296,9 @@ Alt.AdviceManagement.AdvicePauseResumeBlade.prototype.toggleOngoingAdvice = func
             // Show success message
             var actionText = result.action === 'paused' ? 'paused' : 'resumed';
             self.model.showSuccess('Ongoing advice has been ' + actionText + ' successfully.');
+            
+            // Broadcast events to all systems
+            self.broadcastStatusChange(result.action, options, result);
             
             // Reload data to get updated state
             setTimeout(function() {

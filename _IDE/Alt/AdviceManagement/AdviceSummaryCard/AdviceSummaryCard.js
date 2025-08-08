@@ -1,3 +1,21 @@
+// Ensure namespace function exists
+if (typeof namespace !== 'function') {
+    window.namespace = function(namespaceString) {
+        var parts = namespaceString.split('.');
+        var parent = window;
+        var currentPart = '';
+        
+        for (var i = 0, length = parts.length; i < length; i++) {
+            currentPart = parts[i];
+            parent[currentPart] = parent[currentPart] || {};
+            parent = parent[currentPart];
+        }
+        
+        return parent;
+    };
+}
+
+// Create namespace
 namespace("Alt.AdviceManagement");
 
 /**
@@ -131,42 +149,55 @@ Alt.AdviceManagement.AdviceSummaryCard = function(element, configuration, baseMo
         }
         
         // Load work item details and advice attributes
-        $.when(
-            cachedWorkItem ? $.Deferred().resolve(cachedWorkItem) : $.ajax({
-                url: Constants.API.BASE_URL + '/workItem/' + self.model.workItemId(),
-                type: 'GET',
-                timeout: Constants.API.TIMEOUT
-            }),
-            cachedAttributes ? $.Deferred().resolve(cachedAttributes) : $.ajax({
-                url: Constants.API.BASE_URL + '/workItem/' + self.model.workItemId() + '/attributes',
-                type: 'GET',
-                timeout: Constants.API.TIMEOUT
-            }),
-            cachedHistory ? $.Deferred().resolve(cachedHistory) : $.ajax({
-                url: Constants.API.BASE_URL + '/workItem/' + self.model.workItemId() + '/history',
-                type: 'GET',
-                timeout: Constants.API.TIMEOUT
-            })
-        ).done(function(workItemResponse, attributesResponse, historyResponse) {
+        Promise.all([
+            cachedWorkItem ? Promise.resolve(cachedWorkItem) : 
+                $ajax.api.get('/api/v1/public/workItem/' + self.model.workItemId(), { displayErrors: false })
+                    .catch(function(error) {
+                        console.error('Failed to load work item', self.model.workItemId(), error);
+                        return null; // Return null if work item can't be loaded
+                    }),
+            cachedAttributes ? Promise.resolve(cachedAttributes) : 
+                $ajax.api.get('/api/v1/public/workItem/' + self.model.workItemId() + '/attributes', { displayErrors: false })
+                    .catch(function(error) {
+                        // Attributes might not be available - that's OK
+                        if (error.status === 404) {
+                            console.log('Attributes endpoint not available for work item', self.model.workItemId());
+                        }
+                        return {}; // Return empty attributes object on error
+                    }),
+            cachedHistory ? Promise.resolve(cachedHistory) : 
+                // History endpoint doesn't exist in current API - return empty history
+                // This is a placeholder for future history implementation
+                Promise.resolve({ history: [] })
+        ]
+        ).then(function(results) {
             // Handle both cached and fresh responses
-            var workItem = workItemResponse[0] || workItemResponse;
-            var attributes = (attributesResponse[0] && attributesResponse[0].attributes) || attributesResponse.attributes || attributesResponse || {};
-            var history = (historyResponse[0] && historyResponse[0].history) || historyResponse.history || historyResponse || [];
+            var workItem = results[0];
+            var attributes = results[1] || {}; // Response IS the attributes object
+            var history = results[2] && (results[2].history || results[2]) || [];
+            
+            // Check if work item loaded successfully
+            if (!workItem) {
+                console.error('Could not load work item', self.model.workItemId());
+                self.model.isLoading(false);
+                self.model.hasError(true);
+                return;
+            }
             
             // Cache the fresh data
             if (!cachedWorkItem && workItem) {
                 Cache.set('workItem', self.model.workItemId(), workItem, Constants.API.CACHE_TTL);
             }
-            if (!cachedAttributes) {
+            if (!cachedAttributes && attributes) {
                 Cache.set('workItemAttributes', self.model.workItemId(), attributes, Constants.API.CACHE_TTL);
             }
-            if (!cachedHistory) {
+            if (!cachedHistory && history && history.length > 0) {
                 Cache.set('workItemHistory', self.model.workItemId(), history, Constants.API.CACHE_TTL);
             }
             
             self.processSummaryData(workItem, attributes, history);
-        }).fail(function() {
-            console.error("Failed to load advice summary");
+        }).catch(function(error) {
+            console.error("Failed to load advice summary", error);
             self.model.isLoading(false);
             EventBus.publish(Constants.EVENTS.ADVICE_ERROR, {
                 workItemId: self.model.workItemId(),
@@ -183,9 +214,9 @@ Alt.AdviceManagement.AdviceSummaryCard = function(element, configuration, baseMo
                 self.model.workItemTitle(workItem.title);
             }
             
-            // Set status
-            var adviceStatus = attributes['AdviceStatus'];
-            if (adviceStatus && adviceStatus.toLowerCase() === Constants.STATUS.PAUSED) {
+            // Set status using registered attribute name
+            var adviceEnabled = attributes['alt_ongoing_advice_enabled'];
+            if (adviceEnabled === 'false') {
                 self.model.status(Constants.STATUS.PAUSED);
                 self.model.statusLabel('Paused');
                 EventBus.publish(Constants.EVENTS.ADVICE_STATUS_CHANGED, {
@@ -201,59 +232,68 @@ Alt.AdviceManagement.AdviceSummaryCard = function(element, configuration, baseMo
                 });
             }
             
-            // Set last action
-            var lastActionDate = attributes['AdviceLastActionDate'];
-            var lastActionType = attributes['AdviceLastActionType'];
-            if (lastActionDate) {
-                var actionText = (lastActionType || 'Updated') + ' on ' + self.formatDate(lastActionDate);
-                self.model.lastAction(actionText);
+            // Set last action based on pause/resume dates
+            var pausedDate = attributes['alt_ongoing_advice_paused_date'];
+            var resumedDate = attributes['alt_ongoing_advice_resumed_date'];
+            
+            // Determine which is more recent
+            if (pausedDate || resumedDate) {
+                var pausedTime = pausedDate ? new Date(pausedDate).getTime() : 0;
+                var resumedTime = resumedDate ? new Date(resumedDate).getTime() : 0;
+                
+                if (pausedTime > resumedTime) {
+                    self.model.lastAction('Paused on ' + self.formatDate(pausedDate));
+                } else if (resumedTime > 0) {
+                    self.model.lastAction('Resumed on ' + self.formatDate(resumedDate));
+                } else {
+                    self.model.lastAction('No recent actions');
+                }
             } else {
                 self.model.lastAction('No recent actions');
             }
             
             // Set next scheduled action
-            var nextAction = attributes['AdviceNextScheduledAction'];
-            if (nextAction) {
-                self.model.nextScheduledAction(self.formatDate(nextAction));
+            var nextDate = attributes['alt_ongoing_advice_next_date'];
+            if (nextDate && nextDate !== '') {
+                self.model.nextScheduledAction(self.formatDate(nextDate));
             } else {
                 self.model.nextScheduledAction('');
             }
             
-            // Calculate statistics
-            var startDate = attributes['AdviceStartDate'];
-            if (startDate) {
-                var start = new Date(startDate);
+            // Calculate statistics based on work item creation or first resume
+            var resumedDate = attributes['alt_ongoing_advice_resumed_date'];
+            if (resumedDate) {
+                var start = new Date(resumedDate);
+                var now = new Date();
+                self.model.daysActive(self.daysBetween(start, now));
+            } else if (workItem && workItem.createdDate) {
+                var start = new Date(workItem.createdDate);
                 var now = new Date();
                 self.model.daysActive(self.daysBetween(start, now));
             }
             
-            // Count pause events from history
+            // Count pause events - for now just check if currently paused
+            // In future, maintain a counter attribute if needed
             var pauseCount = 0;
-            history.forEach(function(event) {
-                if (event.action === 'advice_paused') {
-                    pauseCount++;
-                }
-            });
+            if (attributes['alt_ongoing_advice_paused_date']) {
+                pauseCount = 1; // At least one pause event
+            }
+            
+            // If history becomes available in the future, count from there
+            if (history && history.length > 0) {
+                pauseCount = 0;
+                history.forEach(function(event) {
+                    if (event.action === 'advice_paused') {
+                        pauseCount++;
+                    }
+                });
+            }
             self.model.timesPaused(pauseCount);
             
-            // Calculate completion percentage
-            var progress = attributes['AdviceCompletionPercent'];
-            if (progress !== undefined && progress !== null) {
-                self.model.completionPercent(progress + '%');
-                self.model.completionValue(progress);
-            } else {
-                // Estimate based on time if no explicit progress
-                var estimatedDuration = attributes['AdviceEstimatedDuration'];
-                if (estimatedDuration && startDate) {
-                    var elapsed = self.daysBetween(new Date(startDate), new Date());
-                    var percent = Math.min(100, Math.round((elapsed / estimatedDuration) * 100));
-                    self.model.completionPercent(percent + '%');
-                    self.model.completionValue(percent);
-                } else {
-                    self.model.completionPercent('N/A');
-                    self.model.completionValue(0);
-                }
-            }
+            // Completion percentage - not tracked in registered attributes
+            // Set to N/A as we don't have this data
+            self.model.completionPercent('N/A');
+            self.model.completionValue(0);
         
         self.model.isLoading(false);
     };
@@ -355,6 +395,61 @@ Alt.AdviceManagement.AdviceSummaryCard = function(element, configuration, baseMo
             self.loadAdviceSummary();
         }, options.refreshInterval);
     }
+    
+    // Subscribe to advice status change events using ShareDo native event system
+    self.initializeEventSubscriptions();
+};
+
+/**
+ * Initialize event subscriptions using ShareDo native event system
+ */
+Alt.AdviceManagement.AdviceSummaryCard.prototype.initializeEventSubscriptions = function() {
+    var self = this;
+    
+    if (!window.$ui || !window.$ui.events) {
+        console.warn('[AdviceSummaryCard] ShareDo events not available');
+        return;
+    }
+    
+    // Store subscription IDs for cleanup
+    self.eventSubscriptions = [];
+    
+    // Helper function to handle events with work item filtering
+    var createEventHandler = function(eventName) {
+        return function(data) {
+            console.log('[AdviceSummaryCard] Received ' + eventName + ' event:', data);
+            if (data && data.workItemId === self.model.workItemId()) {
+                self.loadAdviceSummary();
+            }
+        };
+    };
+    
+    // Subscribe to all relevant events
+    var events = ['advice:paused', 'advice:resumed', 'advice:statusChanged', 'advice:statusLoaded'];
+    events.forEach(function(eventName) {
+        var subscriptionId = $ui.events.subscribe(eventName, 
+            createEventHandler(eventName), self);
+        self.eventSubscriptions.push(subscriptionId);
+    });
+    
+    console.log('[AdviceSummaryCard] Subscribed to ShareDo events:', events);
+};
+
+/**
+ * Clean up event subscriptions
+ */
+Alt.AdviceManagement.AdviceSummaryCard.prototype.cleanupEventSubscriptions = function() {
+    var self = this;
+    
+    if (window.$ui && window.$ui.events && self.eventSubscriptions) {
+        self.eventSubscriptions.forEach(function(subscriptionId) {
+            if (subscriptionId) {
+                $ui.events.unsubscribe(subscriptionId);
+            }
+        });
+        console.log('[AdviceSummaryCard] Cleaned up event subscriptions');
+    }
+    self.eventSubscriptions = [];
 };
 
 /**
@@ -368,6 +463,10 @@ Alt.AdviceManagement.AdviceSummaryCard.prototype.onDestroy = function() {
         clearInterval(self.refreshIntervalId);
         self.refreshIntervalId = null;
     }
+    
+    // Unsubscribe from events
+    // Clean up event subscriptions
+    self.cleanupEventSubscriptions();
     
     // Clean up subscriptions
     if (self.model) {

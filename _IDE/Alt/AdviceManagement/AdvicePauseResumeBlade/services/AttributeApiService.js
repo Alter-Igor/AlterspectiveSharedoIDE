@@ -20,8 +20,8 @@ Alt.OngoingAdvice.Services.AttributeApiService = function() {
             enabled: "alt_ongoing_advice_enabled",
             pausedDate: "alt_ongoing_advice_paused_date",
             resumedDate: "alt_ongoing_advice_resumed_date",
-            pausedBy: "alt_ongoing_advice_paused_by",
-            resumedBy: "alt_ongoing_advice_resumed_by",
+            pausedBy: "alt_ongoing_advice_paused_by",  // Now stores name directly
+            resumedBy: "alt_ongoing_advice_resumed_by",  // Now stores name directly
             pauseReason: "alt_ongoing_advice_pause_reason",
             resumeReason: "alt_ongoing_advice_resume_reason",
             nextAdviceDate: "alt_ongoing_advice_next_date"
@@ -229,7 +229,7 @@ Alt.OngoingAdvice.Services.AttributeApiService = function() {
             if (newStatus) {
                 // Resuming
                 attributesToSet.resumedDate = now;
-                attributesToSet.resumedBy = options.userId || 'unknown';
+                attributesToSet.resumedBy = options.userName || 'Unknown User';  // Store name directly
                 if (options.reason) {
                     attributesToSet.resumeReason = options.reason;
                 }
@@ -239,7 +239,7 @@ Alt.OngoingAdvice.Services.AttributeApiService = function() {
             } else {
                 // Pausing
                 attributesToSet.pausedDate = now;
-                attributesToSet.pausedBy = options.userId || 'unknown';
+                attributesToSet.pausedBy = options.userName || 'Unknown User';  // Store name directly
                 if (options.reason) {
                     attributesToSet.pauseReason = options.reason;
                 }

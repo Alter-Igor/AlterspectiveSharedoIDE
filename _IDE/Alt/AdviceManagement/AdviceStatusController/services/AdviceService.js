@@ -158,52 +158,48 @@ Alt.AdviceManagement.AdviceService = function() {
     self.makeRequest = function(options, attempt) {
         attempt = attempt || 1;
         
-        var ajaxOptions = {
-            url: options.url,
-            type: options.method || 'GET',
-            timeout: self.config.timeout,
-            success: function(response) {
+        // Convert URL to proper API path
+        var apiPath = options.url.replace(self.config.baseUrl, '/api/v1/public');
+        
+        // Determine method to use
+        var method = (options.method || 'GET').toLowerCase();
+        var apiCall;
+        
+        // Prepare request based on method
+        if (method === 'get') {
+            apiCall = $ajax.api.get(apiPath, { displayErrors: false });
+        } else if (method === 'post') {
+            apiCall = $ajax.api.post(apiPath, options.data, { displayErrors: false });
+        } else if (method === 'put') {
+            apiCall = $ajax.api.put(apiPath, options.data, { displayErrors: false });
+        } else if (method === 'delete') {
+            apiCall = $ajax.api.delete(apiPath, options.data, { displayErrors: false });
+        }
+        
+        // Handle promise
+        apiCall
+            .then(function(response) {
                 if (options.success) {
                     options.success(response);
                 }
-            },
-            error: function(xhr, status, error) {
+            })
+            .catch(function(error) {
                 // Retry logic
-                if (attempt < self.config.retryAttempts && self.shouldRetry(xhr.status)) {
+                var status = error.status || 0;
+                if (attempt < self.config.retryAttempts && self.shouldRetry(status)) {
                     setTimeout(function() {
                         self.makeRequest(options, attempt + 1);
                     }, self.config.retryDelay * attempt);
                 } else {
                     if (options.error) {
                         options.error({
-                            status: xhr.status,
-                            message: error || status,
-                            response: xhr.responseText
+                            status: status,
+                            message: error.message || error.statusText || 'Request failed',
+                            response: error.responseText
                         });
                     }
                 }
-            }
-        };
-        
-        // Add data if provided
-        if (options.data) {
-            ajaxOptions.data = options.data;
-        }
-        
-        // Add content type if provided
-        if (options.contentType) {
-            ajaxOptions.contentType = options.contentType;
-        }
-        
-        // Add authorization header if available
-        var authToken = self.getAuthToken();
-        if (authToken) {
-            ajaxOptions.headers = {
-                'Authorization': 'Bearer ' + authToken
-            };
-        }
-        
-        $.ajax(ajaxOptions);
+            });
     };
     
     /**

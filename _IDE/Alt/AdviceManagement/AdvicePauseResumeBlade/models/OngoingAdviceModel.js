@@ -90,12 +90,14 @@ Alt.OngoingAdvice.Models.OngoingAdviceModel = function(initialData) {
         return self.isEnabled() ? 'pause' : 'resume';
     });
     
-    // Last modified information
+    // Last modified information - now uses names directly
     self.lastModifiedText = ko.pureComputed(function() {
-        if (self.isEnabled() && self.resumedDate() && self.resumedBy()) {
-            return 'Resumed ' + self.formatDate(self.resumedDate()) + ' by ' + self.resumedBy();
-        } else if (!self.isEnabled() && self.pausedDate() && self.pausedBy()) {
-            return 'Paused ' + self.formatDate(self.pausedDate()) + ' by ' + self.pausedBy();
+        if (self.isEnabled() && self.resumedDate()) {
+            var byUser = self.resumedBy() || 'Unknown';
+            return 'Resumed ' + self.formatDate(self.resumedDate()) + ' by ' + byUser;
+        } else if (!self.isEnabled() && self.pausedDate()) {
+            var byUser = self.pausedBy() || 'Unknown';
+            return 'Paused ' + self.formatDate(self.pausedDate()) + ' by ' + byUser;
         }
         return 'Status unknown';
     });
@@ -166,8 +168,8 @@ Alt.OngoingAdvice.Models.OngoingAdviceModel.prototype.updateFromAttributes = fun
     self.enabled(attributes.enabled);
     self.pausedDate(attributes.pausedDate);
     self.resumedDate(attributes.resumedDate);
-    self.pausedBy(attributes.pausedBy);
-    self.resumedBy(attributes.resumedBy);
+    self.pausedBy(attributes.pausedBy);  // Now contains name directly
+    self.resumedBy(attributes.resumedBy);  // Now contains name directly
     self.pauseReason(attributes.pauseReason);
     self.resumeReason(attributes.resumeReason);
     self.nextAdviceDate(attributes.nextAdviceDate);
@@ -227,11 +229,20 @@ Alt.OngoingAdvice.Models.OngoingAdviceModel.prototype.resetForm = function() {
  */
 Alt.OngoingAdvice.Models.OngoingAdviceModel.prototype.getActionOptions = function() {
     var self = this;
-    var user = self.currentUser();
+    
+    // Get user name directly from page context - no need for IDs anymore
+    var userName = 'Unknown User';
+    
+    // Get from $ui.pageContext.user
+    if (window.$ui && window.$ui.pageContext && window.$ui.pageContext.user) {
+        var pageUser = window.$ui.pageContext.user;
+        var firstName = typeof pageUser.firstname === 'function' ? pageUser.firstname() : pageUser.firstname || '';
+        var lastName = typeof pageUser.lastname === 'function' ? pageUser.lastname() : pageUser.lastname || '';
+        userName = (firstName + ' ' + lastName).trim() || 'Unknown User';
+    }
     
     var options = {
-        userId: user ? user.id : 'unknown',
-        userName: user ? user.displayName || user.name : 'Unknown User',
+        userName: userName,
         reason: self.reasonInput() || null
     };
     

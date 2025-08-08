@@ -207,6 +207,54 @@ Centralized service for all advice-related API operations.
 - **Audit Trail**: Automatic action logging
 - **Authentication**: Token-based auth support
 
+## Attribute Registry
+
+### CRITICAL: Only Use Registered Attributes
+**See ATTRIBUTE_REGISTRY.md for the complete list of registered attributes.**
+
+All advice-related attributes use the prefix `alt_ongoing_advice_` and include:
+- `alt_ongoing_advice_enabled` - "true" or "false" string indicating if advice is active
+- `alt_ongoing_advice_paused_date` - ISO date when paused
+- `alt_ongoing_advice_paused_by` - UUID of user who paused
+- `alt_ongoing_advice_pause_reason` - Text reason for pause
+- `alt_ongoing_advice_resumed_date` - ISO date when resumed
+- `alt_ongoing_advice_resumed_by` - UUID of user who resumed
+- `alt_ongoing_advice_resume_reason` - Text reason for resume
+- `alt_ongoing_advice_next_date` - ISO date for next scheduled advice
+
+**DO NOT CREATE NEW ATTRIBUTES** without first checking the registry and updating it.
+
+## API Response Structures
+
+### IMPORTANT: Attributes Endpoint
+The `/api/v1/public/workItem/{id}/attributes` endpoint returns the attributes object **directly**, not wrapped in a response object:
+
+```javascript
+// CORRECT - Response IS the attributes object
+$ajax.api.get('/api/v1/public/workItem/' + workItemId + '/attributes')
+    .then(function(attributes) {
+        var adviceStatus = attributes['AdviceStatus'];  // Direct access
+        var pausedDate = attributes['AdvicePausedDate'];
+    });
+
+// INCORRECT - Do NOT access response.attributes
+// The response IS already the attributes object
+```
+
+### Work Item Endpoint
+The `/api/v1/public/workItem/{id}` endpoint returns the work item object directly:
+```javascript
+$ajax.api.get('/api/v1/public/workItem/' + workItemId)
+    .then(function(workItem) {
+        var title = workItem.title;
+        var id = workItem.id;
+    });
+```
+
+### History Endpoint (Not Available)
+The `/api/v1/public/workItem/{id}/history` endpoint **does not exist** in the current API.
+Do not attempt to call this endpoint. Use attributes or other means to track history.
+
 ## Notes
 - This module appears to be part of a legal practice management system
 - The "blade" terminology suggests integration with a portal or dashboard framework

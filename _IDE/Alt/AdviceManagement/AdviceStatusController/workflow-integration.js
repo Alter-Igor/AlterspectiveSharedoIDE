@@ -35,27 +35,49 @@
                 var $el = $(element);
                 $el.empty();
                 
-                // Create visual representation
-                var html = [
-                    '<div class="workflow-action-node advice-status-controller-node">',
-                    '  <div class="node-header">',
-                    '    <i class="fa fa-code-fork"></i>',
-                    '    <span>Advice Status</span>',
-                    '  </div>',
-                    '  <div class="node-body">',
-                    '    <div class="node-status">Check & Control</div>',
-                    '  </div>',
-                    '  <div class="node-ports">',
-                    '    <div class="port port-in" data-port="input"></div>',
-                    '    <div class="port port-out" data-port="success"></div>',
-                    '    <div class="port port-out" data-port="paused"></div>',
-                    '    <div class="port port-out" data-port="resumed"></div>',
-                    '    <div class="port port-out port-error" data-port="error"></div>',
-                    '  </div>',
-                    '</div>'
-                ].join('');
-                
-                $el.html(html);
+                // Create visual representation using $ui service when available
+                if (window.$ui && window.$ui.createNodeElement) {
+                    var node = window.$ui.createNodeElement({
+                        type: 'workflow-action',
+                        className: 'advice-status-controller-node',
+                        header: {
+                            icon: 'fa-code-fork',
+                            text: 'Advice Status'
+                        },
+                        body: {
+                            status: 'Check & Control'
+                        },
+                        ports: [
+                            { type: 'in', port: 'input' },
+                            { type: 'out', port: 'success' },
+                            { type: 'out', port: 'paused' },
+                            { type: 'out', port: 'resumed' },
+                            { type: 'out', port: 'error', className: 'port-error' }
+                        ]
+                    });
+                    $el.html(node);
+                } else {
+                    var html = [
+                        '<div class="workflow-action-node advice-status-controller-node">',
+                        '  <div class="node-header">',
+                        '    <i class="fa fa-code-fork"></i>',
+                        '    <span>Advice Status</span>',
+                        '  </div>',
+                        '  <div class="node-body">',
+                        '    <div class="node-status">Check & Control</div>',
+                        '  </div>',
+                        '  <div class="node-ports">',
+                        '    <div class="port port-in" data-port="input"></div>',
+                        '    <div class="port port-out" data-port="success"></div>',
+                        '    <div class="port port-out" data-port="paused"></div>',
+                        '    <div class="port port-out" data-port="resumed"></div>',
+                        '    <div class="port port-out port-error" data-port="error"></div>',
+                        '  </div>',
+                        '</div>'
+                    ].join('');
+                    
+                    $el.html(html);
+                }
                 
                 // Add drag-drop handlers
                 $el.find('.workflow-action-node').draggable({
@@ -206,7 +228,9 @@
                 label: 'Delete',
                 icon: 'fa-trash',
                 action: function() {
-                    if (confirm('Delete this action?')) {
+                    var confirmDelete = window.$ui && window.$ui.showConfirm ? 
+                        window.$ui.showConfirm('Delete this action?') : confirm('Delete this action?');
+                    if (confirmDelete) {
                         if (config.onDelete) {
                             config.onDelete();
                         }
@@ -229,7 +253,7 @@
     }
     
     // Add CSS for workflow node
-    var style = document.createElement('style');
+    var style = window.$ui && window.$ui.createStyle ? window.$ui.createStyle() : document.createElement('style');
     style.textContent = `
         .workflow-action-node.advice-status-controller-node {
             background: #fff;
@@ -311,6 +335,10 @@
             box-shadow: 0 0 0 3px rgba(0,123,255,0.25);
         }
     `;
-    document.head.appendChild(style);
+    if (window.$ui && window.$ui.addStyle) {
+        window.$ui.addStyle(style);
+    } else {
+        document.head.appendChild(style);
+    }
     
 })();
