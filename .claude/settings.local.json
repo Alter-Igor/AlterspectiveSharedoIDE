@@ -9,7 +9,11 @@
       "Bash(git commit:*)",
       "Bash(powershell:*)",
       "Bash(cmd /c:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(git remote add:*)",
+      "Bash(git remote remove:*)",
+      "Bash(gh repo create:*)",
+      "Bash(gh auth:*)"
     ],
     "deny": []
   }
