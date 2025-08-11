@@ -1,0 +1,35 @@
+{
+    // The system name for the type of node
+    "systemName": "AdviceStatusController",
+
+    // The category to show this in the toolbox
+    "category": "Advice Management",
+
+    // The display info
+    "name": "Advice Status Controller",
+    "icon": "fa-code-fork",
+    "description": "Controls advice status based on conditions - can pause, resume, or toggle advice",
+
+    // The widget used to configure this node type
+    "configWidget": "Alt.AdviceManagement.AdviceStatusControllerDesigner",
+
+    // Any other scripts to include that are used by the factory
+    "factoryIncludes": [],
+
+    // The factory for creating a node of this type
+    "factoryScript": "/_ideFiles/Alt/AdviceManagement/Workflows/AdviceStatusController/AdviceStatusController-factory.js",
+
+    // The template for generating the code for this type
+    "templateScript": "/_ideFiles/Alt/AdviceManagement/Workflows/AdviceStatusController/AdviceStatusController-template.js",
+
+    // Any additional helper scripts to load and run before the main generated script runs
+    "helperScripts": [],
+
+    // Declare any required variable types your step expects to use
+    "requiredTypes": [
+        "/String",           // For status, reasons, and error messages
+        "/Boolean",          // For success/failure status
+        "/DateTime",         // For pausedDate, resumedDate, lastActionDate
+        "/Identifier/Work Item Identifier"  // For work item ID
+    ]
+}

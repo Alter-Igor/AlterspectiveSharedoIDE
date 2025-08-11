@@ -1,0 +1,118 @@
+{
+    "id": "Alt.AdviceManagement.AdvicePauseManager",
+    "version": "1.0.0",
+    "type": "workflowAction",
+    "priority": 8100,
+    "metadata": {
+        "name": "Advice Pause Manager",
+        "description": "Comprehensive workflow action that finds active advice items, saves their state, and moves them to paused phase",
+        "category": "Advice Management",
+        "icon": "fa-pause-circle",
+        "author": "Alterspective",
+        "documentation": "Manages the complete pause lifecycle for advice items including discovery, state preservation, and phase management"
+    },
+    "designer": {
+        "allowInWorkflowDesigner": true,
+        "allowInVisualWorkflow": true,
+        "configurable": true,
+        "configurationComponent": "Alt.AdviceManagement.AdvicePauseManagerDesigner",
+        "inputs": [
+            {
+                "name": "workItemId",
+                "type": "/Identifier/Work Item Identifier",
+                "required": true,
+                "description": "ID of the work item to pause advice for"
+            },
+            {
+                "name": "abstractAdviceTypeSystemName",
+                "type": "/String",
+                "required": true,
+                "description": "System name of the abstract advice type (base type that all advice inherits from)"
+            },
+            {
+                "name": "pausedPhase",
+                "type": "/String",
+                "required": false,
+                "description": "Phase to move advice to when paused (default: Removed)"
+            },
+            {
+                "name": "pauseReason",
+                "type": "/String",
+                "required": false,
+                "description": "Reason for pausing the advice"
+            }
+        ],
+        "outputs": [
+            {
+                "name": "success",
+                "type": "/Boolean",
+                "description": "Whether the pause operation completed successfully"
+            },
+            {
+                "name": "message",
+                "type": "/String",
+                "description": "Result message"
+            },
+            {
+                "name": "foundAdviceCount",
+                "type": "/Number",
+                "description": "Number of active advice items found"
+            },
+            {
+                "name": "pausedAdviceCount",
+                "type": "/Number",
+                "description": "Number of advice items successfully paused"
+            },
+            {
+                "name": "savedState",
+                "type": "/Boolean",
+                "description": "Whether advice state was successfully saved"
+            },
+            {
+                "name": "errorCount",
+                "type": "/Number",
+                "description": "Number of errors encountered"
+            }
+        ],
+        "branches": [
+            {
+                "id": "success",
+                "label": "Success",
+                "color": "#28a745"
+            },
+            {
+                "id": "noAdvice",
+                "label": "No Advice Found",
+                "color": "#6c757d"
+            },
+            {
+                "id": "error",
+                "label": "Error",
+                "color": "#dc3545"
+            }
+        ]
+    },
+    "configuration": {
+        "abstractAdviceTypeSystemName": "AbstractAdvice",
+        "pausedPhase": "Removed",
+        "pauseReason": "Advice paused by workflow",
+        "saveAdviceState": true,
+        "enableLogging": true,
+        "timeout": 60000
+    },
+    "scripts": [
+        "/_ideFiles/Alt/AdviceManagement/Workflows/AdvicePauseManager/AdvicePauseManager.js",
+        "/_ideFiles/Alt/AdviceManagement/Foundation/Services/AdviceLifecycleService.js",
+        "/_ideFiles/Alt/AdviceManagement/Foundation/Configuration/AdviceLifecycleConfig.js"
+    ],
+    "styles": [
+        "/_ideFiles/Alt/AdviceManagement/Workflows/AdvicePauseManager/AdvicePauseManager.css"
+    ],
+    "templates": [
+        "/_ideFiles/Alt/AdviceManagement/Workflows/AdvicePauseManager/AdvicePauseManager.html"
+    ],
+    "dependencies": [
+        "jquery",
+        "knockout"
+    ]
+}

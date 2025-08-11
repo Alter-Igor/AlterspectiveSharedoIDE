@@ -1,0 +1,36 @@
+{
+    // The system name for the type of node
+    "systemName": "AdvicePauseManager",
+
+    // The category to show this in the toolbox
+    "category": "Advice Management",
+
+    // The display info
+    "name": "Advice Pause Manager",
+    "icon": "fa-pause-circle",
+    "description": "Comprehensive action that finds active advice items, saves their state, and moves them to paused phase",
+
+    // The widget used to configure this node type
+    "configWidget": "Alt.AdviceManagement.AdvicePauseManagerDesigner",
+
+    // Any other scripts to include that are used by the factory
+    "factoryIncludes": [],
+
+    // The factory for creating a node of this type
+    "factoryScript": "/_ideFiles/Alt/AdviceManagement/Workflows/AdvicePauseManager/AdvicePauseManager-factory.js",
+
+    // The template for generating the code for this type
+    "templateScript": "/_ideFiles/Alt/AdviceManagement/Workflows/AdvicePauseManager/AdvicePauseManager-template.js",
+
+    // Any additional helper scripts to load and run before the main generated script runs
+    "helperScripts": [],
+
+    // Declare any required variable types your step expects to use
+    "requiredTypes": [
+        "/String",                               // For reasons, messages, and system names
+        "/Boolean",                              // For success flags and save state options
+        "/DateTime",                             // For pause date
+        "/Number",                               // For counts (found count, paused count, errors)
+        "/Identifier/Work Item Identifier"      // For work item ID
+    ]
+}

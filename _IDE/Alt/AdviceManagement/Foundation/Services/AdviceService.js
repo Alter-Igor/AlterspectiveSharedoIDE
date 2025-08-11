@@ -40,7 +40,33 @@ Alt.AdviceManagement.AdviceService = function() {
             url: self.config.baseUrl + '/workItem/' + workItemId + '/attributes',
             method: 'GET',
             success: function(response) {
+                // Log the raw response structure for debugging
+                if ($ui && $ui.log && $ui.log.debug) {
+                    $ui.log.debug("AdviceService - Raw API response for Work Item " + workItemId + ":");
+                    $ui.log.debug("  Response structure: " + JSON.stringify({
+                        hasStatus: !!response.status,
+                        hasSuccess: !!response.success,
+                        hasBody: !!response.body,
+                        hasAttributes: !!response.attributes,
+                        bodyType: typeof response.body,
+                        topLevelKeys: Object.keys(response)
+                    }));
+                    $ui.log.debug("  Full response (first 500 chars): " + JSON.stringify(response).substring(0, 500));
+                }
+                
                 var status = self.extractAdviceStatus(response);
+                
+                // Log the extracted status for debugging
+                if ($ui && $ui.log && $ui.log.debug) {
+                    $ui.log.debug("AdviceService - Extracted status for Work Item " + workItemId + ":");
+                    $ui.log.debug("  Status: " + status.status);
+                    $ui.log.debug("  Paused Date: " + status.pausedDate);
+                    $ui.log.debug("  Paused By: " + status.pausedBy);
+                    $ui.log.debug("  Paused Reason: " + status.pausedReason);
+                    $ui.log.debug("  Resumed Date: " + status.resumedDate);
+                    $ui.log.debug("  Next Advice Date: " + status.nextAdviceDate);
+                }
+                
                 self.cacheStatus(workItemId, status);
                 callback(true, status);
             },
@@ -53,65 +79,209 @@ Alt.AdviceManagement.AdviceService = function() {
     
     /**
      * Pause advice for a work item
+     * Enhanced to support workflow-based advice lifecycle management
      */
-    self.pauseAdvice = function(workItemId, reason, callback) {
+    self.pauseAdvice = function(workItemId, reason, configuration, callback) {
+        // Handle optional configuration parameter
+        if (typeof configuration === 'function') {
+            callback = configuration;
+            configuration = {};
+        }
+        
         if (!workItemId) {
             callback(false, 'Work item ID is required');
             return;
         }
         
-        var attributes = {
-            'AdviceStatus': 'paused',
-            'AdvicePausedDate': new Date().toISOString(),
-            'AdvicePausedReason': reason || 'Paused by workflow',
-            'AdvicePausedBy': self.getCurrentUser(),
-            'AdviceLastActionDate': new Date().toISOString(),
-            'AdviceLastActionType': 'Paused'
-        };
+        // Default configuration
+        var config = $.extend(true, {
+            useWorkflowApproach: true,
+            pauseWorkflowId: 'AdvicePauseWorkflow',
+            abstractAdviceTypeSystemName: 'AbstractAdvice',
+            pausedPhase: 'Removed'
+        }, configuration);
         
-        self.updateAdviceAttributes(workItemId, attributes, function(success, data) {
-            if (success) {
-                self.clearCache(workItemId);
-                self.logAction('pause', workItemId, reason);
-                EventBus.publish(Constants.EVENTS.ADVICE_PAUSED, {
-                    workItemId: workItemId,
-                    reason: reason
-                });
-            }
-            callback(success, data);
-        });
+        if ($ui && $ui.log && $ui.log.debug) {
+            $ui.log.debug("AdviceService - Pausing advice for Work Item " + workItemId);
+            $ui.log.debug("  Use Workflow: " + config.useWorkflowApproach);
+            $ui.log.debug("  Reason: " + reason);
+        }
+        
+        if (config.useWorkflowApproach && typeof Alt !== 'undefined' && Alt.AdviceManagement && Alt.AdviceManagement.AdvicePauseManager) {
+            // Use workflow approach for comprehensive advice management
+            var pauseManager = new Alt.AdviceManagement.AdvicePauseManager({
+                workItemId: workItemId,
+                inputs: { workItemId: workItemId }
+            }, {
+                abstractAdviceTypeSystemName: config.abstractAdviceTypeSystemName,
+                pausedPhase: config.pausedPhase,
+                pauseReason: reason || 'Paused by workflow'
+            }, function(result) {
+                if (result.outputs.success) {
+                    // Update advice status attributes
+                    var attributes = {
+                        'alt_ongoing_advice_enabled': 'false',
+                        'alt_ongoing_advice_paused_date': new Date().toISOString(),
+                        'alt_ongoing_advice_pause_reason': reason || 'Paused by workflow',
+                        'alt_ongoing_advice_paused_by': self.getCurrentUser()
+                    };
+                    
+                    self.updateAdviceAttributes(workItemId, attributes, function(success, data) {
+                        if (success) {
+                            self.clearCache(workItemId);
+                            self.logAction('pause', workItemId, reason);
+                            EventBus.publish(Constants.EVENTS.ADVICE_PAUSED, {
+                                workItemId: workItemId,
+                                reason: reason,
+                                adviceCount: result.outputs.pausedAdviceCount
+                            });
+                        }
+                        
+                        var message = result.outputs.message + 
+                                    (result.outputs.pausedAdviceCount > 0 ? 
+                                     ' (' + result.outputs.pausedAdviceCount + ' advice items paused)' : '');
+                        callback(success, success ? message : data);
+                    });
+                } else {
+                    callback(false, result.outputs.message);
+                }
+            });
+        } else {
+            // Fallback to simple attribute-based approach
+            var attributes = {
+                'alt_ongoing_advice_enabled': 'false',
+                'alt_ongoing_advice_paused_date': new Date().toISOString(),
+                'alt_ongoing_advice_pause_reason': reason || 'Paused by workflow',
+                'alt_ongoing_advice_paused_by': self.getCurrentUser()
+            };
+            
+            self.updateAdviceAttributes(workItemId, attributes, function(success, data) {
+                if (success) {
+                    self.clearCache(workItemId);
+                    self.logAction('pause', workItemId, reason);
+                    EventBus.publish(Constants.EVENTS.ADVICE_PAUSED, {
+                        workItemId: workItemId,
+                        reason: reason
+                    });
+                }
+                callback(success, data);
+            });
+        }
     };
     
     /**
      * Resume advice for a work item
+     * Enhanced to support workflow-based advice lifecycle management
      */
-    self.resumeAdvice = function(workItemId, callback) {
+    self.resumeAdvice = function(workItemId, newAdviceDueDate, configuration, callback) {
+        // Handle optional parameters
+        if (typeof newAdviceDueDate === 'function') {
+            callback = newAdviceDueDate;
+            newAdviceDueDate = null;
+            configuration = {};
+        } else if (typeof configuration === 'function') {
+            callback = configuration;
+            configuration = {};
+        }
+        
         if (!workItemId) {
             callback(false, 'Work item ID is required');
             return;
         }
         
-        var attributes = {
-            'AdviceStatus': 'active',
-            'AdviceResumedDate': new Date().toISOString(),
-            'AdviceResumedBy': self.getCurrentUser(),
-            'AdviceLastActionDate': new Date().toISOString(),
-            'AdviceLastActionType': 'Resumed',
-            'AdvicePausedReason': null,
-            'AdvicePausedDate': null,
-            'AdvicePausedBy': null
-        };
+        // Default configuration
+        var config = $.extend(true, {
+            useWorkflowApproach: true,
+            resumeWorkflowId: 'AdviceResumeWorkflow',
+            abstractAdviceTypeSystemName: 'AbstractAdvice',
+            defaultAdviceTypeSystemName: 'StandardAdvice',
+            activePhase: 'Active'
+        }, configuration);
         
-        self.updateAdviceAttributes(workItemId, attributes, function(success, data) {
-            if (success) {
-                self.clearCache(workItemId);
-                self.logAction('resume', workItemId, null);
-                EventBus.publish(Constants.EVENTS.ADVICE_RESUMED, {
-                    workItemId: workItemId
-                });
+        if ($ui && $ui.log && $ui.log.debug) {
+            $ui.log.debug("AdviceService - Resuming advice for Work Item " + workItemId);
+            $ui.log.debug("  Use Workflow: " + config.useWorkflowApproach);
+            $ui.log.debug("  New Due Date: " + newAdviceDueDate);
+        }
+        
+        if (config.useWorkflowApproach && typeof Alt !== 'undefined' && Alt.AdviceManagement && Alt.AdviceManagement.AdviceResumeManager) {
+            // Use workflow approach for comprehensive advice management
+            var resumeManager = new Alt.AdviceManagement.AdviceResumeManager({
+                workItemId: workItemId,
+                inputs: { workItemId: workItemId }
+            }, {
+                abstractAdviceTypeSystemName: config.abstractAdviceTypeSystemName,
+                defaultAdviceTypeSystemName: config.defaultAdviceTypeSystemName,
+                activePhase: config.activePhase,
+                newAdviceDueDate: newAdviceDueDate
+            }, function(result) {
+                if (result.outputs.success) {
+                    // Update advice status attributes
+                    var attributes = {
+                        'alt_ongoing_advice_enabled': 'true',
+                        'alt_ongoing_advice_resumed_date': new Date().toISOString(),
+                        'alt_ongoing_advice_resumed_by': self.getCurrentUser(),
+                        'alt_ongoing_advice_resume_reason': 'Resumed by workflow',
+                        // Clear pause-related fields
+                        'alt_ongoing_advice_pause_reason': '',
+                        'alt_ongoing_advice_paused_date': '',
+                        'alt_ongoing_advice_paused_by': ''
+                    };
+                    
+                    // Set next advice date if provided
+                    if (newAdviceDueDate) {
+                        attributes['alt_ongoing_advice_next_date'] = newAdviceDueDate;
+                    }
+                    
+                    self.updateAdviceAttributes(workItemId, attributes, function(success, data) {
+                        if (success) {
+                            self.clearCache(workItemId);
+                            self.logAction('resume', workItemId, null);
+                            EventBus.publish(Constants.EVENTS.ADVICE_RESUMED, {
+                                workItemId: workItemId,
+                                resumeApproach: result.outputs.resumeApproach,
+                                adviceCount: result.outputs.totalAdviceCount
+                            });
+                        }
+                        
+                        var message = result.outputs.message + 
+                                    (result.outputs.totalAdviceCount > 0 ? 
+                                     ' (' + result.outputs.totalAdviceCount + ' advice items active)' : '');
+                        callback(success, success ? message : data);
+                    });
+                } else {
+                    callback(false, result.outputs.message);
+                }
+            });
+        } else {
+            // Fallback to simple attribute-based approach
+            var attributes = {
+                'alt_ongoing_advice_enabled': 'true',
+                'alt_ongoing_advice_resumed_date': new Date().toISOString(),
+                'alt_ongoing_advice_resumed_by': self.getCurrentUser(),
+                'alt_ongoing_advice_resume_reason': 'Resumed by workflow',
+                // Clear pause-related fields
+                'alt_ongoing_advice_pause_reason': '',
+                'alt_ongoing_advice_paused_date': '',
+                'alt_ongoing_advice_paused_by': ''
+            };
+            
+            // Set next advice date if provided
+            if (newAdviceDueDate) {
+                attributes['alt_ongoing_advice_next_date'] = newAdviceDueDate;
             }
-            callback(success, data);
-        });
+            
+            self.updateAdviceAttributes(workItemId, attributes, function(success, data) {
+                if (success) {
+                    self.clearCache(workItemId);
+                    self.logAction('resume', workItemId, null);
+                    EventBus.publish(Constants.EVENTS.ADVICE_RESUMED, {
+                        workItemId: workItemId
+                    });
+                }
+                callback(success, data);
+            });
+        }
     };
     
     /**
@@ -214,18 +384,39 @@ Alt.AdviceManagement.AdviceService = function() {
      * Extract advice status from response
      */
     self.extractAdviceStatus = function(response) {
-        var attributes = response.attributes || {};
-        var status = attributes['AdviceStatus'] || 'none';
+        // Handle ShareDo HTTP API response structure: {status, success, body}
+        var attributes;
+        if (response.body) {
+            // ShareDo HTTP API format
+            attributes = response.body;
+        } else if (response.attributes) {
+            // Legacy format
+            attributes = response.attributes;
+        } else {
+            // Direct attributes object
+            attributes = response;
+        }
+        
+        // Use the registered attribute names with alt_ongoing_advice_ prefix
+        var enabled = attributes['alt_ongoing_advice_enabled'] || 'false';
+        var status = (enabled === 'true') ? 'active' : 'paused';
+        
+        // If we have a paused date but no pause reason, it might be disabled rather than paused
+        var pausedDate = attributes['alt_ongoing_advice_paused_date'];
+        if (!pausedDate && enabled === 'false') {
+            status = 'none'; // Not enabled at all
+        }
         
         return {
             status: status.toLowerCase(),
-            pausedDate: attributes['AdvicePausedDate'],
-            pausedReason: attributes['AdvicePausedReason'],
-            pausedBy: attributes['AdvicePausedBy'],
-            resumedDate: attributes['AdviceResumedDate'],
-            resumedBy: attributes['AdviceResumedBy'],
-            lastAction: attributes['AdviceLastActionType'],
-            lastActionDate: attributes['AdviceLastActionDate']
+            pausedDate: pausedDate,
+            pausedReason: attributes['alt_ongoing_advice_pause_reason'],
+            pausedBy: attributes['alt_ongoing_advice_paused_by'],
+            resumedDate: attributes['alt_ongoing_advice_resumed_date'],
+            resumedBy: attributes['alt_ongoing_advice_resumed_by'],
+            resumeReason: attributes['alt_ongoing_advice_resume_reason'],
+            nextAdviceDate: attributes['alt_ongoing_advice_next_date'],
+            lastActionDate: pausedDate || attributes['alt_ongoing_advice_resumed_date'] // Use most recent action date
         };
     };
     

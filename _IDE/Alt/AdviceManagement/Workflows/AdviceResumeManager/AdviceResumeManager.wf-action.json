@@ -1,0 +1,36 @@
+{
+    // The system name for the type of node
+    "systemName": "AdviceResumeManager",
+
+    // The category to show this in the toolbox
+    "category": "Advice Management",
+
+    // The display info
+    "name": "Advice Resume Manager",
+    "icon": "fa-play-circle",
+    "description": "Comprehensive action that restores paused advice from saved state or creates new default advice",
+
+    // The widget used to configure this node type
+    "configWidget": "Alt.AdviceManagement.AdviceResumeManagerDesigner",
+
+    // Any other scripts to include that are used by the factory
+    "factoryIncludes": [],
+
+    // The factory for creating a node of this type
+    "factoryScript": "/_ideFiles/Alt/AdviceManagement/Workflows/AdviceResumeManager/AdviceResumeManager-factory.js",
+
+    // The template for generating the code for this type
+    "templateScript": "/_ideFiles/Alt/AdviceManagement/Workflows/AdviceResumeManager/AdviceResumeManager-template.js",
+
+    // Any additional helper scripts to load and run before the main generated script runs
+    "helperScripts": [],
+
+    // Declare any required variable types your step expects to use
+    "requiredTypes": [
+        "/String",                               // For reasons, messages, and system names
+        "/Boolean",                              // For success flags and configuration options
+        "/DateTime",                             // For dates (resumed date, new due date)
+        "/Number",                               // For counts (restored count, created count, errors)
+        "/Identifier/Work Item Identifier"      // For work item ID
+    ]
+}

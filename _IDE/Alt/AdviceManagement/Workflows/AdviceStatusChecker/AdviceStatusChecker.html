@@ -1,0 +1,157 @@
+<!-- Advice Status Checker Display Template -->
+<div class="advice-status-checker-display">
+    <div class="workflow-action-header">
+        <i class="fa fa-search action-icon"></i>
+        <h4 class="action-title">Advice Status Checker</h4>
+        <span class="action-category">Advice Management</span>
+    </div>
+    
+    <div class="action-description">
+        <p>This action checks the current advice status for a work item and provides detailed status information for workflow branching decisions.</p>
+    </div>
+    
+    <div class="configuration-summary" data-bind="if: config">
+        <h5>Configuration</h5>
+        <dl class="config-list">
+            <dt>Work Item Variable:</dt>
+            <dd data-bind="text: config.workItemVariable || 'Not configured'"></dd>
+            
+            <dt>Enable Caching:</dt>
+            <dd data-bind="text: config.enableCaching !== false ? 'Yes' : 'No'"></dd>
+            
+            <dt>Timeout:</dt>
+            <dd><span data-bind="text: config.timeout || 30000"></span>ms</dd>
+        </dl>
+    </div>
+    
+    <div class="output-variables" data-bind="if: config && config.outputVariableMappings">
+        <h5>Output Variables</h5>
+        <div class="output-grid">
+            <!-- ko if: config.outputVariableMappings.statusVariable -->
+            <div class="output-item">
+                <i class="fa fa-info-circle"></i>
+                <span class="output-label">Status:</span>
+                <span class="output-variable" data-bind="text: config.outputVariableMappings.statusVariable"></span>
+            </div>
+            <!-- /ko -->
+            
+            <!-- ko if: config.outputVariableMappings.isEnabledVariable -->
+            <div class="output-item">
+                <i class="fa fa-toggle-on"></i>
+                <span class="output-label">Is Enabled:</span>
+                <span class="output-variable" data-bind="text: config.outputVariableMappings.isEnabledVariable"></span>
+            </div>
+            <!-- /ko -->
+            
+            <!-- ko if: config.outputVariableMappings.pausedDateVariable -->
+            <div class="output-item">
+                <i class="fa fa-calendar"></i>
+                <span class="output-label">Paused Date:</span>
+                <span class="output-variable" data-bind="text: config.outputVariableMappings.pausedDateVariable"></span>
+            </div>
+            <!-- /ko -->
+            
+            <!-- ko if: config.outputVariableMappings.pausedByVariable -->
+            <div class="output-item">
+                <i class="fa fa-user"></i>
+                <span class="output-label">Paused By:</span>
+                <span class="output-variable" data-bind="text: config.outputVariableMappings.pausedByVariable"></span>
+            </div>
+            <!-- /ko -->
+            
+            <!-- ko if: config.outputVariableMappings.pauseReasonVariable -->
+            <div class="output-item">
+                <i class="fa fa-comment"></i>
+                <span class="output-label">Pause Reason:</span>
+                <span class="output-variable" data-bind="text: config.outputVariableMappings.pauseReasonVariable"></span>
+            </div>
+            <!-- /ko -->
+            
+            <!-- ko if: config.outputVariableMappings.resumedDateVariable -->
+            <div class="output-item">
+                <i class="fa fa-calendar-check-o"></i>
+                <span class="output-label">Resumed Date:</span>
+                <span class="output-variable" data-bind="text: config.outputVariableMappings.resumedDateVariable"></span>
+            </div>
+            <!-- /ko -->
+            
+            <!-- ko if: config.outputVariableMappings.resumedByVariable -->
+            <div class="output-item">
+                <i class="fa fa-user-plus"></i>
+                <span class="output-label">Resumed By:</span>
+                <span class="output-variable" data-bind="text: config.outputVariableMappings.resumedByVariable"></span>
+            </div>
+            <!-- /ko -->
+            
+            <!-- ko if: config.outputVariableMappings.resumeReasonVariable -->
+            <div class="output-item">
+                <i class="fa fa-comment-o"></i>
+                <span class="output-label">Resume Reason:</span>
+                <span class="output-variable" data-bind="text: config.outputVariableMappings.resumeReasonVariable"></span>
+            </div>
+            <!-- /ko -->
+            
+            <!-- ko if: config.outputVariableMappings.nextAdviceDateVariable -->
+            <div class="output-item">
+                <i class="fa fa-clock-o"></i>
+                <span class="output-label">Next Advice Date:</span>
+                <span class="output-variable" data-bind="text: config.outputVariableMappings.nextAdviceDateVariable"></span>
+            </div>
+            <!-- /ko -->
+            
+            <!-- ko if: config.outputVariableMappings.errorMessageVariable -->
+            <div class="output-item">
+                <i class="fa fa-exclamation-triangle"></i>
+                <span class="output-label">Error Message:</span>
+                <span class="output-variable" data-bind="text: config.outputVariableMappings.errorMessageVariable"></span>
+            </div>
+            <!-- /ko -->
+        </div>
+    </div>
+    
+    <div class="branch-info">
+        <h5>Output Branches</h5>
+        <div class="branch-list">
+            <div class="branch-item active">
+                <span class="branch-color" style="background-color: #28a745;"></span>
+                <strong>Advice Running</strong>
+                <span class="branch-desc">- Advice is currently active/enabled</span>
+            </div>
+            <div class="branch-item paused">
+                <span class="branch-color" style="background-color: #ffc107;"></span>
+                <strong>Advice Paused</strong>
+                <span class="branch-desc">- Advice is currently paused/disabled</span>
+            </div>
+            <div class="branch-item none">
+                <span class="branch-color" style="background-color: #6c757d;"></span>
+                <strong>No Advice</strong>
+                <span class="branch-desc">- No advice exists for this work item</span>
+            </div>
+            <div class="branch-item success">
+                <span class="branch-color" style="background-color: #17a2b8;"></span>
+                <strong>Success</strong>
+                <span class="branch-desc">- Status check completed successfully (general)</span>
+            </div>
+            <div class="branch-item error">
+                <span class="branch-color" style="background-color: #dc3545;"></span>
+                <strong>Error</strong>
+                <span class="branch-desc">- Error occurred during status checking</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="action-notes">
+        <div class="note-item">
+            <i class="fa fa-info-circle text-info"></i>
+            <span><strong>Read-Only:</strong> This action only checks status without modifying advice.</span>
+        </div>
+        <div class="note-item">
+            <i class="fa fa-flash text-warning"></i>
+            <span><strong>Performance:</strong> Caching is enabled by default for optimal performance.</span>
+        </div>
+        <div class="note-item">
+            <i class="fa fa-code-fork text-primary"></i>
+            <span><strong>Branching:</strong> Use status-specific branches for conditional workflow logic.</span>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,140 @@
+{
+    "id": "Alt.AdviceManagement.AdviceResumeManager",
+    "version": "1.0.0",
+    "type": "workflowAction",
+    "priority": 8200,
+    "metadata": {
+        "name": "Advice Resume Manager",
+        "description": "Comprehensive workflow action that restores previously paused advice or creates default advice if no saved state exists",
+        "category": "Advice Management",
+        "icon": "fa-play-circle",
+        "author": "Alterspective",
+        "documentation": "Manages the complete resume lifecycle for advice items including state restoration, new advice creation, and due date management"
+    },
+    "designer": {
+        "allowInWorkflowDesigner": true,
+        "allowInVisualWorkflow": true,
+        "configurable": true,
+        "configurationComponent": "Alt.AdviceManagement.AdviceResumeManagerDesigner",
+        "inputs": [
+            {
+                "name": "workItemId",
+                "type": "/Identifier/Work Item Identifier",
+                "required": true,
+                "description": "ID of the work item to resume advice for"
+            },
+            {
+                "name": "abstractAdviceTypeSystemName",
+                "type": "/String",
+                "required": true,
+                "description": "System name of the abstract advice type (base type that all advice inherits from)"
+            },
+            {
+                "name": "defaultAdviceTypeSystemName",
+                "type": "/String",
+                "required": true,
+                "description": "System name of the default advice type to create if no saved state exists"
+            },
+            {
+                "name": "newAdviceDueDate",
+                "type": "/DateTime",
+                "required": false,
+                "description": "Specific due date for resumed/created advice (if not provided, uses saved date or default offset)"
+            },
+            {
+                "name": "activePhase",
+                "type": "/String",
+                "required": false,
+                "description": "Phase for active advice items (default: Active)"
+            }
+        ],
+        "outputs": [
+            {
+                "name": "success",
+                "type": "/Boolean",
+                "description": "Whether the resume operation completed successfully"
+            },
+            {
+                "name": "message",
+                "type": "/String",
+                "description": "Result message"
+            },
+            {
+                "name": "resumeApproach",
+                "type": "/String",
+                "description": "Approach used: 'restore' or 'create'"
+            },
+            {
+                "name": "restoredAdviceCount",
+                "type": "/Number",
+                "description": "Number of advice items restored from saved state"
+            },
+            {
+                "name": "createdAdviceCount",
+                "type": "/Number",
+                "description": "Number of new advice items created"
+            },
+            {
+                "name": "totalAdviceCount",
+                "type": "/Number",
+                "description": "Total number of advice items after resume"
+            },
+            {
+                "name": "hadSavedState",
+                "type": "/Boolean",
+                "description": "Whether saved advice state was found"
+            },
+            {
+                "name": "errorCount",
+                "type": "/Number",
+                "description": "Number of errors encountered"
+            }
+        ],
+        "branches": [
+            {
+                "id": "success",
+                "label": "Success",
+                "color": "#28a745"
+            },
+            {
+                "id": "restored",
+                "label": "Advice Restored",
+                "color": "#17a2b8"
+            },
+            {
+                "id": "created",
+                "label": "Default Advice Created",
+                "color": "#ffc107"
+            },
+            {
+                "id": "error",
+                "label": "Error",
+                "color": "#dc3545"
+            }
+        ]
+    },
+    "configuration": {
+        "abstractAdviceTypeSystemName": "AbstractAdvice",
+        "defaultAdviceTypeSystemName": "StandardAdvice",
+        "activePhase": "Active",
+        "pausedPhase": "Removed",
+        "newAdviceDueDate": null,
+        "enableLogging": true,
+        "timeout": 60000
+    },
+    "scripts": [
+        "/_ideFiles/Alt/AdviceManagement/Workflows/AdviceResumeManager/AdviceResumeManager.js",
+        "/_ideFiles/Alt/AdviceManagement/Foundation/Services/AdviceLifecycleService.js",
+        "/_ideFiles/Alt/AdviceManagement/Foundation/Configuration/AdviceLifecycleConfig.js"
+    ],
+    "styles": [
+        "/_ideFiles/Alt/AdviceManagement/Workflows/AdviceResumeManager/AdviceResumeManager.css"
+    ],
+    "templates": [
+        "/_ideFiles/Alt/AdviceManagement/Workflows/AdviceResumeManager/AdviceResumeManager.html"
+    ],
+    "dependencies": [
+        "jquery",
+        "knockout"
+    ]
+}

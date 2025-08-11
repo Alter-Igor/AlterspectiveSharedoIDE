@@ -1,0 +1,28 @@
+{
+    "id": "Alt.AdviceManagement.AdviceStatusCheckerDesigner",
+    "version": "1.0.0",
+    "type": "widget",
+    "priority": 100,
+    "metadata": {
+        "name": "Advice Status Checker Designer",
+        "description": "Designer widget for configuring the Advice Status Checker workflow action",
+        "category": "Advice Management",
+        "author": "Alterspective"
+    },
+    "scripts": [
+        "/_ideFiles/Alt/AdviceManagement/Workflows/Shared/WorkflowActionInfoModal.js",
+        "/_ideFiles/Alt/AdviceManagement/Workflows/AdviceStatusChecker/AdviceStatusCheckerInfo.js",
+        "/_ideFiles/Alt/AdviceManagement/Workflows/AdviceStatusChecker/Designer/AdviceStatusCheckerDesigner.js"
+    ],
+    "styles": [
+        "/_ideFiles/Alt/AdviceManagement/Workflows/Shared/WorkflowActionInfoModal.css",
+        "/_ideFiles/Alt/AdviceManagement/Workflows/AdviceStatusChecker/Designer/AdviceStatusCheckerDesigner.css"
+    ],
+    "templates": [
+        "/_ideFiles/Alt/AdviceManagement/Workflows/AdviceStatusChecker/Designer/AdviceStatusCheckerDesigner.html"
+    ],
+    "dependencies": [
+        "jquery",
+        "knockout"
+    ]
+}

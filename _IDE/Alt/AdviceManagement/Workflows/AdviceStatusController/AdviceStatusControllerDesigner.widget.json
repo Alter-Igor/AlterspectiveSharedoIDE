@@ -1,0 +1,35 @@
+{
+    "id": "Alt.AdviceManagement.AdviceStatusControllerDesigner",
+    "version": "1.0.0",
+    "type": "widget",
+    "priority": 1000,
+    "metadata": {
+        "name": "Advice Status Controller Designer",
+        "description": "Configuration designer for the Advice Status Controller workflow action",
+        "category": "Workflow Designers",
+        "icon": "fa-cog",
+        "author": "Alterspective"
+    },
+    "designer": {
+        "allowInWorkflowDesigner": false,
+        "allowInVisualWorkflow": false,
+        "allowInPortal": false,
+        "configurable": false
+    },
+    "configuration": {},
+    "scripts": [
+        "/_ideFiles/Alt/AdviceManagement/Workflows/Shared/WorkflowActionInfoModal.js",
+        "/_ideFiles/Alt/AdviceManagement/Workflows/AdviceStatusController/AdviceStatusControllerInfo.js",
+        "/_ideFiles/Alt/AdviceManagement/Workflows/AdviceStatusController/AdviceStatusControllerDesigner.js"
+    ],
+    "styles": [
+        "/_ideFiles/Alt/AdviceManagement/Workflows/AdviceStatusController/AdviceStatusControllerDesigner.css"
+    ],
+    "templates": [
+        "/_ideFiles/Alt/AdviceManagement/Workflows/AdviceStatusController/AdviceStatusControllerDesigner.html"
+    ],
+    "dependencies": [
+        "jquery",
+        "knockout"
+    ]
+}

@@ -1,0 +1,944 @@
+{
+  "systemName": "iCare-Matters-Advice-Loop-V2",
+  "name": "Advice - Start Initial Advice when the matter is in Review",
+  "description": "Responsible for starting the initial advice for Insurance Matters.\n\nInitiated by the updating/creating of either key-dates:\n- Engagement Request Received\n- Instruction Date",
+  "overrideNotifications": false,
+  "exceptionNotifications": true,
+  "exceptionNotificationEmailAddresses": "",
+  "isSystem": false,
+  "variables": [
+    {
+      "systemName": "adviceDate",
+      "name": "Advice Date",
+      "defaultValue": null,
+      "type": "/Date Time",
+      "isCollection": false,
+      "isInputVariable": false,
+      "isMandatory": true
+    },
+    {
+      "systemName": "adviceTaskId",
+      "name": "Advice Task Id",
+      "defaultValue": null,
+      "type": "/Identifier/Work Item Identifier/Task Identifier",
+      "isCollection": false,
+      "isInputVariable": false,
+      "isMandatory": false
+    },
+    {
+      "systemName": "assignedEmployeeID",
+      "name": "Assigned Employee ID",
+      "defaultValue": null,
+      "type": "/Identifier/Ods Entity Identifier",
+      "isCollection": false,
+      "isInputVariable": false,
+      "isMandatory": false
+    },
+    {
+      "systemName": "constPathForAdviceManagement",
+      "name": "Const Path For Advice Management",
+      "defaultValue": "matter/custom-matter-insurance",
+      "type": "/String",
+      "isCollection": false,
+      "isInputVariable": false,
+      "isMandatory": false
+    },
+    {
+      "systemName": "currentPhase",
+      "name": "Current Phase",
+      "defaultValue": null,
+      "type": "/String",
+      "isCollection": false,
+      "isInputVariable": false,
+      "isMandatory": false
+    },
+    {
+      "systemName": "dateInstructionsReceivedKeyDate",
+      "name": "Date Instructions Received Key Date",
+      "defaultValue": null,
+      "type": "/Date Time",
+      "isCollection": false,
+      "isInputVariable": false,
+      "isMandatory": false
+    },
+    {
+      "systemName": "dateOfSubstantiveAdvice0",
+      "name": "Date of Substantive Advice <= 0",
+      "defaultValue": null,
+      "type": "/Date Time",
+      "isCollection": false,
+      "isInputVariable": false,
+      "isMandatory": false
+    },
+    {
+      "systemName": "daysSinceLastAdvice",
+      "name": "Days Since Last Advice",
+      "defaultValue": null,
+      "type": "/Number",
+      "isCollection": false,
+      "isInputVariable": false,
+      "isMandatory": false
+    },
+    {
+      "systemName": "initialAdviceDueDate",
+      "name": "Initial Advice Due Date",
+      "defaultValue": null,
+      "type": "/Date Time",
+      "isCollection": false,
+      "isInputVariable": false,
+      "isMandatory": true
+    },
+    {
+      "systemName": "initialAdviceKeyDateID",
+      "name": "Initial Advice Key Date ID",
+      "defaultValue": null,
+      "type": "/Identifier/Work Item Identifier/Task Identifier/Key Date Identifier",
+      "isCollection": false,
+      "isInputVariable": false,
+      "isMandatory": true
+    },
+    {
+      "systemName": "instructionDate",
+      "name": "Instruction Date",
+      "defaultValue": null,
+      "type": "/Date Time",
+      "isCollection": false,
+      "isInputVariable": false,
+      "isMandatory": false
+    },
+    {
+      "systemName": "keyDateDateEngagementRequestReceivedDate",
+      "name": "Key Date - Date Engagement Request Received - Date",
+      "defaultValue": null,
+      "type": "/Date Time",
+      "isCollection": false,
+      "isInputVariable": false,
+      "isMandatory": false
+    },
+    {
+      "systemName": "keyDateParentTypePath",
+      "name": "Key Date Parent Type Path",
+      "defaultValue": null,
+      "type": "/String",
+      "isCollection": false,
+      "isInputVariable": false,
+      "isMandatory": false
+    },
+    {
+      "systemName": "matterId",
+      "name": "Matter Id",
+      "defaultValue": null,
+      "type": "/Identifier/Work Item Identifier",
+      "isCollection": false,
+      "isInputVariable": false,
+      "isMandatory": false
+    },
+    {
+      "systemName": "ninetydaydatecalc",
+      "name": "ninetydaydatecalc",
+      "defaultValue": null,
+      "type": "/Date Time",
+      "isCollection": false,
+      "isInputVariable": false,
+      "isMandatory": false
+    },
+    {
+      "systemName": "sOWInitialAdviceReminder",
+      "name": "SOW - Initial Advice Reminder",
+      "defaultValue": null,
+      "type": "/Number",
+      "isCollection": false,
+      "isInputVariable": false,
+      "isMandatory": false
+    },
+    {
+      "systemName": "sOWInitialAdviceWorkingDays",
+      "name": "SOW - Initial Advice Working Days",
+      "defaultValue": null,
+      "type": "/Number",
+      "isCollection": false,
+      "isInputVariable": false,
+      "isMandatory": false
+    },
+    {
+      "systemName": "taskId",
+      "name": "TaskId",
+      "defaultValue": null,
+      "type": "/Identifier/Work Item Identifier",
+      "isCollection": false,
+      "isInputVariable": false,
+      "isMandatory": false
+    },
+    {
+      "systemName": "triggerInputKeyDateDueDate",
+      "name": "Trigger Input Key Date Due Date",
+      "defaultValue": null,
+      "type": "/Date Time",
+      "isCollection": false,
+      "isInputVariable": true,
+      "isMandatory": true
+    },
+    {
+      "systemName": "triggerKeyDateDueDate",
+      "name": "Trigger Key Date Due Date",
+      "defaultValue": null,
+      "type": "/Date Time",
+      "isCollection": false,
+      "isInputVariable": false,
+      "isMandatory": false
+    },
+    {
+      "systemName": "triggerKeyDateId",
+      "name": "Trigger Key Date Id",
+      "defaultValue": null,
+      "type": "/Identifier/Work Item Identifier",
+      "isCollection": false,
+      "isInputVariable": true,
+      "isMandatory": true
+    },
+    {
+      "systemName": "triggerKeyDateTitle",
+      "name": "Trigger Key Date Title",
+      "defaultValue": null,
+      "type": "/Identifier/Action Plan Identifier",
+      "isCollection": false,
+      "isInputVariable": false,
+      "isMandatory": false
+    },
+    {
+      "systemName": "triggerKeyDateTypeName",
+      "name": "Trigger Key Date Type Name",
+      "defaultValue": null,
+      "type": "/String",
+      "isCollection": false,
+      "isInputVariable": false,
+      "isMandatory": false
+    },
+    {
+      "systemName": "triggerKeyDateTypeSystemName",
+      "name": "Trigger Key Date Type System Name",
+      "defaultValue": null,
+      "type": "/Identifier/Action Plan Identifier",
+      "isCollection": false,
+      "isInputVariable": false,
+      "isMandatory": false
+    },
+    {
+      "systemName": "updatedAdviceKeyDateID",
+      "name": "Updated Advice Key Date ID",
+      "defaultValue": null,
+      "type": "/Identifier/Work Item Identifier/Task Identifier/Key Date Identifier",
+      "isCollection": false,
+      "isInputVariable": false,
+      "isMandatory": true
+    },
+    {
+      "systemName": "userId",
+      "name": "UserId",
+      "defaultValue": null,
+      "type": "/Identifier/Ods Entity Identifier",
+      "isCollection": false,
+      "isInputVariable": true,
+      "isMandatory": true
+    }
+  ],
+  "steps": [
+    {
+      "ideData": {
+        "x": -400,
+        "y": 475
+      },
+      "actions": [
+        {
+          "config": {
+            "now": true,
+            "startOnDateTimeVariable": null,
+            "startIn": 1,
+            "startInType": "Days",
+            "description": "Start step"
+          },
+          "connections": {
+            "execute": {
+              "step": "finish",
+              "port": "bottom3",
+              "points": []
+            }
+          },
+          "actionSystemName": "startStep",
+          "name": "Start step"
+        }
+      ],
+      "systemName": "abortAlreadyRun",
+      "name": "Abort Already Run",
+      "description": null,
+      "isStart": false,
+      "isEnd": false,
+      "isOptimal": false
+    },
+    {
+      "ideData": {
+        "x": -175,
+        "y": 200
+      },
+      "actions": [
+        {
+          "config": {
+            "now": true,
+            "startOnDateTimeVariable": null,
+            "startIn": 1,
+            "startInType": "Days",
+            "description": "Start step"
+          },
+          "connections": {
+            "execute": {
+              "step": "finish",
+              "port": "bottom2",
+              "points": []
+            }
+          },
+          "actionSystemName": "startStep",
+          "name": "Start step"
+        }
+      ],
+      "systemName": "abortOnInstructionParentType",
+      "name": "Abort On Instruction Parent Type",
+      "description": null,
+      "isStart": false,
+      "isEnd": false,
+      "isOptimal": true
+    },
+    {
+      "ideData": {
+        "x": -175,
+        "y": -50
+      },
+      "actions": [
+        {
+          "config": {
+            "now": true,
+            "startOnDateTimeVariable": null,
+            "startIn": 1,
+            "startInType": "Days",
+            "description": "Start step"
+          },
+          "connections": {
+            "execute": {
+              "step": "finish",
+              "port": "bottom2",
+              "points": []
+            }
+          },
+          "actionSystemName": "startStep",
+          "name": "Start step"
+        }
+      ],
+      "systemName": "adviceManagementNotRequired",
+      "name": "Advice Management Not Required",
+      "description": null,
+      "isStart": false,
+      "isEnd": false,
+      "isOptimal": false
+    },
+    {
+      "ideData": {
+        "x": 1800,
+        "y": -675
+      },
+      "actions": [
+        {
+          "config": {
+            "runForId": "matterId",
+            "ruleToRun": "custom-matter-insurance-lookup-assigned-employee",
+            "assignToId": "assignedEmployeeID"
+          },
+          "connections": {},
+          "actionSystemName": "allocationRule",
+          "name": "Run allocation rule"
+        },
+        {
+          "config": {
+            "now": false,
+            "sourceDateVariable": "instructionDate",
+            "outputVariable": "ninetydaydatecalc",
+            "subtract": false,
+            "amount": "90",
+            "type": "days"
+          },
+          "connections": {},
+          "actionSystemName": "Dates",
+          "name": "Date calculations"
+        },
+        {
+          "config": {
+            "taskType": "custom-global-task-reporting",
+            "taskTitle": "90 Day Program Report",
+            "taskDescription": null,
+            "dueInDays": 0,
+            "tag": null,
+            "dueOnVariable": "ninetydaydatecalc",
+            "priorityId": null,
+            "actionPlanItems": [],
+            "actionPlanTitle": "",
+            "parentWorkItemId": "matterId",
+            "taskOwnerOdsId": "assignedEmployeeID",
+            "outputVariable": null,
+            "onCompleteOutlet": true,
+            "onOverdueOutlet": true,
+            "phaseOutlets": [],
+            "assignments": []
+          },
+          "connections": {},
+          "actionSystemName": "createTaskV2",
+          "name": "Create task"
+        },
+        {
+          "config": {
+            "now": true,
+            "startOnDateTimeVariable": null,
+            "startIn": 1,
+            "startInType": "Days",
+            "description": "Start step"
+          },
+          "connections": {
+            "execute": {
+              "step": "updateInitialAdviceTaskDueDate",
+              "port": "top5",
+              "points": []
+            }
+          },
+          "actionSystemName": "startStep",
+          "name": "Start step"
+        }
+      ],
+      "systemName": "aXAXLReportingStep",
+      "name": "AXA XL Reporting Step",
+      "description": "Step to create 90 Day Program Task for AXA XL Client",
+      "isStart": false,
+      "isEnd": false,
+      "isOptimal": false
+    },
+    {
+      "ideData": {
+        "x": 275,
+        "y": -425
+      },
+      "actions": [
+        {
+          "config": {
+            "variables": [
+              "triggerKeyDateDueDate",
+              "triggerInputKeyDateDueDate",
+              "sOWInitialAdviceWorkingDays"
+            ]
+          },
+          "connections": {},
+          "actionSystemName": "LogVariables",
+          "name": "Log Variables"
+        },
+        {
+          "config": {
+            "now": false,
+            "sourceDateVariable": "triggerInputKeyDateDueDate",
+            "outputVariable": "initialAdviceDueDate",
+            "subtract": false,
+            "amount": "{{sOWInitialAdviceWorkingDays}}",
+            "type": "workingdays"
+          },
+          "connections": {},
+          "actionSystemName": "Dates",
+          "name": "Date calculations Date Engagement Received + SOW SLA Working Days"
+        },
+        {
+          "config": {
+            "variables": [
+              "matterId",
+              "userId",
+              "sOWInitialAdviceReminder",
+              "sOWInitialAdviceWorkingDays",
+              "initialAdviceDueDate"
+            ]
+          },
+          "connections": {},
+          "actionSystemName": "LogVariables",
+          "name": "Log Variables"
+        },
+        {
+          "config": {
+            "variable": "adviceTaskId",
+            "logMessage": null
+          },
+          "connections": {
+            "execute": {
+              "step": "createInitialAdviceTask",
+              "port": "left4",
+              "points": []
+            }
+          },
+          "actionSystemName": "isNull",
+          "name": "Is null or empty - No Existing Initial Advice"
+        },
+        {
+          "config": {
+            "now": true,
+            "startOnDateTimeVariable": null,
+            "startIn": 1,
+            "startInType": "Days",
+            "description": "We have an initial advice"
+          },
+          "connections": {
+            "execute": {
+              "step": "updateInitialAdviceTaskDueDate",
+              "port": "left3",
+              "points": []
+            }
+          },
+          "actionSystemName": "startStep",
+          "name": "We have an initial advice"
+        }
+      ],
+      "systemName": "calculateInitialAdviceDueDate",
+      "name": "Calculate Initial Advice Due Date",
+      "description": null,
+      "isStart": false,
+      "isEnd": false,
+      "isOptimal": true
+    },
+    {
+      "ideData": {
+        "x": 1275,
+        "y": -650
+      },
+      "actions": [
+        {
+          "config": {
+            "matchingRuleContext": "workitem",
+            "matchingRule": "axa-xl-business-rule",
+            "sharedoIdVariable": "matterId",
+            "odsIdVariable": null,
+            "participantIdVariable": null
+          },
+          "connections": {
+            "no-match": {
+              "step": "updateInitialAdviceTaskDueDate",
+              "port": "top3",
+              "points": []
+            },
+            "match": {
+              "step": "aXAXLReportingStep",
+              "port": "left3",
+              "points": []
+            }
+          },
+          "actionSystemName": "RunMatchingRule",
+          "name": "Evaluate business rule"
+        }
+      ],
+      "systemName": "checkIfClientRequiresNinetyDayProgramTask",
+      "name": "Check if Client requires Ninety Day Program Task",
+      "description": null,
+      "isStart": false,
+      "isEnd": false,
+      "isOptimal": false
+    },
+    {
+      "ideData": {
+        "x": 850,
+        "y": -750
+      },
+      "actions": [
+        {
+          "config": {
+            "taskType": "custom-global-task-advice-initial",
+            "taskTitle": "Initial Advice",
+            "taskDescription": "Initial Advice",
+            "dueInDays": 0,
+            "tag": null,
+            "dueOnVariable": null,
+            "priorityId": null,
+            "actionPlanItems": [],
+            "actionPlanTitle": "Initial Advice",
+            "parentWorkItemId": "matterId",
+            "taskOwnerOdsId": "userId",
+            "outputVariable": "adviceTaskId",
+            "onCompleteOutlet": true,
+            "onOverdueOutlet": true,
+            "phaseOutlets": [],
+            "assignments": []
+          },
+          "connections": {},
+          "actionSystemName": "createTaskV2",
+          "name": "Create Initial Advice Task"
+        },
+        {
+          "config": {
+            "offset": "{{sOWInitialAdviceReminder}}",
+            "offsetMetric": "WD",
+            "specificDateVariable": null,
+            "taskIdVariable": "adviceTaskId"
+          },
+          "connections": {},
+          "actionSystemName": "CreateReminder",
+          "name": "Add reminder to Initial Advice Task"
+        },
+        {
+          "config": {
+            "mode": "formfield",
+            "workItemIdVariable": "adviceTaskId",
+            "newValueVariable": null,
+            "newValue": "initial",
+            "attributeSystemName": "custom-global-task-advice-outcome-type",
+            "formId": "20bd5389-9e5b-4f3a-9a08-f9c8e515c9c3"
+          },
+          "connections": {},
+          "actionSystemName": "UpdateAttribute",
+          "name": "Update Advice Type"
+        },
+        {
+          "config": {
+            "now": true,
+            "startOnDateTimeVariable": null,
+            "startIn": 1,
+            "startInType": "Days",
+            "description": "Start step"
+          },
+          "connections": {
+            "execute": {
+              "step": "checkIfClientRequiresNinetyDayProgramTask",
+              "port": "left3",
+              "points": []
+            }
+          },
+          "actionSystemName": "startStep",
+          "name": "Start step"
+        }
+      ],
+      "systemName": "createInitialAdviceTask",
+      "name": "Create Initial Advice Task",
+      "description": null,
+      "isStart": false,
+      "isEnd": false,
+      "isOptimal": true
+    },
+    {
+      "ideData": {
+        "x": 1525,
+        "y": -275
+      },
+      "actions": [],
+      "systemName": "finish",
+      "name": "Plan complete",
+      "description": "The plan is complete",
+      "isStart": false,
+      "isEnd": true,
+      "isOptimal": true
+    },
+    {
+      "ideData": {
+        "x": -1000,
+        "y": -375
+      },
+      "actions": [
+        {
+          "config": {
+            "variables": [
+              "userId",
+              "triggerKeyDateId"
+            ]
+          },
+          "connections": {},
+          "actionSystemName": "LogVariables",
+          "name": "Log Variables"
+        },
+        {
+          "config": {
+            "workItemId": "triggerKeyDateId",
+            "workItemType": "milestone",
+            "variableMappings": [
+              {
+                "variableSystemName": "triggerKeyDateTitle",
+                "composerPath": "workitem.title"
+              },
+              {
+                "variableSystemName": "triggerKeyDateTypeSystemName",
+                "composerPath": "workitem.type.systemName"
+              },
+              {
+                "variableSystemName": "triggerKeyDateTypeName",
+                "composerPath": "workitem.type.name"
+              },
+              {
+                "variableSystemName": "triggerKeyDateDueDate",
+                "composerPath": "workitem.taskDueDate.date.utc.value"
+              },
+              {
+                "variableSystemName": "matterId",
+                "composerPath": "workitem.parent.id"
+              }
+            ],
+            "collectionMappings": []
+          },
+          "connections": {},
+          "actionSystemName": "loadData",
+          "name": "Load Key Date Details"
+        },
+        {
+          "config": {
+            "variables": [
+              "matterId",
+              "triggerKeyDateId"
+            ]
+          },
+          "connections": {},
+          "actionSystemName": "LogVariables",
+          "name": "Log Variables"
+        },
+        {
+          "config": {
+            "workItemContextVariable": "matterId"
+          },
+          "connections": {
+            "never-run": {
+              "step": "start",
+              "port": "left5",
+              "points": []
+            },
+            "already-running": {
+              "step": "abortAlreadyRun",
+              "port": "left3",
+              "points": []
+            },
+            "already-complete": {
+              "step": "abortAlreadyRun",
+              "port": "left2",
+              "points": []
+            }
+          },
+          "actionSystemName": "ExistingInstanceBranch",
+          "name": "Existing instance branch"
+        }
+      ],
+      "systemName": "main",
+      "name": "Main entry point",
+      "description": "The main entry point of the plan",
+      "isStart": true,
+      "isEnd": false,
+      "isOptimal": true
+    },
+    {
+      "ideData": {
+        "x": -550,
+        "y": -500
+      },
+      "actions": [
+        {
+          "config": {
+            "runForId": "matterId",
+            "ruleToRun": "custom-matter-insurance-lookup-assigned-employee",
+            "assignToId": "userId"
+          },
+          "connections": {},
+          "actionSystemName": "allocationRule",
+          "name": "GetUserId"
+        },
+        {
+          "config": {
+            "variables": [
+              "triggerKeyDateTitle",
+              "triggerKeyDateTypeName",
+              "triggerKeyDateTypeSystemName",
+              "triggerKeyDateDueDate"
+            ]
+          },
+          "connections": {},
+          "actionSystemName": "LogVariables",
+          "name": "Log Variables"
+        },
+        {
+          "config": {
+            "workItemId": "matterId",
+            "workItemType": "custom-matter-insurance",
+            "variableMappings": [
+              {
+                "variableSystemName": "instructionDate",
+                "composerPath": "workitem.keyDates.kd-instruction-date.taskDueDate.date.utc.value"
+              },
+              {
+                "variableSystemName": "updatedAdviceKeyDateID",
+                "composerPath": "workitem.keyDates.custom-date-updated-advice-submitted.id"
+              },
+              {
+                "variableSystemName": "initialAdviceKeyDateID",
+                "composerPath": "workitem.keyDates.custom-date-initial-advice-submitted.id"
+              },
+              {
+                "variableSystemName": "sOWInitialAdviceWorkingDays",
+                "composerPath": "workitem.parent!q?path=custom-b2b-insurance-client-sow.form-custom-insurance-sow-sla-settings.insuranceInitialAdviceWorkingDays"
+              },
+              {
+                "variableSystemName": "sOWInitialAdviceReminder",
+                "composerPath": "workitem.parent!q?path=custom-b2b-insurance-client-sow.form-custom-insurance-sow-sla-settings.insuranceInitialAdviceReminderWorkingDays"
+              },
+              {
+                "variableSystemName": "adviceTaskId",
+                "composerPath": "workitem.children!q?path=custom-global-task-advice-initial!1.id"
+              },
+              {
+                "variableSystemName": "keyDateDateEngagementRequestReceivedDate",
+                "composerPath": "workitem.keyDates.custom-global-date-engagement-request-received.taskDueDate.date.utc.value"
+              },
+              {
+                "variableSystemName": "keyDateParentTypePath",
+                "composerPath": "workitem.type.path"
+              }
+            ],
+            "collectionMappings": []
+          },
+          "connections": {},
+          "actionSystemName": "loadData",
+          "name": "Load work item data"
+        },
+        {
+          "config": {
+            "variables": [
+              "updatedAdviceKeyDateID",
+              "initialAdviceKeyDateID",
+              "instructionDate",
+              "matterId",
+              "keyDateDateEngagementRequestReceivedDate",
+              "adviceTaskId",
+              "keyDateParentTypePath"
+            ]
+          },
+          "connections": {},
+          "actionSystemName": "LogVariables",
+          "name": "Log Variables"
+        },
+        {
+          "config": {
+            "conditions": [
+              {
+                "id": 2,
+                "conditionName": "condition2",
+                "condition": "!ctx.keyDateParentTypePath.startsWith(\"/instruction/\")",
+                "label": "We dont have an instruction type"
+              },
+              {
+                "id": 1,
+                "conditionName": "condition1",
+                "condition": "ctx.keyDateParentTypePath.startsWith(\"/instruction/\")",
+                "label": "We have an instruction type"
+              }
+            ]
+          },
+          "connections": {
+            "condition1": {
+              "step": "abortOnInstructionParentType",
+              "port": "left3",
+              "points": []
+            },
+            "condition2": {
+              "step": "validateMatterType",
+              "port": "left3",
+              "points": []
+            }
+          },
+          "actionSystemName": "ifBlock",
+          "name": "If"
+        }
+      ],
+      "systemName": "start",
+      "name": "Start",
+      "description": null,
+      "isStart": false,
+      "isEnd": false,
+      "isOptimal": false
+    },
+    {
+      "ideData": {
+        "x": 1000,
+        "y": -275
+      },
+      "actions": [
+        {
+          "config": {
+            "newDateVariable": "initialAdviceDueDate",
+            "workTypeIdVariable": "adviceTaskId"
+          },
+          "connections": {},
+          "actionSystemName": "UpdateKeyDateDueDate",
+          "name": "Update due date of Initial Advice Task"
+        },
+        {
+          "config": {
+            "now": true,
+            "startOnDateTimeVariable": null,
+            "startIn": 1,
+            "startInType": "Days",
+            "description": "Start step"
+          },
+          "connections": {
+            "execute": {
+              "step": "finish",
+              "port": "left4",
+              "points": []
+            }
+          },
+          "actionSystemName": "startStep",
+          "name": "Start step"
+        }
+      ],
+      "systemName": "updateInitialAdviceTaskDueDate",
+      "name": "Update Initial Advice Task Due Date",
+      "description": null,
+      "isStart": false,
+      "isEnd": false,
+      "isOptimal": true
+    },
+    {
+      "ideData": {
+        "x": -125,
+        "y": -550
+      },
+      "actions": [
+        {
+          "config": {
+            "conditions": [
+              {
+                "id": 1,
+                "conditionName": "condition1",
+                "condition": "ctx.keyDateParentTypePath.includes(ctx.constPathForAdviceManagement)",
+                "label": "Advice Management "
+              },
+              {
+                "id": 2,
+                "conditionName": "condition2",
+                "condition": "true",
+                "label": "Else"
+              }
+            ]
+          },
+          "connections": {
+            "condition2": {
+              "step": "adviceManagementNotRequired",
+              "port": "top5",
+              "points": []
+            },
+            "condition1": {
+              "step": "calculateInitialAdviceDueDate",
+              "port": "top1",
+              "points": []
+            }
+          },
+          "actionSystemName": "ifBlock",
+          "name": "If"
+        }
+      ],
+      "systemName": "validateMatterType",
+      "name": "Validate Matter Type",
+      "description": "In this step we need to validate if the current \nMatter Type is a Matter that required Advice \nManagement.\n/matter/custom-matter-insurance",
+      "isStart": false,
+      "isEnd": false,
+      "isOptimal": false
+    }
+  ]
+}

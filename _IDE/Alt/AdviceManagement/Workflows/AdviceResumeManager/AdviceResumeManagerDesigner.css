@@ -1,0 +1,147 @@
+/* Advice Resume Manager Designer Styles */
+
+/* Import shared modal styles */
+@import url("../Shared/WorkflowActionInfoModal.css");
+
+.advice-resume-manager-designer {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #fff;
+    margin-bottom: 10px;
+}
+
+.designer-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #ddd;
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.designer-header:hover {
+    background-color: #e9ecef;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.designer-icon {
+    color: #28a745; /* Green color for resume/play action */
+    font-size: 16px;
+}
+
+.designer-title {
+    font-weight: bold;
+    color: #333;
+}
+
+.configuration-summary {
+    color: #6c757d;
+    font-size: 14px;
+    flex-grow: 1;
+}
+
+.toggle-icon {
+    color: #6c757d;
+    font-size: 14px;
+}
+
+.designer-content {
+    padding: 15px;
+}
+
+.btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: background-color 0.2s;
+}
+
+.btn-sm {
+    padding: 4px 8px;
+    font-size: 12px;
+}
+
+.btn-link {
+    background: none !important;
+    border: none !important;
+    color: #28a745;
+    padding: 4px 8px;
+}
+
+.btn-link:hover {
+    color: #1e7e34;
+    background: none !important;
+    box-shadow: none !important;
+}
+
+.text-info {
+    color: #17a2b8;
+}
+
+/* Information Panel */
+.info-panel {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 15px;
+    margin-top: 15px;
+}
+
+.info-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 12px;
+    font-size: 14px;
+}
+
+.info-item:last-child {
+    margin-bottom: 0;
+}
+
+.info-item i {
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.info-item strong {
+    color: #495057;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+    
+    .configuration-summary {
+        font-size: 13px;
+    }
+    
+    .info-panel {
+        padding: 12px;
+    }
+    
+    .info-item {
+        font-size: 13px;
+    }
+}

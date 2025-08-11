@@ -18,7 +18,8 @@
       "Bash(cp:*)",
       "Bash(xcopy:*)",
       "Bash(robocopy:*)",
-      "Bash(copy:*)"
+      "Bash(copy:*)",
+      "Bash(touch:*)"
     ],
     "deny": []
   }

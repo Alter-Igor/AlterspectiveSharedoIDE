@@ -1,0 +1,57 @@
+{
+  "systemName": "custom-check-anticipated-disbursements",
+  "name": "Check Anticipated Disbursements",
+  "description": null,
+  "overrideNotifications": false,
+  "exceptionNotifications": true,
+  "exceptionNotificationEmailAddresses": "",
+  "isSystem": false,
+  "variables": [],
+  "steps": [
+    {
+      "ideData": {
+        "x": 250,
+        "y": 200
+      },
+      "actions": [],
+      "systemName": "finish",
+      "name": "Plan complete",
+      "description": "The plan is complete",
+      "isStart": false,
+      "isEnd": true,
+      "isOptimal": true
+    },
+    {
+      "ideData": {
+        "x": 0,
+        "y": 0
+      },
+      "actions": [
+        {
+          "config": {
+            "now": true,
+            "startOnDateTimeVariable": null,
+            "startIn": 1,
+            "startInType": "Days",
+            "description": "Finish"
+          },
+          "connections": {
+            "execute": {
+              "step": "finish",
+              "port": "top3",
+              "points": []
+            }
+          },
+          "actionSystemName": "startStep",
+          "name": "Finish"
+        }
+      ],
+      "systemName": "main",
+      "name": "Main entry point",
+      "description": "The main entry point of the plan",
+      "isStart": true,
+      "isEnd": false,
+      "isOptimal": true
+    }
+  ]
+}

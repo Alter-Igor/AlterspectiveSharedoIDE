@@ -1,0 +1,336 @@
+<!-- Workflow Action Information Modal -->
+<div class="modal workflow-action-info-modal" data-bind="visible: isVisible, event: { keypress: handleKeyPress }" style="display: none;" tabindex="-1">
+    <div class="modal-backdrop" data-bind="click: hide"></div>
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            
+            <!-- Modal Header -->
+            <div class="modal-header">
+                <div class="modal-title-section">
+                    <i class="fa fa-info-circle text-info modal-icon"></i>
+                    <h4 class="modal-title" data-bind="text: actionInfo.name || 'Workflow Action Information'"></h4>
+                    <span class="badge badge-primary" data-bind="text: actionInfo.category || 'Workflow'"></span>
+                </div>
+                <button type="button" class="close" data-bind="click: hide" title="Close Information">
+                    <span>&times;</span>
+                </button>
+            </div>
+            
+            <!-- Tab Navigation -->
+            <div class="modal-nav">
+                <ul class="nav nav-tabs" role="tablist">
+                    <!-- ko foreach: availableTabs -->
+                    <li class="nav-item">
+                        <a class="nav-link" 
+                           data-bind="css: { active: $parent.currentTab() === id }, click: function() { $parent.switchTab(id); }"
+                           href="#" role="tab">
+                            <i class="fa" data-bind="css: icon"></i>
+                            <span data-bind="text: title"></span>
+                        </a>
+                    </li>
+                    <!-- /ko -->
+                </ul>
+            </div>
+            
+            <!-- Modal Body -->
+            <div class="modal-body">
+                
+                <!-- Overview Tab -->
+                <div class="tab-content" data-bind="visible: currentTab() === 'overview'">
+                    <div class="info-section">
+                        <h5><i class="fa fa-info-circle"></i> Description</h5>
+                        <p data-bind="text: actionInfo.description || 'No description available.'"></p>
+                        
+                        <!-- ko if: actionInfo.purpose -->
+                        <h5><i class="fa fa-target"></i> Purpose</h5>
+                        <p data-bind="text: actionInfo.purpose"></p>
+                        <!-- /ko -->
+                        
+                        <!-- ko if: actionInfo.useCases && actionInfo.useCases.length > 0 -->
+                        <h5><i class="fa fa-lightbulb-o"></i> Use Cases</h5>
+                        <ul class="use-cases-list">
+                            <!-- ko foreach: actionInfo.useCases -->
+                            <li data-bind="text: $data"></li>
+                            <!-- /ko -->
+                        </ul>
+                        <!-- /ko -->
+                        
+                        <!-- Action Metadata -->
+                        <div class="metadata-grid">
+                            <div class="metadata-item">
+                                <strong>Category:</strong>
+                                <span data-bind="text: actionInfo.category || 'Not specified'"></span>
+                            </div>
+                            <div class="metadata-item">
+                                <strong>Version:</strong>
+                                <span data-bind="text: actionInfo.version || '1.0'"></span>
+                            </div>
+                            <div class="metadata-item">
+                                <strong>Timeout:</strong>
+                                <span data-bind="text: (actionInfo.defaultTimeout || 30) + ' seconds'"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Configuration Tab -->
+                <div class="tab-content" data-bind="visible: currentTab() === 'configuration'">
+                    
+                    <!-- Configuration Parameters -->
+                    <!-- ko if: getConfigurationParameters().length > 0 -->
+                    <div class="info-section">
+                        <h5><i class="fa fa-cogs"></i> Configuration Parameters</h5>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Parameter</th>
+                                        <th>Type</th>
+                                        <th>Required</th>
+                                        <th>Default</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody data-bind="foreach: getConfigurationParameters">
+                                    <tr>
+                                        <td><code data-bind="text: name"></code></td>
+                                        <td><span class="badge badge-secondary" data-bind="text: type"></span></td>
+                                        <td>
+                                            <i class="fa" data-bind="css: { 'fa-check text-success': required, 'fa-times text-muted': !required }"></i>
+                                        </td>
+                                        <td><code data-bind="text: default"></code></td>
+                                        <td data-bind="text: description"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <!-- /ko -->
+                    
+                    <!-- Variable Mappings -->
+                    <div class="info-section">
+                        <h5><i class="fa fa-exchange"></i> Variable Mappings</h5>
+                        
+                        <!-- Input Variables -->
+                        <!-- ko if: getVariableMappings().inputs.length > 0 -->
+                        <h6 class="subsection-title">Input Variables</h6>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Variable</th>
+                                        <th>Type</th>
+                                        <th>Required</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody data-bind="foreach: getVariableMappings().inputs">
+                                    <tr>
+                                        <td><code data-bind="text: name"></code></td>
+                                        <td><span class="badge badge-info" data-bind="text: type"></span></td>
+                                        <td>
+                                            <i class="fa" data-bind="css: { 'fa-check text-success': required, 'fa-times text-muted': !required }"></i>
+                                        </td>
+                                        <td data-bind="text: description"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- /ko -->
+                        
+                        <!-- Output Variables -->
+                        <!-- ko if: getVariableMappings().outputs.length > 0 -->
+                        <h6 class="subsection-title">Output Variables</h6>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Variable</th>
+                                        <th>Type</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody data-bind="foreach: getVariableMappings().outputs">
+                                    <tr>
+                                        <td><code data-bind="text: name"></code></td>
+                                        <td><span class="badge badge-success" data-bind="text: type"></span></td>
+                                        <td data-bind="text: description"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- /ko -->
+                    </div>
+                    
+                    <!-- Workflow Branches -->
+                    <!-- ko if: getWorkflowBranches().length > 0 -->
+                    <div class="info-section">
+                        <h5><i class="fa fa-code-fork"></i> Workflow Branches</h5>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Branch</th>
+                                        <th>Condition</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody data-bind="foreach: getWorkflowBranches">
+                                    <tr>
+                                        <td><code data-bind="text: name"></code></td>
+                                        <td><span class="badge badge-warning" data-bind="text: condition"></span></td>
+                                        <td data-bind="text: description"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <!-- /ko -->
+                </div>
+                
+                <!-- Examples Tab -->
+                <div class="tab-content" data-bind="visible: currentTab() === 'examples'">
+                    <!-- ko if: getUsageExamples().length > 0 -->
+                    <!-- ko foreach: getUsageExamples -->
+                    <div class="example-section">
+                        <h5>
+                            <i class="fa fa-code"></i>
+                            <span data-bind="text: title"></span>
+                        </h5>
+                        
+                        <p><strong>Scenario:</strong> <span data-bind="text: scenario"></span></p>
+                        
+                        <div class="code-example">
+                            <div class="code-header">
+                                <span>Configuration</span>
+                                <button type="button" class="btn btn-link btn-sm copy-btn" 
+                                        data-bind="click: function() { $parents[1].copyToClipboard(JSON.stringify(configuration, null, 2)); }"
+                                        title="Copy to clipboard">
+                                    <i class="fa fa-copy"></i>
+                                </button>
+                            </div>
+                            <pre><code data-bind="text: JSON.stringify(configuration, null, 2)"></code></pre>
+                        </div>
+                        
+                        <p><strong>Expected Result:</strong> <span data-bind="text: expected"></span></p>
+                    </div>
+                    <!-- /ko -->
+                    <!-- /ko -->
+                    
+                    <!-- ko if: getUsageExamples().length === 0 -->
+                    <div class="alert alert-info">
+                        <i class="fa fa-info-circle"></i>
+                        No usage examples are currently available for this workflow action.
+                    </div>
+                    <!-- /ko -->
+                </div>
+                
+                <!-- Debugging Tab -->
+                <div class="tab-content" data-bind="visible: currentTab() === 'debugging'">
+                    <div class="info-section">
+                        <h5><i class="fa fa-bug"></i> Debugging Information</h5>
+                        
+                        <div class="debug-tools">
+                            <h6>Debug URL</h6>
+                            <p>Use this URL to enable detailed logging for workflow actions:</p>
+                            <div class="input-group">
+                                <input type="text" class="form-control" readonly data-bind="value: getDebugUrl">
+                                <div class="input-group-append">
+                                    <button type="button" class="btn btn-outline-secondary" 
+                                            data-bind="click: function() { copyToClipboard(getDebugUrl()); }"
+                                            title="Copy debug URL">
+                                        <i class="fa fa-copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- ko if: getDebuggingTips().length > 0 -->
+                        <h6>Debugging Tips</h6>
+                        <!-- ko foreach: getDebuggingTips -->
+                        <div class="debug-tip">
+                            <h6>
+                                <span class="badge badge-info" data-bind="text: category"></span>
+                                <span data-bind="text: title"></span>
+                            </h6>
+                            <p data-bind="text: description"></p>
+                            <!-- ko if: code -->
+                            <div class="code-example">
+                                <pre><code data-bind="text: code"></code></pre>
+                            </div>
+                            <!-- /ko -->
+                        </div>
+                        <!-- /ko -->
+                        <!-- /ko -->
+                        
+                        <!-- ko if: getDebuggingTips().length === 0 -->
+                        <div class="alert alert-info">
+                            <i class="fa fa-info-circle"></i>
+                            No specific debugging tips are available. Use the debug URL above to enable detailed logging.
+                        </div>
+                        <!-- /ko -->
+                    </div>
+                </div>
+                
+                <!-- Troubleshooting Tab -->
+                <div class="tab-content" data-bind="visible: currentTab() === 'troubleshooting'">
+                    <!-- ko if: getTroubleshootingScenarios().length > 0 -->
+                    <!-- ko foreach: getTroubleshootingScenarios -->
+                    <div class="troubleshooting-scenario">
+                        <h5>
+                            <i class="fa fa-exclamation-triangle text-warning"></i>
+                            <span data-bind="text: problem"></span>
+                        </h5>
+                        
+                        <!-- ko if: symptoms.length > 0 -->
+                        <div class="scenario-section">
+                            <h6><i class="fa fa-eye"></i> Symptoms</h6>
+                            <ul data-bind="foreach: symptoms">
+                                <li data-bind="text: $data"></li>
+                            </ul>
+                        </div>
+                        <!-- /ko -->
+                        
+                        <!-- ko if: causes.length > 0 -->
+                        <div class="scenario-section">
+                            <h6><i class="fa fa-search"></i> Possible Causes</h6>
+                            <ul data-bind="foreach: causes">
+                                <li data-bind="text: $data"></li>
+                            </ul>
+                        </div>
+                        <!-- /ko -->
+                        
+                        <!-- ko if: solutions.length > 0 -->
+                        <div class="scenario-section">
+                            <h6><i class="fa fa-wrench"></i> Solutions</h6>
+                            <ol data-bind="foreach: solutions">
+                                <li data-bind="text: $data"></li>
+                            </ol>
+                        </div>
+                        <!-- /ko -->
+                    </div>
+                    <!-- /ko -->
+                    <!-- /ko -->
+                    
+                    <!-- ko if: getTroubleshootingScenarios().length === 0 -->
+                    <div class="alert alert-info">
+                        <i class="fa fa-info-circle"></i>
+                        No specific troubleshooting scenarios are documented. For general help, check the debugging tab or consult the ShareDo documentation.
+                    </div>
+                    <!-- /ko -->
+                </div>
+                
+            </div>
+            
+            <!-- Modal Footer -->
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bind="click: hide">
+                    <i class="fa fa-times"></i> Close
+                </button>
+                <a href="#" class="btn btn-link" title="Open ShareDo Documentation">
+                    <i class="fa fa-external-link"></i> ShareDo Docs
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

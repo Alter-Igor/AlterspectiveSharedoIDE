@@ -1,0 +1,170 @@
+{
+    "id": "Alt.AdviceManagement.AdviceStatusChecker",
+    "version": "1.0.0",
+    "type": "workflowAction",
+    "priority": 7000,
+    "metadata": {
+        "name": "Advice Status Checker",
+        "description": "Lightweight workflow action that checks work item advice status and provides detailed status information for workflow branching",
+        "category": "Advice Management",
+        "icon": "fa-search",
+        "author": "Alterspective",
+        "documentation": "Read-only status checking for advice workflow decision-making without modification actions"
+    },
+    "designer": {
+        "allowInWorkflowDesigner": true,
+        "allowInVisualWorkflow": true,
+        "configurable": true,
+        "configurationComponent": "Alt.AdviceManagement.AdviceStatusCheckerDesigner",
+        "inputs": [
+            {
+                "name": "workItemId",
+                "type": "/Identifier/Work Item Identifier",
+                "required": true,
+                "description": "ID of the work item to check advice status for"
+            },
+            {
+                "name": "enableCaching",
+                "type": "/Boolean",
+                "required": false,
+                "description": "Enable response caching for performance (default: true)"
+            },
+            {
+                "name": "timeout",
+                "type": "/Number",
+                "required": false,
+                "description": "Maximum execution time in milliseconds (default: 30000)"
+            }
+        ],
+        "outputs": [
+            {
+                "name": "adviceStatus",
+                "type": "/String",
+                "description": "Current advice status: 'active', 'paused', or 'none'"
+            },
+            {
+                "name": "isEnabled",
+                "type": "/Boolean",
+                "description": "Boolean: true if advice is active, false if paused/none"
+            },
+            {
+                "name": "hasAdvice",
+                "type": "/Boolean",
+                "description": "Whether the work item has any advice (active or paused)"
+            },
+            {
+                "name": "pausedDate",
+                "type": "/DateTime",
+                "description": "Date when advice was paused (if currently paused)"
+            },
+            {
+                "name": "pausedBy",
+                "type": "/String",
+                "description": "User who paused the advice (if currently paused)"
+            },
+            {
+                "name": "pauseReason",
+                "type": "/String",
+                "description": "Reason text if advice is currently paused"
+            },
+            {
+                "name": "resumedDate",
+                "type": "/DateTime",
+                "description": "Date when advice was last resumed"
+            },
+            {
+                "name": "resumedBy",
+                "type": "/String",
+                "description": "User who last resumed advice"
+            },
+            {
+                "name": "resumeReason",
+                "type": "/String",
+                "description": "Reason provided when advice was resumed"
+            },
+            {
+                "name": "nextAdviceDate",
+                "type": "/DateTime",
+                "description": "Date when next advice is scheduled"
+            },
+            {
+                "name": "lastActionDate",
+                "type": "/DateTime",
+                "description": "Date when the last advice action occurred"
+            },
+            {
+                "name": "success",
+                "type": "/Boolean",
+                "description": "Whether the status check completed successfully"
+            },
+            {
+                "name": "errorMessage",
+                "type": "/String",
+                "description": "Error message if the status check failed"
+            }
+        ],
+        "branches": [
+            {
+                "id": "active",
+                "label": "Advice Running",
+                "color": "#28a745",
+                "description": "Advice is currently active/enabled"
+            },
+            {
+                "id": "paused",
+                "label": "Advice Paused",
+                "color": "#ffc107",
+                "description": "Advice is currently paused/disabled"
+            },
+            {
+                "id": "none",
+                "label": "No Advice",
+                "color": "#6c757d",
+                "description": "No advice exists for this work item"
+            },
+            {
+                "id": "success",
+                "label": "Success",
+                "color": "#17a2b8",
+                "description": "Status check completed successfully (general success branch)"
+            },
+            {
+                "id": "error",
+                "label": "Error",
+                "color": "#dc3545",
+                "description": "Error occurred during status checking"
+            }
+        ]
+    },
+    "configuration": {
+        "enableCaching": true,
+        "enableLogging": true,
+        "timeout": 30000,
+        "outputVariableMappings": {
+            "statusVariable": null,
+            "isEnabledVariable": null,
+            "pausedDateVariable": null,
+            "pausedByVariable": null,
+            "pauseReasonVariable": null,
+            "resumedDateVariable": null,
+            "resumedByVariable": null,
+            "resumeReasonVariable": null,
+            "nextAdviceDateVariable": null,
+            "errorMessageVariable": null
+        }
+    },
+    "scripts": [
+        "/_ideFiles/Alt/AdviceManagement/Workflows/AdviceStatusChecker/AdviceStatusChecker.js",
+        "/_ideFiles/Alt/AdviceManagement/Workflows/AdviceStatusChecker/services/AdviceStatusService.js"
+    ],
+    "styles": [
+        "/_ideFiles/Alt/AdviceManagement/Workflows/AdviceStatusChecker/AdviceStatusChecker.css"
+    ],
+    "templates": [
+        "/_ideFiles/Alt/AdviceManagement/Workflows/AdviceStatusChecker/AdviceStatusChecker.html"
+    ],
+    "dependencies": [
+        "jquery",
+        "knockout"
+    ]
+}

@@ -1,0 +1,81 @@
+{
+  "systemName": "alt-advice-management-pause-resume-workflow-v1",
+  "name": "Advice Pause & Resume Workflow ",
+  "description": "This workflow manages the lifecycle of advice items by enabling controlled pausing and intelligent resumption. It identifies active advice of a configurable abstract type, captures and serialises its state, and transitions it to a paused phase. Upon resumption, it restores advice from saved state or creates default advice, with flexible due date handling.\n\nThis is triggered by the Advice Management widgets",
+  "overrideNotifications": false,
+  "exceptionNotifications": true,
+  "exceptionNotificationEmailAddresses": "",
+  "isSystem": false,
+  "variables": [
+    {
+      "systemName": "sharedoId",
+      "name": "Sharedo Id",
+      "defaultValue": null,
+      "type": "/Identifier/Work Item Identifier",
+      "isCollection": false,
+      "isInputVariable": true,
+      "isMandatory": true
+    }
+  ],
+  "steps": [
+  
+    {
+      "ideData": {
+        "x": 250,
+        "y": 200
+      },
+      "actions": [],
+      "systemName": "finish",
+      "name": "Plan complete",
+      "description": "The plan is complete",
+      "isStart": false,
+      "isEnd": true,
+      "isOptimal": true
+    },
+    {
+      "ideData": {
+        "x": -475,
+        "y": 0
+      },
+      "actions": [
+        {
+          "config": {
+            "now": true,
+            "startOnDateTimeVariable": null,
+            "startIn": 1,
+            "startInType": "Days",
+            "description": "Finish"
+          },
+          "connections": {
+            "execute": {
+              "step": "finish",
+              "port": "top3",
+              "points": []
+            }
+          },
+          "actionSystemName": "startStep",
+          "name": "Finish"
+        }
+      ],
+      "systemName": "main",
+      "name": "Main entry point",
+      "description": "The main entry point of the plan",
+      "isStart": true,
+      "isEnd": false,
+      "isOptimal": true
+    },
+    {
+      "ideData": {
+        "x": 400,
+        "y": -125
+      },
+      "actions": [],
+      "systemName": "step4",
+      "name": "Step 4",
+      "description": null,
+      "isStart": false,
+      "isEnd": false,
+      "isOptimal": false
+    }
+  ]
+}

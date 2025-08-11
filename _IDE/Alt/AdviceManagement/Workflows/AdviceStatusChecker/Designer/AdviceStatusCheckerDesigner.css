@@ -1,0 +1,69 @@
+/* Import shared modal styles */
+@import url("../Shared/WorkflowActionInfoModal.css");
+
+.advice-status-checker-designer {
+    padding: 10px;
+}
+
+/* Info Button Styling */
+.chrome-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.info-button {
+    background: none !important;
+    border: none !important;
+    color: #17a2b8;
+    padding: 4px 8px;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.info-button:hover {
+    color: #138496;
+    background: none !important;
+    box-shadow: none !important;
+}
+
+.info-button:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(23, 162, 184, 0.25);
+}
+
+.text-info {
+    color: #17a2b8;
+}
+
+.advice-status-checker-designer .panel {
+    margin-bottom: 0;
+}
+
+.advice-status-checker-designer .form-horizontal .control-label {
+    font-weight: 600;
+}
+
+.advice-status-checker-designer .help-block {
+    font-size: 12px;
+    margin-bottom: 5px;
+}
+
+.advice-status-checker-designer .text-danger {
+    font-size: 12px;
+}
+
+.advice-status-checker-designer hr {
+    margin: 20px 0 15px 0;
+}
+
+.advice-status-checker-designer .alert {
+    margin-top: 20px;
+    margin-bottom: 0;
+}
+
+.advice-status-checker-designer .label {
+    margin-right: 8px;
+    font-size: 11px;
+    padding: 3px 6px;
+}
