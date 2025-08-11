@@ -82,8 +82,52 @@ Alt.AdviceManagement.AdvicePauseManagerDesigner = function(element, options, vie
      * Show information modal
      */
     self.showInfo = function(tab) {
-        if (self.infoModal) {
-            self.infoModal.show(tab);
+        if ($ui && $ui.log && $ui.log.debug) {
+            $ui.log.debug("AdvicePauseManagerDesigner - showInfo called");
+            $ui.log.debug("  Tab: " + (tab || 'default'));
+            $ui.log.debug("  infoModal exists: " + !!self.infoModal);
+        }
+        
+        try {
+            if (self.infoModal) {
+                self.infoModal.show(tab);
+                
+                if ($ui && $ui.log && $ui.log.debug) {
+                    $ui.log.debug("AdvicePauseManagerDesigner - Modal show() called successfully");
+                }
+            } else {
+                if ($ui && $ui.log && $ui.log.error) {
+                    $ui.log.error("AdvicePauseManagerDesigner - infoModal is null or undefined");
+                }
+                
+                // Try to reinitialize the modal
+                if (typeof Alt !== 'undefined' && 
+                    Alt.AdviceManagement && 
+                    Alt.AdviceManagement.Workflows &&
+                    Alt.AdviceManagement.Workflows.Shared &&
+                    Alt.AdviceManagement.Workflows.Shared.WorkflowActionInfoModal) {
+                    
+                    self.infoModal = new Alt.AdviceManagement.Workflows.Shared.WorkflowActionInfoModal(
+                        Alt.AdviceManagement.AdvicePauseManagerInfo
+                    );
+                    self.infoModal.show(tab);
+                    
+                    if ($ui && $ui.log && $ui.log.warning) {
+                        $ui.log.warning("AdvicePauseManagerDesigner - Successfully reinitialized modal");
+                    }
+                } else {
+                    if ($ui && $ui.log && $ui.log.error) {
+                        $ui.log.error("AdvicePauseManagerDesigner - Cannot reinitialize modal, namespace not available");
+                        $ui.log.error("  Alt available: " + (typeof Alt !== 'undefined'));
+                        $ui.log.error("  Full namespace available: " + (typeof Alt !== 'undefined' && Alt.AdviceManagement && Alt.AdviceManagement.Workflows && Alt.AdviceManagement.Workflows.Shared && Alt.AdviceManagement.Workflows.Shared.WorkflowActionInfoModal));
+                    }
+                }
+            }
+        } catch (error) {
+            if ($ui && $ui.log && $ui.log.error) {
+                $ui.log.error("AdvicePauseManagerDesigner - Error in showInfo: " + error.message);
+                $ui.log.error("  Error stack: " + (error.stack || 'No stack trace'));
+            }
         }
     };
     

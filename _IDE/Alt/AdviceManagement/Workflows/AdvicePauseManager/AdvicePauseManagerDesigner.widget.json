@@ -18,6 +18,7 @@
     },
     "configuration": {},
     "scripts": [
+        "/_ideFiles/Alt/AdviceManagement/Foundation/Helpers/namespace.js",
         "/_ideFiles/Alt/AdviceManagement/Workflows/Shared/WorkflowActionInfoModal.js",
         "/_ideFiles/Alt/AdviceManagement/Workflows/AdvicePauseManager/AdvicePauseManagerInfo.js",
         "/_ideFiles/Alt/AdviceManagement/Workflows/AdvicePauseManager/AdvicePauseManagerDesigner.js"

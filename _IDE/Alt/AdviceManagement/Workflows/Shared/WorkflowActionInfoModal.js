@@ -1,3 +1,18 @@
+// Ensure namespace exists for workflow shared components
+window.namespace = window.namespace || function(namespaceString) {
+    var parts = namespaceString.split('.');
+    var parent = window;
+    var currentPart = '';
+    
+    for (var i = 0, length = parts.length; i < length; i++) {
+        currentPart = parts[i];
+        parent[currentPart] = parent[currentPart] || {};
+        parent = parent[currentPart];
+    }
+    
+    return parent;
+};
+
 namespace("Alt.AdviceManagement.Workflows.Shared");
 
 /**
@@ -9,6 +24,15 @@ Alt.AdviceManagement.Workflows.Shared.WorkflowActionInfoModal = function(actionI
     
     // Store action information
     self.actionInfo = actionInfo || {};
+    
+    // Debug logging for initialization
+    if ($ui && $ui.log && $ui.log.debug) {
+        $ui.log.debug("WorkflowActionInfoModal - Constructor called");
+        $ui.log.debug("  Action info: " + JSON.stringify(self.actionInfo.name || 'No name'));
+        $ui.log.debug("  Namespace check - Alt: " + (typeof Alt !== 'undefined'));
+        $ui.log.debug("  Namespace check - Alt.AdviceManagement: " + (typeof Alt !== 'undefined' && typeof Alt.AdviceManagement !== 'undefined'));
+        $ui.log.debug("  Namespace check - Full path: " + (typeof Alt !== 'undefined' && typeof Alt.AdviceManagement !== 'undefined' && typeof Alt.AdviceManagement.Workflows !== 'undefined'));
+    }
     
     // Modal state
     self.isVisible = ko.observable(false);
