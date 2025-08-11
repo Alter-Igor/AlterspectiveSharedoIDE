@@ -15,7 +15,6 @@
         "/_ideFiles/Alt/AdviceManagement/Workflows/AdviceStatusChecker/Designer/AdviceStatusCheckerDesigner.js"
     ],
     "styles": [
-        "/_ideFiles/Alt/AdviceManagement/Workflows/Shared/WorkflowActionInfoModal.css",
         "/_ideFiles/Alt/AdviceManagement/Workflows/AdviceStatusChecker/Designer/AdviceStatusCheckerDesigner.css"
     ],
     "templates": [
