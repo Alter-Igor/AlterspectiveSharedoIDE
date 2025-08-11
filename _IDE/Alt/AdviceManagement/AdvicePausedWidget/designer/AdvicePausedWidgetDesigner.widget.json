@@ -7,13 +7,13 @@
         "allowAspectAdapter": false
     },
     "scripts": [
-        "/_ideFiles/Alt/AdviceManagement/AdvicePausedWidget/designer/AdvicePausedWidgetDesigner.js"
+        "/_ideFiles/Alt/AdviceManagement/Widgets/PausedNotification/designer/AdvicePausedWidgetDesigner.js"
     ],
     "styles": [
-        "/_ideFiles/Alt/AdviceManagement/AdvicePausedWidget/designer/AdvicePausedWidgetDesigner.css"
+        "/_ideFiles/Alt/AdviceManagement/Widgets/PausedNotification/designer/AdvicePausedWidgetDesigner.css"
     ],
     "templates": [
-        "/_ideFiles/Alt/AdviceManagement/AdvicePausedWidget/designer/AdvicePausedWidgetDesigner.html"
+        "/_ideFiles/Alt/AdviceManagement/Widgets/PausedNotification/designer/AdvicePausedWidgetDesigner.html"
     ],
     "menuTemplates": [],
     "components": []

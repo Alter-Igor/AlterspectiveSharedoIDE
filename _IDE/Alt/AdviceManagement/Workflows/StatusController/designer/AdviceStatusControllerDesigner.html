@@ -1,0 +1,134 @@
+<div class="advice-status-controller-designer">
+    <div class="designer-header">
+        <i class="fa fa-cog"></i>
+        <h4>Configure Advice Status Controller</h4>
+    </div>
+    
+    <div class="designer-body">
+        <!-- Default Action -->
+        <div class="form-group">
+            <label class="control-label">Default Action</label>
+            <select class="form-control" data-bind="value: model.defaultAction">
+                <option value="checkOnly">Check Only (No Action)</option>
+                <option value="doNothing">Do Nothing</option>
+                <option value="pause">Pause Advice</option>
+                <option value="resume">Resume Advice</option>
+                <option value="toggle">Toggle Status</option>
+            </select>
+            <span class="help-block">Action to take when no conditions match</span>
+        </div>
+        
+        <!-- Conditions -->
+        <div class="form-group">
+            <label class="control-label">Conditions</label>
+            <div class="conditions-container">
+                <!-- ko foreach: model.conditions -->
+                <div class="condition-row">
+                    <div class="condition-when">
+                        <label>When status is:</label>
+                        <select class="form-control input-sm" data-bind="value: when">
+                            <option value="active">Active</option>
+                            <option value="paused">Paused</option>
+                            <option value="none">None/Unknown</option>
+                            <option value="*">Any Status</option>
+                        </select>
+                    </div>
+                    <div class="condition-then">
+                        <label>Then:</label>
+                        <select class="form-control input-sm" data-bind="value: then">
+                            <option value="doNothing">Do Nothing</option>
+                            <option value="pause">Pause</option>
+                            <option value="resume">Resume</option>
+                            <option value="toggle">Toggle</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-sm btn-danger" data-bind="click: $parent.removeCondition">
+                        <i class="fa fa-trash"></i>
+                    </button>
+                </div>
+                <!-- /ko -->
+                
+                <button class="btn btn-sm btn-success" data-bind="click: addCondition">
+                    <i class="fa fa-plus"></i> Add Condition
+                </button>
+            </div>
+        </div>
+        
+        <!-- Pause Reason -->
+        <div class="form-group" data-bind="visible: model.showPauseReason()">
+            <label class="control-label">Pause Reason</label>
+            <input type="text" class="form-control" 
+                   data-bind="value: model.pauseReason" 
+                   placeholder="Enter reason for pausing advice" />
+            <span class="help-block">Reason shown when advice is paused by this action</span>
+        </div>
+        
+        <!-- Options -->
+        <div class="form-group">
+            <label class="control-label">Options</label>
+            
+            <div class="checkbox">
+                <label>
+                    <input type="checkbox" data-bind="checked: model.requireConfirmation" />
+                    Require user confirmation before action
+                </label>
+            </div>
+            
+            <div class="checkbox">
+                <label>
+                    <input type="checkbox" data-bind="checked: model.enableLogging" />
+                    Enable detailed logging
+                </label>
+            </div>
+            
+            <div class="checkbox">
+                <label>
+                    <input type="checkbox" data-bind="checked: model.retryOnFailure" />
+                    Retry on failure
+                </label>
+            </div>
+        </div>
+        
+        <!-- Retry Settings -->
+        <div class="form-group" data-bind="visible: model.retryOnFailure()">
+            <label class="control-label">Retry Settings</label>
+            <div class="row">
+                <div class="col-sm-6">
+                    <label>Max Retries:</label>
+                    <input type="number" class="form-control input-sm" 
+                           data-bind="value: model.maxRetries" 
+                           min="1" max="10" />
+                </div>
+                <div class="col-sm-6">
+                    <label>Retry Delay (ms):</label>
+                    <input type="number" class="form-control input-sm" 
+                           data-bind="value: model.retryDelay" 
+                           min="100" max="10000" step="100" />
+                </div>
+            </div>
+        </div>
+        
+        <!-- Timeout -->
+        <div class="form-group">
+            <label class="control-label">Timeout (ms)</label>
+            <input type="number" class="form-control" 
+                   data-bind="value: model.timeout" 
+                   min="1000" max="120000" step="1000" />
+            <span class="help-block">Maximum time to wait for action completion</span>
+        </div>
+        
+        <!-- Preview -->
+        <div class="preview-panel">
+            <h5>Configuration Preview</h5>
+            <pre data-bind="text: configurationPreview"></pre>
+        </div>
+        
+        <!-- Validation -->
+        <div class="alert alert-danger" data-bind="visible: model.validationErrors().length > 0">
+            <strong>Validation Errors:</strong>
+            <ul data-bind="foreach: model.validationErrors">
+                <li data-bind="text: $data"></li>
+            </ul>
+        </div>
+    </div>
+</div>

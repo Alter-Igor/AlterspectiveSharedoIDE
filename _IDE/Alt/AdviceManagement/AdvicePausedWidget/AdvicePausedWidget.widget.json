@@ -18,17 +18,17 @@
         }
     },
     "scripts": [
-        "/_ideFiles/Alt/AdviceManagement/common/Constants.js",
-        "/_ideFiles/Alt/AdviceManagement/common/EventBus.js",
-        "/_ideFiles/Alt/AdviceManagement/common/CacheManager.js",
-        "/_ideFiles/Alt/AdviceManagement/common/UIHelpers.js",
-        "/_ideFiles/Alt/AdviceManagement/AdvicePausedWidget/AdvicePausedWidget.js"
+        "/_ideFiles/Alt/AdviceManagement/Foundation/Constants.js",
+        "/_ideFiles/Alt/AdviceManagement/Foundation/EventBus.js",
+        "/_ideFiles/Alt/AdviceManagement/Foundation/CacheManager.js",
+        "/_ideFiles/Alt/AdviceManagement/Foundation/UIHelpers.js",
+        "/_ideFiles/Alt/AdviceManagement/Widgets/PausedNotification/AdvicePausedWidget.js"
     ],
     "styles": [
-        "/_ideFiles/Alt/AdviceManagement/AdvicePausedWidget/AdvicePausedWidget.css"
+        "/_ideFiles/Alt/AdviceManagement/Widgets/PausedNotification/AdvicePausedWidget.css"
     ],
     "templates": [
-        "/_ideFiles/Alt/AdviceManagement/AdvicePausedWidget/AdvicePausedWidget.html"
+        "/_ideFiles/Alt/AdviceManagement/Widgets/PausedNotification/AdvicePausedWidget.html"
     ],
     "menuTemplates": [],
     "components": []

@@ -160,6 +160,62 @@ headers: {
 }
 ```
 
+### 11. ShareDo Visual Workflow Actions
+
+ShareDo visual workflow actions are custom nodes that can be used in the visual workflow designer. They follow a specific file structure and format.
+
+#### Required Files:
+- `{ActionName}.wf-action.json` - Action configuration and metadata
+- `{ActionName}-factory.js` - Factory function for creating the action model
+- `{ActionName}-template.js` - Code generation template using SSVE syntax
+- `Designer/{ActionName}Designer.widget.json` - Designer widget configuration
+- `Designer/{ActionName}Designer.js` - Designer widget JavaScript
+- `Designer/{ActionName}Designer.html` - Designer widget HTML template
+- `Designer/{ActionName}Designer.css` - Designer widget styles
+
+#### Action Configuration Format (.wf-action.json):
+```json
+{
+    "systemName": "ActionName",
+    "category": "Category Name",
+    "name": "Display Name",
+    "icon": "fa-icon-name", 
+    "description": "Description of action",
+    "configWidget": "Namespace.ActionNameDesigner",
+    "factoryIncludes": [
+        "/_ideFiles/path/to/helper/scripts.js"
+    ],
+    "factoryScript": "/_ideFiles/path/to/ActionName-factory.js",
+    "templateScript": "/_ideFiles/path/to/ActionName-template.js",
+    "helperScripts": [],
+    "requiredTypes": []
+}
+```
+
+#### Factory Function Structure:
+- Must return object with `createModel` and `dispose` functions
+- `createModel` receives (actionModel, actionOptions, wfModel, stepModel)
+- Set up observables on `actionModel.config` for configuration
+- Set up validation on `actionModel.validation`
+- Track variables with `actionModel.trackVariable()`
+- Add outlets with `actionModel.addAvailableOutlet()`
+
+#### Template Structure:
+- Uses SSVE (Server-Side View Engine) syntax
+- Access configuration via `$model.Configuration.propertyName`
+- Access connections via `$model.Connections.outletName.step`
+- Use `$ifNotNull.Configuration.property` for conditional generation
+- Use `trigger.SubProcess("stepId").Now()` to branch to next steps
+- Can make HTTP calls with `sharedo.http.get/post()`
+
+#### Important: Server-Side Execution Context
+- Templates execute **server-side** in ShareDo's workflow engine
+- Client-side JavaScript classes/namespaces are **NOT available**
+- Cannot use `new MyClass()` or access browser objects
+- Must use direct API calls via `sharedo.http.*`
+- No access to jQuery, KnockoutJS, or custom client-side libraries
+- Variables from workflow context available via `ctx["variableName"]`
+
 ## Common Patterns
 
 ### 1. Using ShareDo's AJAX Wrapper

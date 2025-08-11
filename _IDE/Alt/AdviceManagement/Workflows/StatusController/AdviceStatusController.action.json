@@ -104,14 +104,14 @@
         "timeout": 30000
     },
     "scripts": [
-        "/_ideFiles/Alt/AdviceManagement/Workflows/StatusController/AdviceStatusController.js",
-        "/_ideFiles/Alt/AdviceManagement/Foundation/Services/AdviceService.js"
+        "/_ideFiles/Alt/AdviceManagement/AdviceStatusController/AdviceStatusController.js",
+        "/_ideFiles/Alt/AdviceManagement/AdviceStatusController/services/AdviceService.js"
     ],
     "styles": [
-        "/_ideFiles/Alt/AdviceManagement/Workflows/StatusController/AdviceStatusController.css"
+        "/_ideFiles/Alt/AdviceManagement/AdviceStatusController/AdviceStatusController.css"
     ],
     "templates": [
-        "/_ideFiles/Alt/AdviceManagement/Workflows/StatusController/AdviceStatusController.html"
+        "/_ideFiles/Alt/AdviceManagement/AdviceStatusController/AdviceStatusController.html"
     ],
     "dependencies": [
         "jquery",

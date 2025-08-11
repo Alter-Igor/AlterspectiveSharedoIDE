@@ -1,0 +1,35 @@
+.advice-status-checker-designer {
+    padding: 10px;
+}
+
+.advice-status-checker-designer .panel {
+    margin-bottom: 0;
+}
+
+.advice-status-checker-designer .form-horizontal .control-label {
+    font-weight: 600;
+}
+
+.advice-status-checker-designer .help-block {
+    font-size: 12px;
+    margin-bottom: 5px;
+}
+
+.advice-status-checker-designer .text-danger {
+    font-size: 12px;
+}
+
+.advice-status-checker-designer hr {
+    margin: 20px 0 15px 0;
+}
+
+.advice-status-checker-designer .alert {
+    margin-top: 20px;
+    margin-bottom: 0;
+}
+
+.advice-status-checker-designer .label {
+    margin-right: 8px;
+    font-size: 11px;
+    padding: 3px 6px;
+}

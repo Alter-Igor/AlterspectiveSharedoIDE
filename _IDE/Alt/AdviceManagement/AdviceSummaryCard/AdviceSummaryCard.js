@@ -425,7 +425,7 @@ Alt.AdviceManagement.AdviceSummaryCard.prototype.initializeEventSubscriptions = 
     };
     
     // Subscribe to all relevant events
-    var events = ['advice:paused', 'advice:resumed', 'advice:statusChanged', 'advice:statusLoaded'];
+    var events = ['advice:paused', 'advice:resumed', 'advice:statusChanged', 'advice:statusLoaded', 'advice:statusRefreshed', 'advice:cacheInvalidated'];
     events.forEach(function(eventName) {
         var subscriptionId = $ui.events.subscribe(eventName, 
             createEventHandler(eventName), self);

@@ -1,0 +1,7 @@
+{
+ "url": "https://mccabes-vnext.sharedo.tech/",
+ "clientId": "vscode",
+ "clientSecret": "208$j$ewaHN#8eB0i$~SwrhemcMZ^o",
+ "impersonateUser": "igor@alterspective.com.au",
+ "impersonateProvider": "sharedo-aad"
+}

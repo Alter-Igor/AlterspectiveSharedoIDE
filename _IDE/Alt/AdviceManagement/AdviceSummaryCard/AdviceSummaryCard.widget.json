@@ -18,17 +18,17 @@
         }
     },
     "scripts": [
-        "/_ideFiles/Alt/AdviceManagement/common/Constants.js",
-        "/_ideFiles/Alt/AdviceManagement/common/EventBus.js",
-        "/_ideFiles/Alt/AdviceManagement/common/CacheManager.js",
-        "/_ideFiles/Alt/AdviceManagement/common/UIHelpers.js",
-        "/_ideFiles/Alt/AdviceManagement/AdviceSummaryCard/AdviceSummaryCard.js"
+        "/_ideFiles/Alt/AdviceManagement/Foundation/Constants.js",
+        "/_ideFiles/Alt/AdviceManagement/Foundation/EventBus.js",
+        "/_ideFiles/Alt/AdviceManagement/Foundation/CacheManager.js",
+        "/_ideFiles/Alt/AdviceManagement/Foundation/UIHelpers.js",
+        "/_ideFiles/Alt/AdviceManagement/Widgets/SummaryCard/AdviceSummaryCard.js"
     ],
     "styles": [
-        "/_ideFiles/Alt/AdviceManagement/AdviceSummaryCard/AdviceSummaryCard.css"
+        "/_ideFiles/Alt/AdviceManagement/Widgets/SummaryCard/AdviceSummaryCard.css"
     ],
     "templates": [
-        "/_ideFiles/Alt/AdviceManagement/AdviceSummaryCard/AdviceSummaryCard.html"
+        "/_ideFiles/Alt/AdviceManagement/Widgets/SummaryCard/AdviceSummaryCard.html"
     ],
     "menuTemplates": [],
     "components": []

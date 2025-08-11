@@ -40,7 +40,13 @@ Alt.AdviceManagement.AdvicePausedWidget = function(element, configuration, baseM
             STORAGE: { DISMISSED_ITEMS: 'advice_dismissed_items' }
         };
         Alt.AdviceManagement.Common.EventBus = Alt.AdviceManagement.Common.EventBus || { publish: function() {}, subscribe: function() { return { unsubscribe: function() {} }; } };
-        Alt.AdviceManagement.Common.CacheManager = Alt.AdviceManagement.Common.CacheManager || { get: function() { return null; }, set: function() {}, remove: function() {} };
+        Alt.AdviceManagement.Common.CacheManager = Alt.AdviceManagement.Common.CacheManager || { 
+            get: function() { return null; }, 
+            set: function() {}, 
+            remove: function() {},
+            clear: function() {},
+            invalidate: function() {}
+        };
     }
     
     // Import Foundation Bundle components
@@ -109,17 +115,19 @@ Alt.AdviceManagement.AdvicePausedWidget = function(element, configuration, baseM
     };
     
     // Function to check advice status
-    self.checkAdviceStatus = function() {
+    self.checkAdviceStatus = function(forceRefresh) {
         if (!self.model.workItemId() || self.model.isDismissed()) {
             self.model.isPaused(false);
             return;
         }
         
-        // Check cache first
-        var cached = Cache.get('widgetAdviceStatus', self.model.workItemId());
-        if (cached) {
-            self.processAdviceStatus(cached);
-            return;
+        // Check cache first (unless forcing refresh)
+        if (!forceRefresh) {
+            var cached = Cache.get('widgetAdviceStatus', self.model.workItemId());
+            if (cached) {
+                self.processAdviceStatus(cached);
+                return;
+            }
         }
         
         self.model.isLoading(true);
@@ -448,13 +456,15 @@ Alt.AdviceManagement.AdvicePausedWidget.prototype.initializeEventSubscriptions =
         return function(data) {
             console.log('[AdvicePausedWidget] Received ' + eventName + ' event:', data);
             if (data && data.workItemId === self.model.workItemId()) {
-                self.checkAdviceStatus();
+                // Force refresh for invalidation events to bypass cache
+                var forceRefresh = (eventName === 'advice:cacheInvalidated' || eventName === 'advice:statusRefreshed');
+                self.checkAdviceStatus(forceRefresh);
             }
         };
     };
     
     // Subscribe to all relevant events
-    var events = ['advice:paused', 'advice:resumed', 'advice:statusChanged', 'advice:statusLoaded'];
+    var events = ['advice:paused', 'advice:resumed', 'advice:statusChanged', 'advice:statusLoaded', 'advice:statusRefreshed', 'advice:cacheInvalidated'];
     events.forEach(function(eventName) {
         var subscriptionId = $ui.events.subscribe(eventName, 
             createEventHandler(eventName), self);

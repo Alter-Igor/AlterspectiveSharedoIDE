@@ -1,0 +1,181 @@
+{
+    "id": "test-advice-workflow-001",
+    "name": "Test Advice Status Control Workflow",
+    "description": "Example workflow demonstrating advice status controller",
+    "version": "1.0.0",
+    "created": "2024-01-08",
+    "author": "System",
+    "nodes": [
+        {
+            "id": "start",
+            "type": "trigger",
+            "name": "Workflow Start",
+            "position": { "x": 100, "y": 200 },
+            "configuration": {
+                "triggerType": "manual",
+                "description": "Manually triggered workflow"
+            }
+        },
+        {
+            "id": "get-work-item",
+            "type": "action",
+            "name": "Get Work Item",
+            "position": { "x": 300, "y": 200 },
+            "configuration": {
+                "action": "getWorkItem",
+                "workItemId": "${trigger.workItemId}"
+            }
+        },
+        {
+            "id": "check-advice-status",
+            "type": "action",
+            "name": "Check & Control Advice",
+            "actionId": "Alt.AdviceManagement.AdviceStatusController",
+            "position": { "x": 500, "y": 200 },
+            "configuration": {
+                "defaultAction": "checkOnly",
+                "conditions": [
+                    {
+                        "when": "active",
+                        "then": "pause",
+                        "comment": "Pause active advice for review"
+                    },
+                    {
+                        "when": "paused",
+                        "then": "resume",
+                        "comment": "Resume paused advice after review"
+                    },
+                    {
+                        "when": "none",
+                        "then": "doNothing",
+                        "comment": "No action if no advice exists"
+                    }
+                ],
+                "pauseReason": "Automated review process",
+                "requireConfirmation": false,
+                "enableLogging": true,
+                "retryOnFailure": true,
+                "maxRetries": 3,
+                "retryDelay": 1000,
+                "timeout": 30000
+            }
+        },
+        {
+            "id": "notify-paused",
+            "type": "action",
+            "name": "Notify Advice Paused",
+            "position": { "x": 700, "y": 100 },
+            "configuration": {
+                "action": "sendNotification",
+                "template": "advice-paused",
+                "recipients": ["${workItem.assignee}"],
+                "data": {
+                    "workItemId": "${workItem.id}",
+                    "reason": "${nodes.check-advice-status.outputs.pauseReason}"
+                }
+            }
+        },
+        {
+            "id": "notify-resumed",
+            "type": "action",
+            "name": "Notify Advice Resumed",
+            "position": { "x": 700, "y": 200 },
+            "configuration": {
+                "action": "sendNotification",
+                "template": "advice-resumed",
+                "recipients": ["${workItem.assignee}"],
+                "data": {
+                    "workItemId": "${workItem.id}"
+                }
+            }
+        },
+        {
+            "id": "log-no-action",
+            "type": "action",
+            "name": "Log No Action",
+            "position": { "x": 700, "y": 300 },
+            "configuration": {
+                "action": "log",
+                "level": "info",
+                "message": "No advice action taken for work item ${workItem.id}"
+            }
+        },
+        {
+            "id": "handle-error",
+            "type": "action",
+            "name": "Handle Error",
+            "position": { "x": 700, "y": 400 },
+            "configuration": {
+                "action": "errorHandler",
+                "logError": true,
+                "notifyAdmin": true,
+                "continueOnError": false
+            }
+        },
+        {
+            "id": "end",
+            "type": "end",
+            "name": "Workflow Complete",
+            "position": { "x": 900, "y": 200 }
+        }
+    ],
+    "connections": [
+        {
+            "from": "start",
+            "to": "get-work-item"
+        },
+        {
+            "from": "get-work-item",
+            "to": "check-advice-status"
+        },
+        {
+            "from": "check-advice-status",
+            "fromPort": "paused",
+            "to": "notify-paused"
+        },
+        {
+            "from": "check-advice-status",
+            "fromPort": "resumed",
+            "to": "notify-resumed"
+        },
+        {
+            "from": "check-advice-status",
+            "fromPort": "noAction",
+            "to": "log-no-action"
+        },
+        {
+            "from": "check-advice-status",
+            "fromPort": "error",
+            "to": "handle-error"
+        },
+        {
+            "from": "notify-paused",
+            "to": "end"
+        },
+        {
+            "from": "notify-resumed",
+            "to": "end"
+        },
+        {
+            "from": "log-no-action",
+            "to": "end"
+        }
+    ],
+    "variables": {
+        "workItemId": {
+            "type": "string",
+            "required": true,
+            "description": "ID of work item to process"
+        }
+    },
+    "settings": {
+        "timeout": 60000,
+        "retryOnError": true,
+        "maxRetries": 2,
+        "logLevel": "info"
+    },
+    "testData": {
+        "workItemId": "WI-TEST-001",
+        "expectedOutcome": "Advice status checked and appropriate action taken"
+    }
+}
