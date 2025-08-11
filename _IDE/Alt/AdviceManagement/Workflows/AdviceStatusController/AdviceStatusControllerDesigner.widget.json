@@ -2,7 +2,7 @@
     "id": "Alt.AdviceManagement.AdviceStatusControllerDesigner",
     "version": "1.0.0",
     "type": "widget",
-    "priority": 1000,
+    "priority": 6000,
     "metadata": {
         "name": "Advice Status Controller Designer",
         "description": "Configuration designer for the Advice Status Controller workflow action",

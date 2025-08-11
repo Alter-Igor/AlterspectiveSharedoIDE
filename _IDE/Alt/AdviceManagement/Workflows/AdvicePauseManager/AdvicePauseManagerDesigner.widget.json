@@ -2,7 +2,7 @@
     "id": "Alt.AdviceManagement.AdvicePauseManagerDesigner",
     "version": "1.0.0",
     "type": "widget",
-    "priority": 1000,
+    "priority": 6000,
     "metadata": {
         "name": "Advice Pause Manager Designer",
         "description": "Configuration designer for the Advice Pause Manager workflow action",

@@ -1,7 +1,6 @@
 /* Advice Resume Manager Designer Styles */
 
-/* Import shared modal styles */
-@import url("../Shared/WorkflowActionInfoModal.css");
+/* Note: Shared modal styles loaded via widget manifest, not @import */
 
 .advice-resume-manager-designer {
     border: 1px solid #ddd;

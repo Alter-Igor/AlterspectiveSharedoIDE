@@ -2,7 +2,7 @@
     "id": "Alt.AdviceManagement.AdviceStatusCheckerDesigner",
     "version": "1.0.0",
     "type": "widget",
-    "priority": 100,
+    "priority": 6000,
     "metadata": {
         "name": "Advice Status Checker Designer",
         "description": "Designer widget for configuring the Advice Status Checker workflow action",

@@ -2,7 +2,7 @@
     "id": "Alt.AdviceManagement.AdviceResumeManagerDesigner",
     "version": "1.0.0",
     "type": "widget",
-    "priority": 1000,
+    "priority": 6000,
     "metadata": {
         "name": "Advice Resume Manager Designer",
         "description": "Configuration designer for the Advice Resume Manager workflow action",
