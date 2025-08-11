@@ -1,205 +1,139 @@
 /**
  * AdvicePauseManager Factory
  * 
- * Factory function for creating AdvicePauseManager workflow action nodes
- * in the visual workflow designer.
+ * ShareDo workflow action factory for AdvicePauseManager visual workflow nodes.
+ * Follows ShareDo's standard factory pattern.
  */
 (function() {
     'use strict';
 
-    // Ensure namespace exists
-    if (typeof Alt === 'undefined') Alt = {};
-    if (typeof Alt.AdviceManagement === 'undefined') Alt.AdviceManagement = {};
-    if (typeof Alt.AdviceManagement.Workflows === 'undefined') Alt.AdviceManagement.Workflows = {};
+    /**
+     * Create model function - called by ShareDo when creating workflow action nodes
+     * @param {Object} actionModel - The action model provided by ShareDo
+     * @param {Object} actionOptions - Configuration options from workflow
+     * @param {Object} wfModel - The overall workflow model
+     * @param {Object} stepModel - The step model
+     * @returns {Object} - Extended action model
+     */
+    var createModel = function(actionModel, actionOptions, wfModel, stepModel) {
+        var self = actionModel;
+        
+        // Setup model defaults
+        var defaults = {
+            config: {
+                workItemIdVariable: null,
+                pauseReasonVariable: null,
+                successVariable: null,
+                messageVariable: null,
+                foundAdviceCountVariable: null,
+                pausedAdviceCountVariable: null,
+                savedStateVariable: null,
+                pausedDateVariable: null,
+                errorCountVariable: null,
+                useWorkflowApproach: true,
+                abstractAdviceTypeSystemName: 'AbstractAdvice',
+                pausedPhase: 'Removed',
+                saveAdviceState: true,
+                overwriteExistingSavedState: true,
+                pauseAllAdviceTypes: true,
+                includeInactiveAdvice: false,
+                enableLogging: true,
+                enableRetry: true,
+                maxRetries: 3,
+                retryDelay: 1000,
+                timeout: 60000
+            },
+            connections: {}
+        };
+        
+        var options = $.extend(true, {}, defaults, actionOptions);
+
+        // Extend the action model with config observables
+        self.config.workItemIdVariable = ko.observable(options.config.workItemIdVariable);
+        self.config.pauseReasonVariable = ko.observable(options.config.pauseReasonVariable);
+        self.config.successVariable = ko.observable(options.config.successVariable);
+        self.config.messageVariable = ko.observable(options.config.messageVariable);
+        self.config.foundAdviceCountVariable = ko.observable(options.config.foundAdviceCountVariable);
+        self.config.pausedAdviceCountVariable = ko.observable(options.config.pausedAdviceCountVariable);
+        self.config.savedStateVariable = ko.observable(options.config.savedStateVariable);
+        self.config.pausedDateVariable = ko.observable(options.config.pausedDateVariable);
+        self.config.errorCountVariable = ko.observable(options.config.errorCountVariable);
+        self.config.useWorkflowApproach = ko.observable(options.config.useWorkflowApproach);
+        self.config.abstractAdviceTypeSystemName = ko.observable(options.config.abstractAdviceTypeSystemName);
+        self.config.pausedPhase = ko.observable(options.config.pausedPhase);
+        self.config.saveAdviceState = ko.observable(options.config.saveAdviceState);
+        self.config.overwriteExistingSavedState = ko.observable(options.config.overwriteExistingSavedState);
+        self.config.pauseAllAdviceTypes = ko.observable(options.config.pauseAllAdviceTypes);
+        self.config.includeInactiveAdvice = ko.observable(options.config.includeInactiveAdvice);
+        self.config.enableLogging = ko.observable(options.config.enableLogging);
+        self.config.enableRetry = ko.observable(options.config.enableRetry);
+        self.config.maxRetries = ko.observable(options.config.maxRetries);
+        self.config.retryDelay = ko.observable(options.config.retryDelay);
+        self.config.timeout = ko.observable(options.config.timeout);
+
+        // Extend the action model validation
+        self.validation.workItemIdVariable = Validator.required(self, self.config.workItemIdVariable, "Work Item ID variable is required");
+        self.validation.abstractAdviceTypeSystemName = ko.computed(function() {
+            var systemName = self.config.abstractAdviceTypeSystemName();
+            return systemName && systemName.trim() ? null : 'Abstract advice type system name is required';
+        });
+
+        // Error count for validation
+        self.actionModelErrorCount = ko.pureComputed(function() {
+            var fails = 0;
+            if (self.validation.workItemIdVariable()) fails++;
+            if (self.validation.abstractAdviceTypeSystemName()) fails++;
+            return fails;
+        });
+
+        // Track variable selections for proper disposal
+        self.ui.workItemIdVariable = self.trackVariable(self.config.workItemIdVariable, "/Identifier/Work Item Identifier");
+        self.ui.pauseReasonVariable = self.trackVariable(self.config.pauseReasonVariable, "/String");
+        self.ui.successVariable = self.trackVariable(self.config.successVariable, "/Boolean");
+        self.ui.messageVariable = self.trackVariable(self.config.messageVariable, "/String");
+        self.ui.foundAdviceCountVariable = self.trackVariable(self.config.foundAdviceCountVariable, "/Number");
+        self.ui.pausedAdviceCountVariable = self.trackVariable(self.config.pausedAdviceCountVariable, "/Number");
+        self.ui.savedStateVariable = self.trackVariable(self.config.savedStateVariable, "/Boolean");
+        self.ui.pausedDateVariable = self.trackVariable(self.config.pausedDateVariable, "/DateTime");
+        self.ui.errorCountVariable = self.trackVariable(self.config.errorCountVariable, "/Number");
+
+        // Force addition of outlets for workflow branches
+        self.addAvailableOutlet("success", ko.pureComputed(function() { return "Success"; }));
+        self.addAvailableOutlet("paused", ko.pureComputed(function() { return "Advice Paused"; }));
+        self.addAvailableOutlet("noAdvice", ko.pureComputed(function() { return "No Advice Found"; }));
+        self.addAvailableOutlet("alreadyPaused", ko.pureComputed(function() { return "Already Paused"; }));
+        self.addAvailableOutlet("error", ko.pureComputed(function() { return "Error"; }));
+
+        return self;
+    };
 
     /**
-     * Factory function for creating AdvicePauseManager workflow nodes
-     * @param {Object} workflowModel - The overall workflow model
-     * @returns {Object} - The node model for AdvicePauseManager
+     * Dispose function - called by ShareDo when destroying workflow action nodes
+     * @param {Object} actionModel - The action model to dispose
      */
-    Alt.AdviceManagement.Workflows.AdvicePauseManagerFactory = function(workflowModel) {
-        return {
-            // Node identification
-            id: generateUniqueId('AdvicePauseManager'),
-            systemName: 'AdvicePauseManager',
-            type: 'AdvicePauseManager',
-            name: 'Advice Pause Manager',
-            
-            // Visual properties
-            icon: 'fa-pause-circle',
-            color: '#ffc107',
-            category: 'Advice Management',
-            
-            // Node description
-            description: 'Finds active advice items, saves their state, and moves them to paused phase',
-            
-            // Input/Output configuration
-            ui: {
-                // Input variable selectors
-                workItemIdVariable: {
-                    label: 'Work Item ID Variable',
-                    type: 'variableSelector',
-                    required: true,
-                    variableType: '/Identifier/Work Item Identifier',
-                    value: ko.observable(null),
-                    allowedTypes: ['/Identifier/Work Item Identifier']
-                },
-                
-                pauseReasonVariable: {
-                    label: 'Pause Reason Variable',
-                    type: 'variableSelector',
-                    required: false,
-                    variableType: '/String',
-                    value: ko.observable(null),
-                    allowedTypes: ['/String']
-                },
-                
-                // Output variable selectors
-                successVariable: {
-                    label: 'Success Variable',
-                    type: 'variableSelector',
-                    required: false,
-                    variableType: '/Boolean',
-                    value: ko.observable(null),
-                    allowedTypes: ['/Boolean']
-                },
-                
-                messageVariable: {
-                    label: 'Message Variable',
-                    type: 'variableSelector',
-                    required: false,
-                    variableType: '/String',
-                    value: ko.observable(null),
-                    allowedTypes: ['/String']
-                },
-                
-                foundAdviceCountVariable: {
-                    label: 'Found Advice Count Variable',
-                    type: 'variableSelector',
-                    required: false,
-                    variableType: '/Number',
-                    value: ko.observable(null),
-                    allowedTypes: ['/Number']
-                },
-                
-                pausedAdviceCountVariable: {
-                    label: 'Paused Advice Count Variable',
-                    type: 'variableSelector',
-                    required: false,
-                    variableType: '/Number',
-                    value: ko.observable(null),
-                    allowedTypes: ['/Number']
-                },
-                
-                savedStateVariable: {
-                    label: 'Saved State Variable',
-                    type: 'variableSelector',
-                    required: false,
-                    variableType: '/Boolean',
-                    value: ko.observable(null),
-                    allowedTypes: ['/Boolean']
-                },
-                
-                pausedDateVariable: {
-                    label: 'Paused Date Variable',
-                    type: 'variableSelector',
-                    required: false,
-                    variableType: '/DateTime',
-                    value: ko.observable(null),
-                    allowedTypes: ['/DateTime']
-                },
-                
-                errorCountVariable: {
-                    label: 'Error Count Variable',
-                    type: 'variableSelector',
-                    required: false,
-                    variableType: '/Number',
-                    value: ko.observable(null),
-                    allowedTypes: ['/Number']
-                }
-            },
-            
-            // Configuration options
-            config: {
-                // Pause strategy
-                useWorkflowApproach: ko.observable(true),
-                abstractAdviceTypeSystemName: ko.observable('AbstractAdvice'),
-                pausedPhase: ko.observable('Removed'),
-                
-                // State management
-                saveAdviceState: ko.observable(true),
-                overwriteExistingSavedState: ko.observable(true),
-                
-                // Behavior options
-                pauseAllAdviceTypes: ko.observable(true),
-                includeInactiveAdvice: ko.observable(false),
-                
-                // Performance and reliability
-                enableLogging: ko.observable(true),
-                enableRetry: ko.observable(true),
-                maxRetries: ko.observable(3),
-                retryDelay: ko.observable(1000),
-                timeout: ko.observable(60000)
-            },
-            
-            // Validation rules
-            validation: {
-                workItemIdVariable: ko.computed(function() {
-                    return this.ui.workItemIdVariable.value() ? null : 'Work Item ID variable is required';
-                }, this),
-                
-                abstractAdviceTypeSystemName: ko.computed(function() {
-                    var systemName = this.config.abstractAdviceTypeSystemName();
-                    return systemName && systemName.trim() ? null : 'Abstract advice type system name is required';
-                }, this)
-            },
-            
-            // Branch definitions for visual workflow
-            branches: [
-                {
-                    id: 'success',
-                    name: 'Success',
-                    description: 'Pause operation completed successfully',
-                    color: '#28a745'
-                },
-                {
-                    id: 'paused',
-                    name: 'Advice Paused',
-                    description: 'Advice items were found and paused',
-                    color: '#ffc107'
-                },
-                {
-                    id: 'noAdvice',
-                    name: 'No Advice Found',
-                    description: 'No active advice was found to pause',
-                    color: '#6c757d'
-                },
-                {
-                    id: 'alreadyPaused',
-                    name: 'Already Paused',
-                    description: 'Advice is already in paused state',
-                    color: '#17a2b8'
-                },
-                {
-                    id: 'error',
-                    name: 'Error',
-                    description: 'Pause operation failed',
-                    color: '#dc3545'
-                }
-            ],
-            
-            // Reference to workflow model for variable selection
-            workflowModel: workflowModel
-        };
+    var dispose = function(actionModel) {
+        var self = actionModel;
+        
+        // Dispose tracked variables to prevent memory leaks
+        if (self.ui.workItemIdVariable) self.ui.workItemIdVariable.dispose();
+        if (self.ui.pauseReasonVariable) self.ui.pauseReasonVariable.dispose();
+        if (self.ui.successVariable) self.ui.successVariable.dispose();
+        if (self.ui.messageVariable) self.ui.messageVariable.dispose();
+        if (self.ui.foundAdviceCountVariable) self.ui.foundAdviceCountVariable.dispose();
+        if (self.ui.pausedAdviceCountVariable) self.ui.pausedAdviceCountVariable.dispose();
+        if (self.ui.savedStateVariable) self.ui.savedStateVariable.dispose();
+        if (self.ui.pausedDateVariable) self.ui.pausedDateVariable.dispose();
+        if (self.ui.errorCountVariable) self.ui.errorCountVariable.dispose();
+        
+        // Dispose computed observables
+        if (self.validation.abstractAdviceTypeSystemName) self.validation.abstractAdviceTypeSystemName.dispose();
+        if (self.actionModelErrorCount) self.actionModelErrorCount.dispose();
     };
-    
-    /**
-     * Generate a unique ID for workflow nodes
-     * @param {string} prefix - Prefix for the ID
-     * @returns {string} - Unique ID
-     */
-    function generateUniqueId(prefix) {
-        return prefix + '_' + Math.random().toString(36).substr(2, 9);
-    }
+
+    // Return the factory object that ShareDo expects
+    return {
+        createModel: createModel,
+        dispose: dispose
+    };
 
 })();
