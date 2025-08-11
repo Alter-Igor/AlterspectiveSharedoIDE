@@ -18,10 +18,8 @@ Alt.AdviceManagement.AdvicePauseManagerDesigner = function(element, options, vie
     self.isExpanded = ko.observable(false);
     self.showAdvancedOptions = ko.observable(false);
     
-    // Initialize information modal
-    self.infoModal = new Alt.AdviceManagement.Workflows.Shared.WorkflowActionInfoModal(
-        Alt.AdviceManagement.AdvicePauseManagerInfo
-    );
+    // Store action information for help blade
+    self.actionInfo = Alt.AdviceManagement.AdvicePauseManagerInfo;
     
     // Initialize configuration with fallback if viewModel doesn't exist yet
     if (!self.viewModel || !self.viewModel.config) {
@@ -79,53 +77,54 @@ Alt.AdviceManagement.AdvicePauseManagerDesigner = function(element, options, vie
     };
     
     /**
-     * Show information modal
+     * Show help information blade
      */
     self.showInfo = function(tab) {
         if ($ui && $ui.log && $ui.log.debug) {
-            $ui.log.debug("AdvicePauseManagerDesigner - showInfo called");
-            $ui.log.debug("  Tab: " + (tab || 'default'));
-            $ui.log.debug("  infoModal exists: " + !!self.infoModal);
+            $ui.log.debug("AdvicePauseManagerDesigner - Opening help blade");
+            $ui.log.debug("  Initial tab: " + (tab || 'overview'));
         }
         
         try {
-            if (self.infoModal) {
-                self.infoModal.show(tab);
+            // Prepare blade configuration
+            var bladeConfig = {
+                actionInfo: self.actionInfo,
+                initialTab: tab || 'overview'
+            };
+            
+            // Open the help blade
+            if ($ui && $ui.panels && $ui.panels.open) {
+                $ui.panels.open('Alt.AdviceManagement.WorkflowActionHelpBlade', bladeConfig, {
+                    title: (self.actionInfo.name || 'Workflow Action') + ' - Help',
+                    width: 900,
+                    height: 700,
+                    resizable: true,
+                    maximizable: true
+                });
                 
                 if ($ui && $ui.log && $ui.log.debug) {
-                    $ui.log.debug("AdvicePauseManagerDesigner - Modal show() called successfully");
+                    $ui.log.debug("AdvicePauseManagerDesigner - Help blade opened successfully");
                 }
             } else {
                 if ($ui && $ui.log && $ui.log.error) {
-                    $ui.log.error("AdvicePauseManagerDesigner - infoModal is null or undefined");
+                    $ui.log.error("AdvicePauseManagerDesigner - $ui.panels.open not available");
                 }
                 
-                // Try to reinitialize the modal
-                if (typeof Alt !== 'undefined' && 
-                    Alt.AdviceManagement && 
-                    Alt.AdviceManagement.Workflows &&
-                    Alt.AdviceManagement.Workflows.Shared &&
-                    Alt.AdviceManagement.Workflows.Shared.WorkflowActionInfoModal) {
-                    
-                    self.infoModal = new Alt.AdviceManagement.Workflows.Shared.WorkflowActionInfoModal(
-                        Alt.AdviceManagement.AdvicePauseManagerInfo
-                    );
-                    self.infoModal.show(tab);
-                    
-                    if ($ui && $ui.log && $ui.log.warning) {
-                        $ui.log.warning("AdvicePauseManagerDesigner - Successfully reinitialized modal");
-                    }
+                // Fallback: try alternative panel opening methods
+                if (typeof openPanel === 'function') {
+                    openPanel('Alt.AdviceManagement.WorkflowActionHelpBlade', bladeConfig);
+                } else if ($ui && $ui.blade && $ui.blade.open) {
+                    $ui.blade.open('Alt.AdviceManagement.WorkflowActionHelpBlade', bladeConfig);
                 } else {
                     if ($ui && $ui.log && $ui.log.error) {
-                        $ui.log.error("AdvicePauseManagerDesigner - Cannot reinitialize modal, namespace not available");
-                        $ui.log.error("  Alt available: " + (typeof Alt !== 'undefined'));
-                        $ui.log.error("  Full namespace available: " + (typeof Alt !== 'undefined' && Alt.AdviceManagement && Alt.AdviceManagement.Workflows && Alt.AdviceManagement.Workflows.Shared && Alt.AdviceManagement.Workflows.Shared.WorkflowActionInfoModal));
+                        $ui.log.error("AdvicePauseManagerDesigner - No panel opening method available");
+                        $ui.log.error("  Available methods: " + JSON.stringify(Object.keys($ui || {})));
                     }
                 }
             }
         } catch (error) {
             if ($ui && $ui.log && $ui.log.error) {
-                $ui.log.error("AdvicePauseManagerDesigner - Error in showInfo: " + error.message);
+                $ui.log.error("AdvicePauseManagerDesigner - Error opening help blade: " + error.message);
                 $ui.log.error("  Error stack: " + (error.stack || 'No stack trace'));
             }
         }

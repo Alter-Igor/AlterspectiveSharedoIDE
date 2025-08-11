@@ -18,10 +18,8 @@ Alt.AdviceManagement.AdviceResumeManagerDesigner = function(element, options, vi
     self.isExpanded = ko.observable(false);
     self.showAdvancedOptions = ko.observable(false);
     
-    // Initialize information modal
-    self.infoModal = new Alt.AdviceManagement.Workflows.Shared.WorkflowActionInfoModal(
-        Alt.AdviceManagement.AdviceResumeManagerInfo
-    );
+    // Store action information for help blade
+    self.actionInfo = Alt.AdviceManagement.AdviceResumeManagerInfo;
     
     // Initialize configuration with fallback
     if (!self.viewModel || !self.viewModel.config) {
@@ -53,11 +51,56 @@ Alt.AdviceManagement.AdviceResumeManagerDesigner = function(element, options, vi
     };
     
     /**
-     * Show information modal
+     * Show help information blade
      */
     self.showInfo = function(tab) {
-        if (self.infoModal) {
-            self.infoModal.show(tab);
+        if ($ui && $ui.log && $ui.log.debug) {
+            $ui.log.debug("AdviceResumeManagerDesigner - Opening help blade");
+            $ui.log.debug("  Initial tab: " + (tab || 'overview'));
+        }
+        
+        try {
+            // Prepare blade configuration
+            var bladeConfig = {
+                actionInfo: self.actionInfo,
+                initialTab: tab || 'overview'
+            };
+            
+            // Open the help blade
+            if ($ui && $ui.panels && $ui.panels.open) {
+                $ui.panels.open('Alt.AdviceManagement.WorkflowActionHelpBlade', bladeConfig, {
+                    title: (self.actionInfo.name || 'Workflow Action') + ' - Help',
+                    width: 900,
+                    height: 700,
+                    resizable: true,
+                    maximizable: true
+                });
+                
+                if ($ui && $ui.log && $ui.log.debug) {
+                    $ui.log.debug("AdviceResumeManagerDesigner - Help blade opened successfully");
+                }
+            } else {
+                if ($ui && $ui.log && $ui.log.error) {
+                    $ui.log.error("AdviceResumeManagerDesigner - $ui.panels.open not available");
+                }
+                
+                // Fallback: try alternative panel opening methods
+                if (typeof openPanel === 'function') {
+                    openPanel('Alt.AdviceManagement.WorkflowActionHelpBlade', bladeConfig);
+                } else if ($ui && $ui.blade && $ui.blade.open) {
+                    $ui.blade.open('Alt.AdviceManagement.WorkflowActionHelpBlade', bladeConfig);
+                } else {
+                    if ($ui && $ui.log && $ui.log.error) {
+                        $ui.log.error("AdviceResumeManagerDesigner - No panel opening method available");
+                        $ui.log.error("  Available methods: " + JSON.stringify(Object.keys($ui || {})));
+                    }
+                }
+            }
+        } catch (error) {
+            if ($ui && $ui.log && $ui.log.error) {
+                $ui.log.error("AdviceResumeManagerDesigner - Error opening help blade: " + error.message);
+                $ui.log.error("  Error stack: " + (error.stack || 'No stack trace'));
+            }
         }
     };
     

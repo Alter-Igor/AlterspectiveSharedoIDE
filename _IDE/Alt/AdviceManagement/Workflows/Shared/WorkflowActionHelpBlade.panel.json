@@ -1,0 +1,42 @@
+{
+    "id": "Alt.AdviceManagement.WorkflowActionHelpBlade",
+    "version": "1.0.0",
+    "type": "panel",
+    "priority": 5000,
+    "metadata": {
+        "name": "Workflow Action Help",
+        "description": "Displays comprehensive help information for workflow actions",
+        "category": "Help",
+        "icon": "fa-info-circle",
+        "author": "Alterspective"
+    },
+    "panel": {
+        "allowInWorkspace": true,
+        "allowInModal": true,
+        "defaultWidth": 800,
+        "defaultHeight": 600,
+        "resizable": true,
+        "maximizable": true,
+        "minimizable": false
+    },
+    "configuration": {
+        "actionInfo": {
+            "type": "object",
+            "description": "The workflow action information to display"
+        }
+    },
+    "scripts": [
+        "/_ideFiles/Alt/AdviceManagement/Foundation/Helpers/namespace.js",
+        "/_ideFiles/Alt/AdviceManagement/Workflows/Shared/WorkflowActionHelpBlade.js"
+    ],
+    "styles": [
+        "/_ideFiles/Alt/AdviceManagement/Workflows/Shared/WorkflowActionHelpBlade.css"
+    ],
+    "templates": [
+        "/_ideFiles/Alt/AdviceManagement/Workflows/Shared/WorkflowActionHelpBlade.html"
+    ],
+    "dependencies": [
+        "jquery",
+        "knockout"
+    ]
+}
