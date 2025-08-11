@@ -240,16 +240,18 @@ Alt.AdviceManagement.Workflows.Shared.WorkflowActionHelpBlade = function(element
     });
     
     /**
-     * Close the help panel
+     * Close the help blade
      */
     self.closePanel = function() {
-        if ($ui && $ui.panels && $ui.panels.close) {
-            $ui.panels.close(self);
+        if ($ui && $ui.stacks && $ui.stacks.cancel) {
+            // Use StackManager to close this blade
+            $ui.stacks.cancel(self.stackModel || self);
         } else if (self.options && self.options.closeCallback) {
             self.options.closeCallback();
         } else {
             if ($ui && $ui.log && $ui.log.warning) {
                 $ui.log.warning("WorkflowActionHelpBlade - No close method available");
+                $ui.log.warning("  Available $ui methods: " + JSON.stringify(Object.keys($ui || {})));
             }
         }
     };

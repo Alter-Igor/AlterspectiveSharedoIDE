@@ -11,7 +11,6 @@
     },
     "scripts": [
         "/_ideFiles/Alt/AdviceManagement/Foundation/Helpers/namespace.js",
-        "/_ideFiles/Alt/AdviceManagement/Workflows/Shared/WorkflowActionInfoModal.js",
         "/_ideFiles/Alt/AdviceManagement/Workflows/AdviceStatusChecker/AdviceStatusCheckerInfo.js",
         "/_ideFiles/Alt/AdviceManagement/Workflows/AdviceStatusChecker/Designer/AdviceStatusCheckerDesigner.js"
     ],

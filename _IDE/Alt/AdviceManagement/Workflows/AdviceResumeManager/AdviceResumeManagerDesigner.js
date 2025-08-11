@@ -66,34 +66,25 @@ Alt.AdviceManagement.AdviceResumeManagerDesigner = function(element, options, vi
                 initialTab: tab || 'overview'
             };
             
-            // Open the help blade
-            if ($ui && $ui.panels && $ui.panels.open) {
-                $ui.panels.open('Alt.AdviceManagement.WorkflowActionHelpBlade', bladeConfig, {
-                    title: (self.actionInfo.name || 'Workflow Action') + ' - Help',
-                    width: 900,
-                    height: 700,
-                    resizable: true,
-                    maximizable: true
-                });
+            // Open help blade using correct ShareDo StackManager pattern
+            if ($ui && $ui.stacks && $ui.stacks.openPanel) {
+                // Add blade width to configuration
+                bladeConfig.bladeWidth = 900;
                 
-                if ($ui && $ui.log && $ui.log.debug) {
-                    $ui.log.debug("AdviceResumeManagerDesigner - Help blade opened successfully");
-                }
+                var events = {
+                    onShow: function(stack) {
+                        if ($ui && $ui.log && $ui.log.debug) {
+                            $ui.log.debug("AdviceResumeManagerDesigner - Help blade opened successfully");
+                        }
+                    }
+                };
+                
+                $ui.stacks.openPanel('Alt.AdviceManagement.WorkflowActionHelpBlade', bladeConfig, events);
+                
             } else {
                 if ($ui && $ui.log && $ui.log.error) {
-                    $ui.log.error("AdviceResumeManagerDesigner - $ui.panels.open not available");
-                }
-                
-                // Fallback: try alternative panel opening methods
-                if (typeof openPanel === 'function') {
-                    openPanel('Alt.AdviceManagement.WorkflowActionHelpBlade', bladeConfig);
-                } else if ($ui && $ui.blade && $ui.blade.open) {
-                    $ui.blade.open('Alt.AdviceManagement.WorkflowActionHelpBlade', bladeConfig);
-                } else {
-                    if ($ui && $ui.log && $ui.log.error) {
-                        $ui.log.error("AdviceResumeManagerDesigner - No panel opening method available");
-                        $ui.log.error("  Available methods: " + JSON.stringify(Object.keys($ui || {})));
-                    }
+                    $ui.log.error("AdviceResumeManagerDesigner - $ui.stacks.openPanel not available");
+                    $ui.log.error("  Available $ui methods: " + JSON.stringify(Object.keys($ui || {})));
                 }
             }
         } catch (error) {

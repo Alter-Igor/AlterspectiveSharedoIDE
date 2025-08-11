@@ -43,17 +43,51 @@ Alt.AdviceManagement.AdviceStatusCheckerDesigner = function(element, configurati
     // Reference the workflow model as well, for the variable pickers
     self.model = options.model;
     
-    // Initialize information modal
-    self.infoModal = new Alt.AdviceManagement.Workflows.Shared.WorkflowActionInfoModal(
-        Alt.AdviceManagement.AdviceStatusCheckerInfo
-    );
+    // Store action information for help blade
+    self.actionInfo = Alt.AdviceManagement.AdviceStatusCheckerInfo;
     
     /**
-     * Show information modal
+     * Show help information blade
      */
     self.showInfo = function(tab) {
-        if (self.infoModal) {
-            self.infoModal.show(tab);
+        if ($ui && $ui.log && $ui.log.debug) {
+            $ui.log.debug("AdviceStatusCheckerDesigner - Opening help blade");
+            $ui.log.debug("  Initial tab: " + (tab || 'overview'));
+        }
+        
+        try {
+            // Prepare blade configuration
+            var bladeConfig = {
+                actionInfo: self.actionInfo,
+                initialTab: tab || 'overview'
+            };
+            
+            // Open help blade using correct ShareDo StackManager pattern
+            if ($ui && $ui.stacks && $ui.stacks.openPanel) {
+                // Add blade width to configuration
+                bladeConfig.bladeWidth = 900;
+                
+                var events = {
+                    onShow: function(stack) {
+                        if ($ui && $ui.log && $ui.log.debug) {
+                            $ui.log.debug("AdviceStatusCheckerDesigner - Help blade opened successfully");
+                        }
+                    }
+                };
+                
+                $ui.stacks.openPanel('Alt.AdviceManagement.WorkflowActionHelpBlade', bladeConfig, events);
+                
+            } else {
+                if ($ui && $ui.log && $ui.log.error) {
+                    $ui.log.error("AdviceStatusCheckerDesigner - $ui.stacks.openPanel not available");
+                    $ui.log.error("  Available $ui methods: " + JSON.stringify(Object.keys($ui || {})));
+                }
+            }
+        } catch (error) {
+            if ($ui && $ui.log && $ui.log.error) {
+                $ui.log.error("AdviceStatusCheckerDesigner - Error opening help blade: " + error.message);
+                $ui.log.error("  Error stack: " + (error.stack || 'No stack trace'));
+            }
         }
     };
     
