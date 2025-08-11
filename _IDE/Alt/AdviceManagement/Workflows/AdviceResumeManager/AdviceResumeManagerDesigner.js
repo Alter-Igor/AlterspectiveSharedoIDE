@@ -2,53 +2,31 @@ namespace("Alt.AdviceManagement");
 
 /**
  * AdviceResumeManagerDesigner - Designer widget for configuring the Advice Resume Manager workflow action
- * @param {Object} element - DOM element
- * @param {Object} options - Widget options
- * @param {Object} viewModel - Parent view model (workflow action model)
+ * @param {HTMLElement} element - DOM element to bind to
+ * @param {Object} configuration - Configuration from workflow designer
+ * @param {Object} baseModel - Base model from workflow designer
  */
-Alt.AdviceManagement.AdviceResumeManagerDesigner = function(element, options, viewModel) {
+Alt.AdviceManagement.AdviceResumeManagerDesigner = function(element, configuration, baseModel) {
     var self = this;
     
-    // Store parameters
-    self.element = element;
-    self.options = options;
-    self.viewModel = viewModel;
+    var defaults = {
+        // The action node from the workflow model
+        node: null,
+        
+        // The overall workflow editor model
+        model: null
+    };
     
-    // Designer-specific observables
-    self.isExpanded = ko.observable(false);
-    self.showAdvancedOptions = ko.observable(false);
+    var options = $.extend(true, {}, defaults, configuration);
+    
+    // Store the action in this view model ready for the widget template to render it
+    self.action = options.node;
+    
+    // Reference the workflow model as well, for the variable pickers
+    self.model = options.model;
     
     // Store action information for help blade
     self.actionInfo = Alt.AdviceManagement.AdviceResumeManagerInfo;
-    
-    // Initialize configuration with fallback
-    if (!self.viewModel || !self.viewModel.config) {
-        if (!self.viewModel) {
-            self.viewModel = {};
-        }
-        if (!self.viewModel.config) {
-            self.viewModel.config = {
-                abstractAdviceTypeSystemName: ko.observable('AbstractAdvice'),
-                defaultAdviceTypeSystemName: ko.observable('StandardAdvice'),
-                activePhase: ko.observable('Active'),
-                pausedPhase: ko.observable('Removed'),
-                newAdviceDueDate: ko.observable(null),
-                enableLogging: ko.observable(true),
-                timeout: ko.observable(60000)
-            };
-        }
-        
-        if ($ui && $ui.log && $ui.log.warning) {
-            $ui.log.warning("AdviceResumeManagerDesigner - viewModel.config not provided, created placeholder");
-        }
-    }
-    
-    /**
-     * Toggle expanded view
-     */
-    self.toggleExpanded = function() {
-        self.isExpanded(!self.isExpanded());
-    };
     
     /**
      * Show help information blade
@@ -95,34 +73,32 @@ Alt.AdviceManagement.AdviceResumeManagerDesigner = function(element, options, vi
         }
     };
     
-    /**
-     * Get display text for current configuration
-     */
-    self.getConfigurationSummary = ko.computed(function() {
-        try {
-            if (!self.viewModel || !self.viewModel.config) {
-                return "Configuration not available";
-            }
-            
-            var abstractType = 'AbstractAdvice';
-            var defaultType = 'StandardAdvice';
-            
-            if (self.viewModel.config.abstractAdviceTypeSystemName && typeof self.viewModel.config.abstractAdviceTypeSystemName === 'function') {
-                abstractType = self.viewModel.config.abstractAdviceTypeSystemName() || 'AbstractAdvice';
-            }
-            
-            if (self.viewModel.config.defaultAdviceTypeSystemName && typeof self.viewModel.config.defaultAdviceTypeSystemName === 'function') {
-                defaultType = self.viewModel.config.defaultAdviceTypeSystemName() || 'StandardAdvice';
-            }
-            
-            return "Base: " + abstractType + ", Default: " + defaultType;
-        } catch (error) {
-            return "Configuration error";
-        }
-    });
     
     // Initialize logging
     if ($ui && $ui.log && $ui.log.debug) {
         $ui.log.debug("AdviceResumeManagerDesigner - INITIALIZING");
+        $ui.log.debug("  Action available: " + !!self.action);
+        $ui.log.debug("  Model available: " + !!self.model);
+    }
+};
+
+/**
+ * Called when the designer is being bound to the DOM
+ */
+Alt.AdviceManagement.AdviceResumeManagerDesigner.prototype.loadAndBind = function() {
+    var self = this;
+    // Designer is ready - the HTML template handles the binding to actionModel.config
+};
+
+/**
+ * Called when the designer is being destroyed
+ */
+Alt.AdviceManagement.AdviceResumeManagerDesigner.prototype.onDestroy = function() {
+    var self = this;
+    
+    // Clean up resources
+    
+    if ($ui && $ui.log && $ui.log.debug) {
+        $ui.log.debug("AdviceResumeManagerDesigner - Destroyed");
     }
 };

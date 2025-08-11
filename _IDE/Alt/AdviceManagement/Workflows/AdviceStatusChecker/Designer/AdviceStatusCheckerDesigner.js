@@ -113,10 +113,7 @@ Alt.AdviceManagement.AdviceStatusCheckerDesigner.prototype.loadAndBind = functio
 Alt.AdviceManagement.AdviceStatusCheckerDesigner.prototype.onDestroy = function() {
     var self = this;
     
-    // Clean up modal
-    if (self.infoModal) {
-        self.infoModal.hide();
-    }
+    // Clean up resources
     
     if ($ui && $ui.log && $ui.log.debug) {
         $ui.log.debug("AdviceStatusCheckerDesigner - Destroyed");

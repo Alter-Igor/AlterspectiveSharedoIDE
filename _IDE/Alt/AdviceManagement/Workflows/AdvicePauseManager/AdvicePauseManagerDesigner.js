@@ -2,79 +2,31 @@ namespace("Alt.AdviceManagement");
 
 /**
  * AdvicePauseManagerDesigner - Designer widget for configuring the Advice Pause Manager workflow action
- * @param {Object} element - DOM element
- * @param {Object} options - Widget options  
- * @param {Object} viewModel - Parent view model (workflow action model)
+ * @param {HTMLElement} element - DOM element to bind to
+ * @param {Object} configuration - Configuration from workflow designer
+ * @param {Object} baseModel - Base model from workflow designer
  */
-Alt.AdviceManagement.AdvicePauseManagerDesigner = function(element, options, viewModel) {
+Alt.AdviceManagement.AdvicePauseManagerDesigner = function(element, configuration, baseModel) {
     var self = this;
     
-    // Store parameters
-    self.element = element;
-    self.options = options;
-    self.viewModel = viewModel;
+    var defaults = {
+        // The action node from the workflow model
+        node: null,
+        
+        // The overall workflow editor model
+        model: null
+    };
     
-    // Designer-specific observables
-    self.isExpanded = ko.observable(false);
-    self.showAdvancedOptions = ko.observable(false);
+    var options = $.extend(true, {}, defaults, configuration);
+    
+    // Store the action in this view model ready for the widget template to render it
+    self.action = options.node;
+    
+    // Reference the workflow model as well, for the variable pickers
+    self.model = options.model;
     
     // Store action information for help blade
     self.actionInfo = Alt.AdviceManagement.AdvicePauseManagerInfo;
-    
-    // Initialize configuration with fallback if viewModel doesn't exist yet
-    if (!self.viewModel || !self.viewModel.config) {
-        if (!self.viewModel) {
-            self.viewModel = {};
-        }
-        if (!self.viewModel.config) {
-            self.viewModel.config = {
-                abstractAdviceTypeSystemName: ko.observable('AbstractAdvice'),
-                pausedPhase: ko.observable('Removed'),
-                pauseReason: ko.observable('Advice paused by workflow'),
-                saveAdviceState: ko.observable(true),
-                enableLogging: ko.observable(true),
-                timeout: ko.observable(60000)
-            };
-        }
-        
-        if ($ui && $ui.log && $ui.log.warning) {
-            $ui.log.warning("AdvicePauseManagerDesigner - viewModel.config not provided, created placeholder");
-        }
-    } else {
-        // Ensure all required observables exist
-        if (!self.viewModel.config.abstractAdviceTypeSystemName) {
-            self.viewModel.config.abstractAdviceTypeSystemName = ko.observable('AbstractAdvice');
-        }
-        if (!self.viewModel.config.pausedPhase) {
-            self.viewModel.config.pausedPhase = ko.observable('Removed');
-        }
-        if (!self.viewModel.config.pauseReason) {
-            self.viewModel.config.pauseReason = ko.observable('Advice paused by workflow');
-        }
-        if (!self.viewModel.config.saveAdviceState) {
-            self.viewModel.config.saveAdviceState = ko.observable(true);
-        }
-        if (!self.viewModel.config.enableLogging) {
-            self.viewModel.config.enableLogging = ko.observable(true);
-        }
-        if (!self.viewModel.config.timeout) {
-            self.viewModel.config.timeout = ko.observable(60000);
-        }
-    }
-    
-    /**
-     * Toggle expanded view
-     */
-    self.toggleExpanded = function() {
-        self.isExpanded(!self.isExpanded());
-    };
-    
-    /**
-     * Toggle advanced options
-     */
-    self.toggleAdvancedOptions = function() {
-        self.showAdvancedOptions(!self.showAdvancedOptions());
-    };
     
     /**
      * Show help information blade
@@ -121,170 +73,32 @@ Alt.AdviceManagement.AdvicePauseManagerDesigner = function(element, options, vie
         }
     };
     
-    /**
-     * Get display text for current configuration
-     */
-    self.getConfigurationSummary = ko.computed(function() {
-        try {
-            if (!self.viewModel || !self.viewModel.config) {
-                return "Configuration not available";
-            }
-            
-            var abstractType = 'AbstractAdvice';
-            var phase = 'Removed';
-            var saveState = true;
-            
-            if (self.viewModel.config.abstractAdviceTypeSystemName && typeof self.viewModel.config.abstractAdviceTypeSystemName === 'function') {
-                abstractType = self.viewModel.config.abstractAdviceTypeSystemName() || 'AbstractAdvice';
-            }
-            
-            if (self.viewModel.config.pausedPhase && typeof self.viewModel.config.pausedPhase === 'function') {
-                phase = self.viewModel.config.pausedPhase() || 'Removed';
-            }
-            
-            if (self.viewModel.config.saveAdviceState && typeof self.viewModel.config.saveAdviceState === 'function') {
-                saveState = self.viewModel.config.saveAdviceState();
-            }
-            
-            var summary = "Type: " + abstractType + ", Phase: " + phase;
-            if (saveState) {
-                summary += ", Save State: Yes";
-            }
-            
-            return summary;
-        } catch (error) {
-            if ($ui && $ui.log && $ui.log.error) {
-                $ui.log.error("AdvicePauseManagerDesigner - Error in getConfigurationSummary: " + error.message);
-            }
-            return "Configuration error";
-        }
-    });
-    
-    /**
-     * Validation
-     */
-    self.isValid = ko.computed(function() {
-        try {
-            if (!self.viewModel || !self.viewModel.config) {
-                return false;
-            }
-            
-            // Check if we have required fields
-            var abstractType = null;
-            if (self.viewModel.config.abstractAdviceTypeSystemName && typeof self.viewModel.config.abstractAdviceTypeSystemName === 'function') {
-                abstractType = self.viewModel.config.abstractAdviceTypeSystemName();
-            }
-            
-            if (!abstractType || abstractType.trim().length === 0) {
-                return false;
-            }
-            
-            var phase = null;
-            if (self.viewModel.config.pausedPhase && typeof self.viewModel.config.pausedPhase === 'function') {
-                phase = self.viewModel.config.pausedPhase();
-            }
-            
-            if (!phase || phase.trim().length === 0) {
-                return false;
-            }
-            
-            return true;
-        } catch (error) {
-            if ($ui && $ui.log && $ui.log.error) {
-                $ui.log.error("AdvicePauseManagerDesigner - Error in isValid: " + error.message);
-            }
-            return false;
-        }
-    });
-    
-    /**
-     * Get validation message
-     */
-    self.validationMessage = ko.computed(function() {
-        try {
-            if (self.isValid()) {
-                return "";
-            }
-            
-            if (!self.viewModel || !self.viewModel.config) {
-                return "Configuration model not available";
-            }
-            
-            var abstractType = null;
-            if (self.viewModel.config.abstractAdviceTypeSystemName && typeof self.viewModel.config.abstractAdviceTypeSystemName === 'function') {
-                abstractType = self.viewModel.config.abstractAdviceTypeSystemName();
-            }
-            
-            if (!abstractType || abstractType.trim().length === 0) {
-                return "Abstract advice type system name is required";
-            }
-            
-            var phase = null;
-            if (self.viewModel.config.pausedPhase && typeof self.viewModel.config.pausedPhase === 'function') {
-                phase = self.viewModel.config.pausedPhase();
-            }
-            
-            if (!phase || phase.trim().length === 0) {
-                return "Paused phase name is required";
-            }
-            
-            return "Configuration is invalid";
-        } catch (error) {
-            if ($ui && $ui.log && $ui.log.error) {
-                $ui.log.error("AdvicePauseManagerDesigner - Error in validationMessage: " + error.message);
-            }
-            return "Validation error: " + error.message;
-        }
-    });
     
     // Initialize logging
     if ($ui && $ui.log && $ui.log.debug) {
         $ui.log.debug("AdvicePauseManagerDesigner - INITIALIZING");
-        $ui.log.debug("  ViewModel available: " + !!self.viewModel);
-        $ui.log.debug("  Config available: " + !!(self.viewModel && self.viewModel.config));
-    }
-    
-    // Enhanced error checking
-    if (!self.viewModel) {
-        if ($ui && $ui.log && $ui.log.error) {
-            $ui.log.error("AdvicePauseManagerDesigner - CRITICAL: No viewModel provided");
-        }
-        console.error("AdvicePauseManagerDesigner: viewModel is required but not provided");
-    }
-    
-    if (self.viewModel && !self.viewModel.config) {
-        if ($ui && $ui.log && $ui.log.error) {
-            $ui.log.error("AdvicePauseManagerDesigner - CRITICAL: viewModel.config is missing");
-        }
-        console.error("AdvicePauseManagerDesigner: viewModel.config is required but not available");
+        $ui.log.debug("  Action available: " + !!self.action);
+        $ui.log.debug("  Model available: " + !!self.model);
     }
 };
 
 /**
- * Dispose function called when widget is destroyed
+ * Called when the designer is being bound to the DOM
  */
-Alt.AdviceManagement.AdvicePauseManagerDesigner.prototype.dispose = function() {
+Alt.AdviceManagement.AdvicePauseManagerDesigner.prototype.loadAndBind = function() {
+    var self = this;
+    // Designer is ready - the HTML template handles the binding to actionModel.config
+};
+
+/**
+ * Called when the designer is being destroyed
+ */
+Alt.AdviceManagement.AdvicePauseManagerDesigner.prototype.onDestroy = function() {
     var self = this;
     
-    // Clean up subscriptions
-    if (self.getConfigurationSummary && self.getConfigurationSummary.dispose) {
-        self.getConfigurationSummary.dispose();
-    }
-    
-    if (self.isValid && self.isValid.dispose) {
-        self.isValid.dispose();
-    }
-    
-    if (self.validationMessage && self.validationMessage.dispose) {
-        self.validationMessage.dispose();
-    }
-    
-    // Clean up modal
-    if (self.infoModal) {
-        self.infoModal.hide();
-    }
+    // Clean up resources
     
     if ($ui && $ui.log && $ui.log.debug) {
-        $ui.log.debug("AdvicePauseManagerDesigner - Disposed");
+        $ui.log.debug("AdvicePauseManagerDesigner - Destroyed");
     }
 };
