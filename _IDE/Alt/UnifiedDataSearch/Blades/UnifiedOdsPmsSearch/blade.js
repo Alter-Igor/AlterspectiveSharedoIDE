@@ -18,7 +18,7 @@ Alt.UnifiedDataSearch.Blades.UnifiedOdsPmsSearch = function(element, configurati
         mode: "addParticipant", // "select" or "addParticipant"
         entityTypes: ["person", "organisation"],
         useMockPms: true, // Default to mock for development
-        useMockOds: true, // Use mock ODS data when API not available
+        useMockOds: false, // Use real ODS API by default (will fallback to mock if API fails)
         pmsTimeout: 5000,
         allowAddNew: true,
         tryAutoAddParticipant: false,
@@ -361,36 +361,76 @@ Alt.UnifiedDataSearch.Blades.UnifiedOdsPmsSearch.prototype.searchOds = function(
         return self.getMockOdsData(query, page);
     }
     
-    // Build search parameters
-    var params = {
-        q: query,
-        page: page || 0,
-        pageSize: self.options.rowsPerPage
+    // Build search payload for ShareDo ODS _search endpoint
+    var payload = {
+        startPage: (page || 0) + 1,  // ShareDo uses 1-based pages
+        endPage: (page || 0) + 1,
+        rowsPerPage: self.options.rowsPerPage || 20,
+        searchString: query || "",
+        odsEntityTypes: [],
+        availability: {
+            isAvailable: null,
+            isOutOfOffice: null,
+            isNotAvailable: null
+        },
+        location: {
+            postcode: null,
+            range: 10
+        },
+        connection: {
+            systemName: null,
+            label: null,
+            otherOdsIds: []
+        },
+        competencies: [],
+        teams: [],
+        roles: [],
+        odsTypes: [],
+        wallManagement: false
     };
     
-    // Add entity type filter if needed
-    if (self.searchEntityType() !== "all") {
-        params.entityTypes = [self.searchEntityType()];
-    } else if (self.options.entityTypes) {
-        params.entityTypes = self.options.entityTypes;
+    // Add entity type filter
+    if (self.searchEntityType() === "person") {
+        payload.odsEntityTypes = ["person"];
+    } else if (self.searchEntityType() === "organisation") {
+        payload.odsEntityTypes = ["organisation"];
+    } else {
+        // For "all", include both types
+        payload.odsEntityTypes = ["person", "organisation"];
     }
     
     // Create a deferred to handle fallback
     var deferred = $.Deferred();
     
-    // Try real API first
-    var apiCall = window.$ajax && window.$ajax.get ? 
-        $ajax.get("/api/ods/search", params) :
+    // Try real API first using POST to _search endpoint
+    var apiCall = window.$ajax && window.$ajax.post ? 
+        $ajax.post("/api/ods/_search", payload) :
         $.ajax({
-            url: "/api/ods/search",
-            method: "GET",
-            data: params,
+            url: "/api/ods/_search",
+            method: "POST",
+            data: JSON.stringify(payload),
+            contentType: "application/json",
             dataType: "json"
         });
     
     apiCall
         .done(function(data) {
-            deferred.resolve(data);
+            // Transform the response to match our expected format
+            var transformed = {
+                success: true,
+                results: data.results || data.items || data,
+                totalResults: data.totalCount || data.total || (data.results ? data.results.length : 0),
+                page: page || 0,
+                hasMore: data.hasMore || false
+            };
+            
+            // If data is directly an array, wrap it
+            if (Array.isArray(data)) {
+                transformed.results = data;
+                transformed.totalResults = data.length;
+            }
+            
+            deferred.resolve(transformed);
         })
         .fail(function(error) {
             console.warn("ODS API failed, falling back to mock data:", error);
