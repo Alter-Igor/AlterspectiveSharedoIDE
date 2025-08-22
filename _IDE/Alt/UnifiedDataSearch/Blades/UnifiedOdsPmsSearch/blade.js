@@ -313,35 +313,55 @@ Alt.UnifiedDataSearch.Blades.UnifiedOdsPmsSearch.prototype.executeSearch = funct
     // Wait for both to complete
     $.when(odsPromise, pmsPromise)
         .always(function(odsResponse, pmsResponse) {
+            console.log("Search responses received:", { odsResponse: odsResponse, pmsResponse: pmsResponse });
+            
             // Get results (handle both success and failure)
             var odsResults = null;
             var pmsResults = null;
             
-            // Parse ODS response
+            // Parse ODS response - when() wraps successful responses in array [data, status, xhr]
             if (odsResponse) {
-                if (odsResponse[0]) {
+                if (Array.isArray(odsResponse) && odsResponse.length > 0) {
+                    // Success case - response is [data, status, xhr]
                     odsResults = odsResponse[0];
-                } else if (Array.isArray(odsResponse)) {
-                    odsResults = { results: odsResponse };
+                } else if (odsResponse.results !== undefined) {
+                    // Direct object with results
+                    odsResults = odsResponse;
                 } else {
+                    // Might be the data directly
                     odsResults = odsResponse;
                 }
             }
             
             // Parse PMS response
-            if (pmsResponse && pmsResponse[0]) {
-                pmsResults = pmsResponse[0];
+            if (pmsResponse) {
+                if (Array.isArray(pmsResponse) && pmsResponse.length > 0) {
+                    // Success case - response is [data, status, xhr]
+                    pmsResults = pmsResponse[0];
+                } else if (pmsResponse.results !== undefined) {
+                    // Direct object with results
+                    pmsResults = pmsResponse;
+                } else {
+                    // Might be the data directly
+                    pmsResults = pmsResponse;
+                }
             }
             
             // Ensure we have valid results structures
             odsResults = odsResults || { results: [] };
             pmsResults = pmsResults || { results: [] };
             
+            console.log("Parsed results:", { odsResults: odsResults, pmsResults: pmsResults });
+            
             // Merge results
             var merged = self.resultMergerService.mergeResults(odsResults, pmsResults);
             
             // Enrich results with display data
-            merged = self.resultMergerService.enrichResults(merged);
+            if (self.resultMergerService.enrichResults) {
+                merged = self.resultMergerService.enrichResults(merged);
+            }
+            
+            console.log("Merged results:", merged);
             
             self.searchResults(merged);
             
@@ -415,6 +435,8 @@ Alt.UnifiedDataSearch.Blades.UnifiedOdsPmsSearch.prototype.searchOds = function(
     
     apiCall
         .done(function(data) {
+            console.log("ODS API raw response:", data);
+            
             // Transform the response to match our expected format
             var transformed = {
                 success: true,
@@ -430,6 +452,7 @@ Alt.UnifiedDataSearch.Blades.UnifiedOdsPmsSearch.prototype.searchOds = function(
                 transformed.totalResults = data.length;
             }
             
+            console.log("ODS API transformed response:", transformed);
             deferred.resolve(transformed);
         })
         .fail(function(error) {
