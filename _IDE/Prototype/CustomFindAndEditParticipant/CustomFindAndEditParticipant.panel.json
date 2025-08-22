@@ -1,0 +1,21 @@
+{
+    "id": "Prototype.CustomFindAndEditParticipant",
+    "priority": 6000, 
+    "width": 600,
+    "scripts":
+    [
+        "/_ideFiles/Prototype/CustomFindAndEditParticipant/CustomFindAndEditParticipant.js"
+    ],
+    "styles":
+    [
+        "/_ideFiles/Prototype/CustomFindAndEditParticipant/CustomFindAndEditParticipant.css"
+    ],
+    "templates":
+    [
+        "/_ideFiles/Prototype/CustomFindAndEditParticipant/CustomFindAndEditParticipant.html"
+    ],
+    "components":
+    [
+        "Sharedo.UI.Framework.Components.RibbonBar"
+    ]
+}

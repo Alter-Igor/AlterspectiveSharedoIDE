@@ -1,0 +1,124 @@
+
+<div class="Sharedo-Core-Case-WorkflowEditor-NodeTypes-ProgressMilestoneDesigner">
+
+    <div data-bind="widgetChrome:{ icon: 'fa-list', title: 'Action configuration' }">
+        <div class="form-group">
+            <label for="name">Action name:</label>
+            <input id="name" type="text" class="form-control" data-bind="textInput:action.name" />
+            <div class="text-danger" data-bind="visible:action.validation.name, text:action.validation.name"></div>
+        </div>
+    </div>
+
+    <div data-bind="widgetChrome:{ icon: 'fa-forward', title: 'Progress milestone' }">
+
+        <div class="form-group">
+            <label>Id of work item to be transitioned:</label>
+            <!-- ko component: { name: "core-wf-variable-selector", params:action.ui.workItemIdVariable } -->
+            <!-- /ko -->
+            <div class="text-danger" data-bind="visible:action.validation.workItemIdVariable, text:action.validation.workItemIdVariable"></div>
+        </div>
+
+        <div class="form-group">
+            <label for="dynamic">Dynamic Work Type?:</label>
+            <div>
+                <input type="checkbox" id="dynamic" data-bind="toggleSwitch: action.config.dynamic, toggleOptions: { on: 'Yes', off: 'No' }">
+            </div>
+        </div>
+   
+  
+        <div class="form-group" data-bind="visible:action.config.dynamic()">
+            <label>Transition to phase features:</label>
+            <!-- ko if: !phasesLoading() --> 
+            <select data-bind="
+                        value:action.config.phaseFeature, 
+                        options: phaseFeatures,
+                        optionsText: 'displayName',
+                        optionsValue:'systemName'" class="form-control">
+            </select>
+            <!-- /ko -->
+            <div class="form-control" data-bind="visible:phasesLoading"><span class="fa fa-spin fa-spinner"></span></div>
+            <div class="text-danger" data-bind="visible:action.validation.phaseFeature, text:action.validation.phaseFeature"></div>
+        </div>
+
+        <div class="form-group" >
+            <label>Expected work type:</label>
+            <!-- ko component: { name: "sharedo-type-picker", params: expectedTypePicker } -->
+            <!-- /ko -->
+            <div class="text-danger" data-bind="visible:action.validation.expectedTypeSystemName, text:action.validation.expectedTypeSystemName"></div>
+        </div>
+
+
+        <div class="form-group" data-bind="visible:!action.config.dynamic()">
+            <label>Transition to phase:</label>
+            <!-- ko if: !phasesLoading() --> 
+            <select data-bind="
+                        value:action.config.phaseSystemName,
+                        options: phases,
+                        optionsText: 'name',
+                        optionsValue:'systemName'" class="form-control">
+            </select>
+            <!-- /ko -->
+            <div class="form-control" data-bind="visible:phasesLoading"><span class="fa fa-spin fa-spinner"></span></div>
+            <div class="text-danger" data-bind="visible:action.validation.phaseSystemName, text:action.validation.phaseSystemName"></div>
+        </div>
+
+        <div class="form-group" data-bind="visible:!action.config.jumpToPhase()">
+            <label>Comment:</label>
+            <!-- ko component: { name: "core-wf-token-input", params: { value: action.config.reasonText, rootModel: model } } -->
+            <!-- /ko -->
+        </div>
+
+        <div class="alert alert-info">
+            <span class="fa fa-info-circle"></span>
+            Jump to phase is an admin action and <strong>
+                may result in a sharedo being placed into an
+                inconsistent state
+            </strong>. Moving a phase out of sequence will result in events from previous
+            phases being missing and new events being fired. These events may result in additional
+            tasks being created or missed.
+        </div>
+
+        <div class="form-group">
+            <label for="jumpToPhase">Jump to phase:</label>
+            <div>
+                <input type="checkbox" id="jumpToPhase" data-bind="toggleSwitch: action.config.jumpToPhase, toggleOptions: { on: 'Yes', off: 'No' }">
+            </div>
+        </div>
+
+        <div class="form-group" data-bind="visible:action.config.jumpToPhase()">
+            <label>Reason:</label>
+            <!-- ko if: !reasonsLoading() -->
+            <select data-bind="
+                        value:action.config.reasonType,
+                        options: reasons,
+                        optionsText: 'name',
+                        optionsValue:'id'" class="form-control">
+            </select>
+            <!-- /ko -->
+            <div class="form-control" data-bind="visible:reasonsLoading"><span class="fa fa-spin fa-spinner"></span></div>
+            <div class="text-danger" data-bind="visible:action.validation.reasonType, text:action.validation.reasonType"></div>
+        </div>
+
+        <div class="form-group" data-bind="visible:action.config.jumpToPhase()">
+            <label>Description:</label>
+            <!-- ko component: { name: "core-wf-token-input", params: { value: action.config.description, rootModel: model } } -->
+            <!-- /ko -->
+            <div class="text-danger" data-bind="visible:action.validation.description, text:action.validation.description"></div>
+        </div>
+
+        <div class="form-group" data-bind="visible:action.config.jumpToPhase()">
+            <label for="suppressChecksAndGuards">Suppress checks and guards:</label>
+            <div>
+                <input type="checkbox" id="suppressChecksAndGuards" data-bind="toggleSwitch: action.config.suppressChecksAndGuards, toggleOptions: { on: 'Yes', off: 'No' }">
+            </div>
+        </div>
+
+        <div class="form-group" data-bind="visible:action.config.jumpToPhase()">
+            <label for="suppressEvents">Suppress events and workflows from triggering:</label>
+            <div>
+                <input type="checkbox" id="suppressEvents" data-bind="toggleSwitch: action.config.suppressEvents, toggleOptions: { on: 'Yes', off: 'No' }">
+            </div>
+        </div>
+    </div>
+
+</div>

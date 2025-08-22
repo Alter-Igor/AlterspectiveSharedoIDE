@@ -1,0 +1,66 @@
+{
+    "id": "Alt.Utilities.BladeBouncer",
+    "priority": 5000,
+    "width": 650,
+    "title": "Blade Bouncer",
+    "description": "A utility blade for dynamically redirecting to other blades with configuration token replacement",
+    "scripts": [
+        "/_ideFiles/Alt/Common/Services/ConfigurationService.js",
+        "/_ideFiles/Alt/Utilities/BladeBouncer/services/ConfigurationService.js",
+        "/_ideFiles/Alt/Utilities/BladeBouncer/blade.js"
+    ],
+    "styles": [
+        "/_ideFiles/Alt/Utilities/BladeBouncer/blade.css"
+    ],
+    "templates": [
+        "/_ideFiles/Alt/Utilities/BladeBouncer/blade.html"
+    ],
+    "components": [],
+    "configuration": {
+        "targetBlade": {
+            "type": "string",
+            "required": true,
+            "description": "The blade ID to redirect to"
+        },
+        "inputConfiguration": {
+            "type": "array",
+            "required": false,
+            "description": "Input configuration values for token substitution"
+        },
+        "configForTargetBlade": {
+            "type": "array",
+            "required": false,
+            "description": "Configuration to pass to the target blade with token replacement"
+        },
+        "tokenSources": {
+            "type": "array",
+            "required": false,
+            "default": ["workItem"],
+            "description": "Data sources to fetch for token replacement"
+        },
+        "debugMode": {
+            "type": "boolean",
+            "required": false,
+            "default": false,
+            "description": "Enable debug mode to show configuration details"
+        },
+        "autoRedirect": {
+            "type": "boolean",
+            "required": false,
+            "default": true,
+            "description": "Automatically redirect to target blade on load"
+        },
+        "redirectDelay": {
+            "type": "number",
+            "required": false,
+            "default": 500,
+            "description": "Delay in milliseconds before redirecting"
+        },
+        "closeAfterRedirect": {
+            "type": "boolean",
+            "required": false,
+            "default": true,
+            "description": "Close the bouncer blade after redirecting"
+        }
+    }
+}

@@ -1,0 +1,183 @@
+<!-- Pause Tasks Designer -->
+<div class="pause-tasks-designer">
+    
+    <div data-bind="widgetChrome:{ icon: 'fa-pause-circle', title: 'Pause Tasks Configuration' }">
+        <p class="help-block">
+            <i class="fa fa-info-circle"></i>
+            This action finds child tasks of a specified work type and moves them to a paused phase.
+            The original phase is saved for later restoration.
+        </p>
+        
+        <!-- Work Item ID Input -->
+        <div class="form-group">
+            <label>Parent Work Item ID: <span class="text-danger">*</span></label>
+            <!-- ko component: { name: "core-wf-variable-selector", params: action.ui.workItemIdVariable } -->
+            <!-- /ko -->
+            <div class="help-block">Variable containing the parent work item ID whose child tasks will be paused</div>
+            <!-- ko if: action.validation.workItemIdVariable -->
+            <div class="text-danger">
+                <i class="fa fa-exclamation-triangle"></i>
+                <span data-bind="text: action.validation.workItemIdVariable"></span>
+            </div>
+            <!-- /ko -->
+        </div>
+        
+        <!-- Base Work Type -->
+        <div class="form-group">
+            <label>Base Work Type:</label>
+            <input type="text" class="form-control" 
+                   data-bind="value: action.config.baseWorkType" 
+                   placeholder="AbstractAdvice" />
+            <div class="help-block">Base work type to search for (will include derived types). Default: AbstractAdvice</div>
+        </div>
+    </div>
+    
+    <div data-bind="widgetChrome:{ icon: 'fa-map-marker', title: 'Target Phase Configuration' }">
+        <p class="help-block">
+            Configure which phase to move tasks to. You can specify either a phase feature or a specific phase name.
+        </p>
+        
+        <!-- Target Phase Feature -->
+        <div class="form-group">
+            <label>Target Phase Feature:</label>
+            <input type="text" class="form-control" 
+                   data-bind="value: action.config.targetPhaseFeature" 
+                   placeholder="Paused" />
+            <div class="help-block">Phase feature to look for (e.g., "Paused"). The system will find the appropriate phase for each work type.</div>
+        </div>
+        
+        <!-- Target Phase System Name -->
+        <div class="form-group">
+            <label>Target Phase System Name:</label>
+            <input type="text" class="form-control" 
+                   data-bind="value: action.config.targetPhaseSystemName" 
+                   placeholder="Optional - overrides feature" />
+            <div class="help-block">Specific phase system name (optional). If provided, this overrides the phase feature.</div>
+        </div>
+        
+        <!-- ko if: action.validation.targetPhase -->
+        <div class="text-danger">
+            <i class="fa fa-exclamation-triangle"></i>
+            <span data-bind="text: action.validation.targetPhase"></span>
+        </div>
+        <!-- /ko -->
+        
+        <!-- Save Original State -->
+        <div class="form-group">
+            <label>
+                <input type="checkbox" data-bind="checked: action.config.saveOriginalState" />
+                Save Original State
+            </label>
+            <div class="help-block">Save the original phase information for later restoration when resuming tasks</div>
+        </div>
+    </div>
+    
+    <div data-bind="widgetChrome:{ icon: 'fa-filter', title: 'Exclusions' }">
+        <!-- Exclude Phases -->
+        <div class="form-group">
+            <label>Exclude Phases:</label>
+            <div class="well well-sm">
+                <!-- ko foreach: action.config.excludePhases -->
+                <span class="label label-default" style="margin-right: 5px;">
+                    <span data-bind="text: $data"></span>
+                    <a href="#" data-bind="click: $parent.removeExcludePhase" style="color: white; margin-left: 5px;">
+                        <i class="fa fa-times"></i>
+                    </a>
+                </span>
+                <!-- /ko -->
+                <!-- ko if: (!action.config.excludePhases || action.config.excludePhases().length === 0) -->
+                <span class="text-muted">No phases excluded</span>
+                <!-- /ko -->
+            </div>
+            <button type="button" class="btn btn-sm btn-default" data-bind="click: addExcludePhase">
+                <i class="fa fa-plus"></i> Add Phase to Exclude
+            </button>
+            <div class="help-block">Tasks in these phases will not be paused (default: Completed, Cancelled, Removed)</div>
+        </div>
+    </div>
+    
+    <div data-bind="widgetChrome:{ icon: 'fa-cog', title: 'Advanced Options' }">
+        <button type="button" class="btn btn-sm btn-link" data-bind="click: toggleAdvancedOptions">
+            <i class="fa" data-bind="css: { 'fa-chevron-down': !showAdvancedOptions(), 'fa-chevron-up': showAdvancedOptions() }"></i>
+            <span data-bind="text: showAdvancedOptions() ? 'Hide' : 'Show'"></span> Advanced Options
+        </button>
+        
+        <!-- ko if: showAdvancedOptions -->
+        <div style="margin-top: 15px;">
+            <!-- Pause Reason Variable -->
+            <div class="form-group">
+                <label>Pause Reason:</label>
+                <!-- ko component: { name: "core-wf-variable-selector", params: action.ui.pauseReasonVariable } -->
+                <!-- /ko -->
+                <div class="help-block">Variable containing the reason for pausing (optional)</div>
+            </div>
+            
+            <!-- Paused By Variable -->
+            <div class="form-group">
+                <label>Paused By:</label>
+                <!-- ko component: { name: "core-wf-variable-selector", params: action.ui.pausedByVariable } -->
+                <!-- /ko -->
+                <div class="help-block">Variable containing who initiated the pause (optional)</div>
+            </div>
+            
+            <!-- Suppress Options -->
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" data-bind="checked: action.config.suppressEvents" />
+                    Suppress Events
+                </label>
+                <div class="help-block">Suppress ShareDo events during phase changes</div>
+            </div>
+            
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" data-bind="checked: action.config.suppressGuards" />
+                    Suppress Guards
+                </label>
+                <div class="help-block">Suppress phase transition guards and checks</div>
+            </div>
+        </div>
+        <!-- /ko -->
+    </div>
+    
+    <div data-bind="widgetChrome:{ icon: 'fa-arrow-right', title: 'Output Variables (Optional)' }">
+        <p class="help-block">Configure which variables to populate with results:</p>
+        
+        <!-- Success Variable -->
+        <div class="form-group">
+            <label>Success Status:</label>
+            <!-- ko component: { name: "core-wf-variable-selector", params: action.ui.successVariable } -->
+            <!-- /ko -->
+            <div class="help-block">Will be set to true if all operations succeeded</div>
+        </div>
+        
+        <!-- Paused Count Variable -->
+        <div class="form-group">
+            <label>Paused Count:</label>
+            <!-- ko component: { name: "core-wf-variable-selector", params: action.ui.pausedCountVariable } -->
+            <!-- /ko -->
+            <div class="help-block">Number of tasks successfully paused</div>
+        </div>
+        
+        <!-- Error Message Variable -->
+        <div class="form-group">
+            <label>Error Message:</label>
+            <!-- ko component: { name: "core-wf-variable-selector", params: action.ui.errorMessageVariable } -->
+            <!-- /ko -->
+            <div class="help-block">Will contain error messages if any operations fail</div>
+        </div>
+    </div>
+    
+    <div data-bind="widgetChrome:{ icon: 'fa-code-fork', title: 'Output Branches' }">
+        <div class="alert alert-info">
+            <p><strong>This action will branch to one of the following:</strong></p>
+            <ul class="list-unstyled">
+                <li><span class="label label-success">Success</span> - All eligible tasks were paused successfully</li>
+                <li><span class="label label-warning">Partial Success</span> - Some tasks paused, some failed</li>
+                <li><span class="label label-default">No Tasks</span> - No eligible tasks found to pause</li>
+                <li><span class="label label-danger">Error</span> - Critical error occurred</li>
+            </ul>
+        </div>
+    </div>
+    
+</div>

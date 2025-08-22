@@ -1,0 +1,152 @@
+{
+    "systemName": "A-Test-Signals",
+    "previousVersion": null,
+    "name": "A Test - Signals",
+    "description": null,
+    "overrideNotifications": false,
+    "exceptionNotifications": true,
+    "exceptionNotificationEmailAddresses": "",
+    "isSystem": false,
+    "variables": [
+        {
+            "systemName": "id",
+            "name": "id",
+            "defaultValue": "b33c7a89-ac65-4390-b57b-b15b0009374d",
+            "type": "/Identifier/Work Item Identifier",
+            "isCollection": false,
+            "isInputVariable": false,
+            "isMandatory": false
+        },
+        {
+            "systemName": "now",
+            "name": "Now",
+            "defaultValue": null,
+            "type": "/Date Time",
+            "isCollection": false,
+            "isInputVariable": false,
+            "isMandatory": false
+        }
+    ],
+    "steps": [
+        {
+            "ideData": {
+                "x": 200,
+                "y": -25
+            },
+            "actions": [
+                {
+                    "config": {
+                        "signalMessageJSON": "{\n   \"events\": [\n      {\n         \"eventSystemName\": \"custom.sharedo.event.sync.signal\",\n         \"eventData\": null\n      },\n      \"sharedo.core.case.components.comments.comments-changed\"\n   ],\n   \"refresh\": {\n      \"type\": \"request\",\n      \"messageTitle\": null,\n      \"messageBody\": null\n   },\n   \"toastMessage\": {\n      \"title\": \"The Additional Information has been updated.\",\n      \"type\": \"toast-warning\",\n      \"time\": 10000\n   }\n}",
+                        "contextId": "id"
+                    },
+                    "connections": {},
+                    "actionSystemName": "SendEventToUI",
+                    "name": "Send event/message to the UI"
+                }
+            ],
+            "systemName": "finish",
+            "name": "Plan complete",
+            "description": "The plan is complete",
+            "isStart": false,
+            "isEnd": true,
+            "isOptimal": true
+        },
+        {
+            "ideData": {
+                "x": -300,
+                "y": -25
+            },
+            "actions": [
+                {
+                    "config": {
+                        "now": true,
+                        "sourceDateVariable": null,
+                        "outputVariable": "now",
+                        "subtract": false,
+                        "amount": "0",
+                        "type": "days"
+                    },
+                    "connections": {},
+                    "actionSystemName": "Dates",
+                    "name": "Date calculations"
+                },
+                {
+                    "config": {
+                        "mode": "formfield",
+                        "workItemIdVariable": "id",
+                        "newValueVariable": "now",
+                        "newValue": null,
+                        "attributeSystemName": "dateCompleted",
+                        "formId": "ed68de5e-989c-45bf-bdca-174d71695890"
+                    },
+                    "connections": {},
+                    "actionSystemName": "UpdateAttribute",
+                    "name": "Update work item attribute"
+                },
+                {
+                    "config": {
+                        "sharedoIdVariable": "id",
+                        "comment": "This is a new comment add at : {{now}}"
+                    },
+                    "connections": {},
+                    "actionSystemName": "addComment",
+                    "name": "Add comment"
+                },
+                {
+                    "config": {
+                        "now": true,
+                        "startOnDateTimeVariable": null,
+                        "startIn": 1,
+                        "startInType": "Days",
+                        "description": "Finish"
+                    },
+                    "connections": {
+                        "execute": {
+                            "step": "finish",
+                            "port": "left3",
+                            "points": []
+                        }
+                    },
+                    "actionSystemName": "startStep",
+                    "name": "Finish"
+                }
+            ],
+            "systemName": "main",
+            "name": "Main entry point",
+            "description": "The main entry point of the plan",
+            "isStart": true,
+            "isEnd": false,
+            "isOptimal": true
+        },
+        {
+            "ideData": {
+                "x": 425.5926997077038,
+                "y": -428.5265853499678
+            },
+            "actions": [
+                {
+                    "config": {
+                        "script": "\n\nlet message = {\n    \"events\":null,\n    \"refresh\":null,\n    \"toastMessage\":null,\n    \"context\":{\n        \"sharedoId\":\"eb251607-3016-49c8-9026-b14e00597b73\"\n    }\n}\n\nsharedo.http.post(\"/api/proxy/signals/_/api/sendsignal\",message);\n"
+                    },
+                    "connections": {},
+                    "actionSystemName": "script",
+                    "name": "Send Signal"
+                },
+                {
+                    "config": {
+                        "script": "\n\nlet message = {\n    \"events\":[\n        {\n            \"eventSystemName\":\"custom.sharedo.event.sync.signal\",\n            \"eventData\":null\n            \n        },\n        \"sharedo.core.case.components.comments.comments-changed\"\n        ],\n    \"refresh\":{\n        \"type\":\"warn\",\n        \"messageTitle\":null,\n        \"messageBody\":null\n    },\n    \"toastMessage\":{\n        \"title\":\"The Additional Information has been updated.\",\n        \"type\":\"toast-warning\",\n        \"time\":10000\n    },\n    \"context\":{\n        \"sharedoId\":\"eb251607-3016-49c8-9026-b14e00597b73\"\n    }\n}\n\nsharedo.http.post(\"/api/proxy/signals/_/api/sendsignal\",message);\n"
+                    },
+                    "connections": {},
+                    "actionSystemName": "script",
+                    "name": "Send Signal"
+                }
+            ],
+            "systemName": "step3",
+            "name": "Step 3",
+            "description": null,
+            "isStart": false,
+            "isEnd": false,
+            "isOptimal": true
+        }
+    ]
+}

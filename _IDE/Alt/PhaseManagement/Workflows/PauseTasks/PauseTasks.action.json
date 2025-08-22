@@ -1,0 +1,136 @@
+{
+    "id": "Alt.PhaseManagement.PauseTasks",
+    "version": "1.0.0",
+    "type": "workflowAction",
+    "priority": 7000,
+    "metadata": {
+        "name": "Pause Tasks",
+        "description": "Finds and pauses child tasks by moving them to a paused phase feature or system name",
+        "category": "Phase Management",
+        "icon": "fa-pause-circle",
+        "author": "Alterspective",
+        "documentation": "Pauses child tasks of a specified work type, saving their original phase for later restoration"
+    },
+    "designer": {
+        "allowInWorkflowDesigner": true,
+        "allowInVisualWorkflow": true,
+        "configurable": true,
+        "configurationComponent": "Alt.PhaseManagement.PauseTasksDesigner",
+        "inputs": [
+            {
+                "name": "workItemId",
+                "type": "/Identifier/Work Item Identifier",
+                "required": true,
+                "description": "ID of the parent work item whose child tasks will be paused"
+            },
+            {
+                "name": "baseWorkType",
+                "type": "/String",
+                "required": false,
+                "description": "Base work type to search for (default: AbstractAdvice)"
+            },
+            {
+                "name": "targetPhaseFeature",
+                "type": "/String",
+                "required": false,
+                "description": "Phase feature to move tasks to (default: Paused)"
+            },
+            {
+                "name": "targetPhaseSystemName",
+                "type": "/String",
+                "required": false,
+                "description": "Specific phase system name (overrides feature)"
+            },
+            {
+                "name": "pauseReason",
+                "type": "/String",
+                "required": false,
+                "description": "Reason for pausing tasks"
+            }
+        ],
+        "outputs": [
+            {
+                "name": "success",
+                "type": "/Boolean",
+                "description": "Boolean: true if all operations succeeded"
+            },
+            {
+                "name": "pausedCount",
+                "type": "/Number",
+                "description": "Number of tasks successfully paused"
+            },
+            {
+                "name": "errorMessage",
+                "type": "/String",
+                "description": "Error messages if any operations failed"
+            }
+        ],
+        "connections": [
+            {
+                "name": "success",
+                "displayName": "Success",
+                "description": "All tasks paused successfully"
+            },
+            {
+                "name": "partial",
+                "displayName": "Partial Success",
+                "description": "Some tasks paused, some failed"
+            },
+            {
+                "name": "noTasks",
+                "displayName": "No Tasks",
+                "description": "No tasks found to pause"
+            },
+            {
+                "name": "error",
+                "displayName": "Error",
+                "description": "Critical error occurred"
+            }
+        ]
+    },
+    "configuration": {
+        "workItemIdVariable": {
+            "type": "variable",
+            "displayName": "Work Item ID Variable",
+            "description": "Variable containing the parent work item ID",
+            "required": true
+        },
+        "baseWorkType": {
+            "type": "string",
+            "displayName": "Base Work Type",
+            "description": "Base work type to search for",
+            "default": "AbstractAdvice"
+        },
+        "targetPhaseFeature": {
+            "type": "string",
+            "displayName": "Target Phase Feature",
+            "description": "Phase feature to move tasks to",
+            "default": "Paused"
+        },
+        "targetPhaseSystemName": {
+            "type": "string",
+            "displayName": "Target Phase System Name",
+            "description": "Specific phase system name"
+        },
+        "saveOriginalState": {
+            "type": "boolean",
+            "displayName": "Save Original State",
+            "description": "Save the original phase for restoration",
+            "default": true
+        },
+        "excludePhases": {
+            "type": "array",
+            "displayName": "Exclude Phases",
+            "description": "Phases to exclude from pausing",
+            "default": ["Completed", "Cancelled", "Removed"]
+        }
+    },
+    "scripts": [
+        "/_ideFiles/Alt/PhaseManagement/Workflows/PauseTasks/PauseTasks-factory.js",
+        "/_ideFiles/Alt/PhaseManagement/Workflows/PauseTasks/PauseTasks-template.js"
+    ],
+    "dependencies": [
+        "jquery",
+        "knockout"
+    ]
+}

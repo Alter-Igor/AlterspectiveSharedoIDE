@@ -1,0 +1,21 @@
+{
+    "id": "PortalWidgets.SharedoEventSyncDesigner",
+    "designer": {
+        "allowInPortalDesigner": false,
+        "allowInSharedoPortalDesigner": false
+    },
+    "scripts": [
+        "/_ideFiles/PortalWidgets/SharedoEventSync/Designer/SharedoEventSyncDesigner.js"
+    ],
+    "styles": [
+        "/_ideFiles/PortalWidgets/SharedoEventSync/Designer/SharedoEventSyncDesigner.css"
+    ],
+    "templates": [
+        "/_ideFiles/PortalWidgets/SharedoEventSync/Designer/SharedoEventSyncDesigner.html"
+    ],
+    "menuTemplates": [
+    ],
+    "components": [
+     
+    ]
+}

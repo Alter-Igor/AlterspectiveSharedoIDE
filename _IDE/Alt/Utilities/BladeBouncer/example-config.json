@@ -1,0 +1,902 @@
+{
+    "description": "Example configuration for BladeBouncer utility",
+    "examples": [
+        {
+            "name": "Quick Edit Client - Skip Navigation",
+            "description": "Directly edit client details without navigating through multiple participant screens",
+            "configuration": {
+                "targetBlade": "Sharedo.Core.Case.Panels.Ods.AddEditPerson",
+                "inputConfiguration": [
+                    {
+                        "roleSystemName": "client"
+                    }
+                ],
+                "configForTargetBlade": [
+                    {
+                        "id": "[workItem.roles.{roleSystemName}.ods.id]",
+                        "sharedoId": "$[$ui.pageContext.sharedoId()]",
+                        "mode": "edit",
+                        "roleType": "{roleSystemName}",
+                        "userId": "$[$ui.pageContext.user.userid()]"
+                    }
+                ],
+                "tokenSources": ["workItem"],
+                "debugMode": false,
+                "autoRedirect": true,
+                "redirectDelay": 200
+            }
+        },
+        {
+            "name": "Quick Add Opponent Solicitor",
+            "description": "Bypass role selection screens to directly add an opponent solicitor",
+            "configuration": {
+                "targetBlade": "Sharedo.Core.Case.Panels.Ods.AddEditPerson",
+                "inputConfiguration": [
+                    {
+                        "roleSystemName": "opponentsolicitor",
+                        "roleLabel": "Opponent Solicitor"
+                    }
+                ],
+                "configForTargetBlade": [
+                    {
+                        "sharedoId": "$[$ui.pageContext.sharedoId()]",
+                        "mode": "create",
+                        "roleType": "{roleSystemName}",
+                        "roleDisplayName": "{roleLabel}",
+                        "createdBy": "$[$ui.pageContext.user.userid()]",
+                        "organisationId": "$[$ui.pageContext.user.organisationId() || $ui.pageContext.defaultOrgId()]"
+                    }
+                ],
+                "debugMode": false,
+                "autoRedirect": true,
+                "redirectDelay": 100
+            }
+        },
+        {
+            "name": "Create Letter from Template",
+            "description": "Skip document type selection and go straight to letter creation with pre-filled data",
+            "configuration": {
+                "targetBlade": "Sharedo.Core.Documents.CreateDocument",
+                "inputConfiguration": [
+                    {
+                        "documentType": "letter",
+                        "templateId": "client-correspondence"
+                    }
+                ],
+                "configForTargetBlade": [
+                    {
+                        "matterId": "[workItem.matter.id]",
+                        "matterName": "[workItem.matter.name]",
+                        "clientName": "[workItem.roles.client.displayName]",
+                        "documentType": "{documentType}",
+                        "templateId": "{templateId}",
+                        "userId": "$[$ui.pageContext.user.userid()]",
+                        "documentName": "$[concat('Letter_', data['workItem.matter.reference'], '_', formatDate(new Date(), 'YYYYMMDD'))]",
+                        "author": "$[concat($ui.pageContext.user.firstname(), ' ', $ui.pageContext.user.lastname())]"
+                    }
+                ],
+                "tokenSources": ["workItem"],
+                "debugMode": false,
+                "autoRedirect": true,
+                "closeAfterRedirect": true
+            }
+        },
+        {
+            "name": "Create Urgent Task for Current Matter",
+            "description": "Quickly create a high-priority task with automatic assignment",
+            "configuration": {
+                "targetBlade": "Sharedo.Core.Tasks.CreateTask",
+                "inputConfiguration": [
+                    {
+                        "taskType": "client-follow-up",
+                        "defaultDays": 3
+                    }
+                ],
+                "configForTargetBlade": [
+                    {
+                        "sharedoId": "$[$ui.pageContext.sharedoId()]",
+                        "taskType": "{taskType}",
+                        "priority": "high",
+                        "assignedTo": "$[$ui.pageContext.user.userid()]",
+                        "assignedToName": "$[concat($ui.pageContext.user.firstname(), ' ', $ui.pageContext.user.lastname())]",
+                        "dueDate": "$[formatDate(new Date(Date.now() + inputs.defaultDays*24*60*60*1000), 'YYYY-MM-DD')]",
+                        "description": "$[concat('Follow up on matter ', data['workItem.matter.reference'])]",
+                        "createdBy": "$[$ui.pageContext.user.userid()]"
+                    }
+                ],
+                "tokenSources": ["workItem"],
+                "debugMode": false,
+                "autoRedirect": true,
+                "redirectDelay": 300
+            }
+        },
+        {
+            "name": "Open Advice Pause/Resume Blade",
+            "description": "Quick access to advice management without navigation",
+            "configuration": {
+                "targetBlade": "Alt.AdviceManagement.AdvicePauseResumeBlade",
+                "configForTargetBlade": [
+                    {
+                        "sharedoId": "$[$ui.pageContext.sharedoId()]",
+                        "userId": "$[$ui.pageContext.user.userid()]",
+                        "mode": "manage"
+                    }
+                ],
+                "debugMode": false,
+                "autoRedirect": true,
+                "redirectDelay": 100
+            }
+        },
+        {
+            "name": "Quick Matter Dashboard",
+            "description": "Jump directly to matter dashboard with context",
+            "configuration": {
+                "targetBlade": "Sharedo.Core.Case.Dashboard",
+                "configForTargetBlade": [
+                    {
+                        "caseId": "$[$ui.pageContext.sharedoId()]",
+                        "view": "summary",
+                        "userId": "$ui.pageContext.user.userid()"
+                    }
+                ],
+                "autoRedirect": true,
+                "redirectDelay": 0
+            }
+        },
+        {
+            "name": "Direct Time Entry Creation",
+            "description": "Skip navigation and create time entry with smart defaults",
+            "configuration": {
+                "targetBlade": "Sharedo.Core.TimeRecording.CreateTimeEntry",
+                "inputConfiguration": [
+                    {
+                        "defaultHours": 1.5,
+                        "activityType": "client-meeting"
+                    }
+                ],
+                "configForTargetBlade": [
+                    {
+                        "sharedoId": "$[$ui.pageContext.sharedoId()]",
+                        "userId": "$[$ui.pageContext.user.userid()]",
+                        "userName": "$[concat($ui.pageContext.user.firstname(), ' ', $ui.pageContext.user.lastname())]",
+                        "date": "$[formatDate(new Date(), 'YYYY-MM-DD')]",
+                        "hours": "{defaultHours}",
+                        "activityType": "{activityType}",
+                        "description": "$[concat('Meeting regarding ', data['workItem.matter.name'])]",
+                        "billable": true
+                    }
+                ],
+                "tokenSources": ["workItem"],
+                "debugMode": false,
+                "autoRedirect": true,
+                "closeAfterRedirect": true
+            }
+        },
+        {
+            "name": "Workflow Action Shortcuts",
+            "description": "Collection of workflow blade shortcuts for common actions",
+            "configuration": {
+                "targetBlade": "Alt.AdviceManagement.WorkflowActionHelpBlade",
+                "inputConfiguration": [
+                    {
+                        "actionType": "pause"
+                    }
+                ],
+                "configForTargetBlade": [
+                    {
+                        "actionType": "{actionType}",
+                        "title": "Advice Management",
+                        "sharedoId": "$ui.pageContext.sharedoId()"
+                    }
+                ],
+                "debugMode": false,
+                "autoRedirect": true
+            }
+        },
+        {
+            "name": "Minimal Quick Dashboard",
+            "description": "Simplest configuration to open a dashboard",
+            "configuration": {
+                "targetBlade": "Sharedo.Core.Case.Dashboard",
+                "configForTargetBlade": [
+                    {
+                        "caseId": "$[$ui.pageContext.sharedoId()]"
+                    }
+                ],
+                "autoRedirect": true
+            }
+        },
+        {
+            "name": "Debug Configuration Helper",
+            "description": "Use this to test your blade configuration before deployment",
+            "configuration": {
+                "targetBlade": "YourCompany.YourBlade",
+                "inputConfiguration": [
+                    {
+                        "roleKey": "client",
+                        "priority": "high"
+                    }
+                ],
+                "configForTargetBlade": [
+                    {
+                        "workItemId": "[workItem.id]",
+                        "roleId": "[workItem.roles.{roleKey}.ods.id]",
+                        "priorityValue": "{priority}",
+                        "currentUser": "$[$ui.pageContext.user.userid()]",
+                        "timestamp": "$[new Date().toISOString()]",
+                        "sessionRef": "$[concat('DEBUG-', $ui.pageContext.user.username(), '-', Date.now())]"
+                    }
+                ],
+                "tokenSources": ["workItem"],
+                "debugMode": true,
+                "autoRedirect": false,
+                "redirectDelay": 2000,
+                "closeAfterRedirect": false
+            }
+        },
+        {
+            "name": "Conditional ODS Type Routing",
+            "description": "Opens different blades based on ODS entity type (people vs organisation)",
+            "configuration": {
+                "inputConfiguration": [
+                    {
+                        "roleSystemName": "client"
+                    }
+                ],
+                "conditionalRules": [
+                    {
+                        "condition": {
+                            "path": "workItem.roles.client.ods.type.name",
+                            "operator": "equals",
+                            "value": "people"
+                        },
+                        "targetBlade": "Sharedo.Core.Case.Panels.Ods.AddEditPerson",
+                        "configForTargetBlade": [
+                            {
+                                "id": "[workItem.roles.client.ods.id]",
+                                "sharedoId": "$[$ui.pageContext.sharedoId()]",
+                                "mode": "edit"
+                            }
+                        ]
+                    },
+                    {
+                        "condition": {
+                            "path": "workItem.roles.client.ods.type.name",
+                            "operator": "equals",
+                            "value": "organisation"
+                        },
+                        "targetBlade": "Sharedo.Core.Case.Panels.Ods.AddEditOrganisation",
+                        "configForTargetBlade": [
+                            {
+                                "id": "[workItem.roles.client.ods.id]",
+                                "sharedoId": "$[$ui.pageContext.sharedoId()]",
+                                "mode": "edit"
+                            }
+                        ]
+                    }
+                ],
+                "defaultTargetBlade": "Sharedo.Core.Case.Panels.Ods.ViewEntity",
+                "tokenSources": ["workItem"],
+                "debugMode": false,
+                "autoRedirect": true,
+                "redirectDelay": 200
+            }
+        },
+        {
+            "name": "Priority-Based Task Routing",
+            "description": "Routes to different task creation blades based on priority level",
+            "configuration": {
+                "inputConfiguration": [
+                    {
+                        "taskCategory": "litigation"
+                    }
+                ],
+                "conditionalRules": [
+                    {
+                        "condition": {
+                            "path": "workItem.customFields.priority",
+                            "operator": "equals",
+                            "value": "urgent"
+                        },
+                        "targetBlade": "Sharedo.Core.Tasks.CreateUrgentTask",
+                        "configForTargetBlade": [
+                            {
+                                "sharedoId": "$[$ui.pageContext.sharedoId()]",
+                                "priority": "urgent",
+                                "dueDate": "$[formatDate(new Date(Date.now() + 24*60*60*1000), 'YYYY-MM-DD')]",
+                                "category": "{taskCategory}"
+                            }
+                        ]
+                    },
+                    {
+                        "condition": {
+                            "path": "workItem.customFields.priority",
+                            "operator": "in",
+                            "value": ["normal", "low"]
+                        },
+                        "targetBlade": "Sharedo.Core.Tasks.CreateTask",
+                        "configForTargetBlade": [
+                            {
+                                "sharedoId": "$[$ui.pageContext.sharedoId()]",
+                                "priority": "[workItem.customFields.priority]",
+                                "dueDate": "$[formatDate(new Date(Date.now() + 7*24*60*60*1000), 'YYYY-MM-DD')]",
+                                "category": "{taskCategory}"
+                            }
+                        ]
+                    }
+                ],
+                "defaultTargetBlade": "Sharedo.Core.Tasks.TaskList",
+                "tokenSources": ["workItem"],
+                "debugMode": false,
+                "autoRedirect": true
+            }
+        },
+        {
+            "name": "Document Type Smart Routing",
+            "description": "Routes to appropriate document creation blade based on matter type",
+            "configuration": {
+                "conditionalRules": [
+                    {
+                        "condition": {
+                            "path": "workItem.matter.type.systemName",
+                            "operator": "contains",
+                            "value": "litigation"
+                        },
+                        "targetBlade": "Sharedo.Core.Documents.CreateLitigationDocument"
+                    },
+                    {
+                        "condition": {
+                            "path": "workItem.matter.type.systemName",
+                            "operator": "contains",
+                            "value": "conveyancing"
+                        },
+                        "targetBlade": "Sharedo.Core.Documents.CreateConveyancingDocument"
+                    },
+                    {
+                        "condition": {
+                            "path": "workItem.matter.type.systemName",
+                            "operator": "startsWith",
+                            "value": "family"
+                        },
+                        "targetBlade": "Sharedo.Core.Documents.CreateFamilyDocument"
+                    }
+                ],
+                "defaultTargetBlade": "Sharedo.Core.Documents.CreateDocument",
+                "configForTargetBlade": [
+                    {
+                        "matterId": "[workItem.matter.id]",
+                        "matterType": "[workItem.matter.type.systemName]",
+                        "userId": "$[$ui.pageContext.user.userid()]"
+                    }
+                ],
+                "tokenSources": ["workItem"],
+                "autoRedirect": true
+            }
+        },
+        {
+            "name": "Role Existence Check Routing",
+            "description": "Routes based on whether certain roles exist",
+            "configuration": {
+                "conditionalRules": [
+                    {
+                        "condition": {
+                            "path": "workItem.roles.opponentsolicitor",
+                            "operator": "exists"
+                        },
+                        "targetBlade": "Sharedo.Core.Correspondence.ComposeToOpponent",
+                        "configForTargetBlade": [
+                            {
+                                "recipientId": "[workItem.roles.opponentsolicitor.ods.id]",
+                                "recipientName": "[workItem.roles.opponentsolicitor.displayName]"
+                            }
+                        ]
+                    },
+                    {
+                        "condition": {
+                            "path": "workItem.roles.opponentsolicitor",
+                            "operator": "notexists"
+                        },
+                        "targetBlade": "Sharedo.Core.Case.Panels.Ods.AddEditPerson",
+                        "configForTargetBlade": [
+                            {
+                                "mode": "create",
+                                "roleType": "opponentsolicitor",
+                                "sharedoId": "$[$ui.pageContext.sharedoId()]"
+                            }
+                        ]
+                    }
+                ],
+                "tokenSources": ["workItem"],
+                "debugMode": false,
+                "autoRedirect": true
+            }
+        },
+        {
+            "name": "Numeric Comparison Routing",
+            "description": "Routes based on numeric values like amounts or counts",
+            "configuration": {
+                "conditionalRules": [
+                    {
+                        "condition": {
+                            "path": "workItem.customFields.claimAmount",
+                            "operator": "greaterthan",
+                            "value": 100000
+                        },
+                        "targetBlade": "Sharedo.Core.HighValue.ClaimManager",
+                        "configForTargetBlade": [
+                            {
+                                "claimAmount": "[workItem.customFields.claimAmount]",
+                                "matterId": "[workItem.matter.id]",
+                                "priorityLevel": "high",
+                                "approvalRequired": true
+                            }
+                        ]
+                    },
+                    {
+                        "condition": {
+                            "path": "workItem.customFields.claimAmount",
+                            "operator": "lessorequal",
+                            "value": 100000
+                        },
+                        "targetBlade": "Sharedo.Core.Standard.ClaimManager",
+                        "configForTargetBlade": [
+                            {
+                                "claimAmount": "[workItem.customFields.claimAmount]",
+                                "matterId": "[workItem.matter.id]",
+                                "priorityLevel": "standard",
+                                "approvalRequired": false
+                            }
+                        ]
+                    }
+                ],
+                "tokenSources": ["workItem"],
+                "autoRedirect": true
+            }
+        },
+        {
+            "name": "Multi-Condition Role-Based Routing",
+            "description": "Complex routing based on multiple role and status conditions",
+            "configuration": {
+                "inputConfiguration": [
+                    {
+                        "targetRoleType": "client",
+                        "actionMode": "view"
+                    }
+                ],
+                "conditionalRules": [
+                    {
+                        "condition": {
+                            "path": "workItem.roles.{targetRoleType}.ods.type.name",
+                            "operator": "equals",
+                            "value": "people"
+                        },
+                        "targetBlade": "Sharedo.Core.Case.Panels.Ods.AddEditPerson",
+                        "configForTargetBlade": [
+                            {
+                                "id": "[workItem.roles.{targetRoleType}.ods.id]",
+                                "sharedoId": "$[$ui.pageContext.sharedoId()]",
+                                "mode": "{actionMode}",
+                                "roleType": "{targetRoleType}",
+                                "personName": "[workItem.roles.{targetRoleType}.displayName]",
+                                "contactEmail": "[workItem.roles.{targetRoleType}.ods.email]",
+                                "canEdit": "$[inputs.actionMode === 'edit']"
+                            }
+                        ]
+                    },
+                    {
+                        "condition": {
+                            "path": "workItem.roles.{targetRoleType}.ods.type.name",
+                            "operator": "equals",
+                            "value": "organisation"
+                        },
+                        "targetBlade": "Sharedo.Core.Case.Panels.Ods.AddEditOrganisation",
+                        "configForTargetBlade": [
+                            {
+                                "id": "[workItem.roles.{targetRoleType}.ods.id]",
+                                "sharedoId": "$[$ui.pageContext.sharedoId()]",
+                                "mode": "{actionMode}",
+                                "roleType": "{targetRoleType}",
+                                "organisationName": "[workItem.roles.{targetRoleType}.displayName]",
+                                "contactEmail": "[workItem.roles.{targetRoleType}.ods.email]",
+                                "canEdit": "$[inputs.actionMode === 'edit']"
+                            }
+                        ]
+                    }
+                ],
+                "defaultTargetBlade": "Sharedo.Core.Case.Panels.ParticipantsList",
+                "tokenSources": ["workItem"],
+                "debugMode": false,
+                "autoRedirect": true,
+                "redirectDelay": 150
+            }
+        },
+        {
+            "name": "Status-Based Matter Workflow Routing",
+            "description": "Routes to different workflow blades based on matter status and stage",
+            "configuration": {
+                "conditionalRules": [
+                    {
+                        "condition": {
+                            "path": "workItem.matter.status.systemName",
+                            "operator": "equals",
+                            "value": "active"
+                        },
+                        "targetBlade": "Sharedo.Core.Case.ActiveMatterWorkflow",
+                        "configForTargetBlade": [
+                            {
+                                "matterId": "[workItem.matter.id]",
+                                "status": "[workItem.matter.status.systemName]",
+                                "stage": "[workItem.matter.stage.displayName]",
+                                "canAdvanceStage": true,
+                                "assignedSolicitor": "[workItem.roles.solicitor.displayName]"
+                            }
+                        ]
+                    },
+                    {
+                        "condition": {
+                            "path": "workItem.matter.status.systemName",
+                            "operator": "in",
+                            "value": ["pending", "onhold"]
+                        },
+                        "targetBlade": "Sharedo.Core.Case.PendingMatterDashboard",
+                        "configForTargetBlade": [
+                            {
+                                "matterId": "[workItem.matter.id]",
+                                "status": "[workItem.matter.status.systemName]",
+                                "canReactivate": "$[data['workItem.roles.solicitor'] ? true : false]",
+                                "holdReason": "[workItem.customFields.holdReason]"
+                            }
+                        ]
+                    },
+                    {
+                        "condition": {
+                            "path": "workItem.matter.status.systemName",
+                            "operator": "equals",
+                            "value": "closed"
+                        },
+                        "targetBlade": "Sharedo.Core.Case.ClosedMatterSummary",
+                        "configForTargetBlade": [
+                            {
+                                "matterId": "[workItem.matter.id]",
+                                "closedDate": "[workItem.matter.closedDate]",
+                                "outcome": "[workItem.customFields.matterOutcome]",
+                                "readonly": true
+                            }
+                        ]
+                    }
+                ],
+                "defaultTargetBlade": "Sharedo.Core.Case.Dashboard",
+                "tokenSources": ["workItem"],
+                "autoRedirect": true
+            }
+        },
+        {
+            "name": "Context-Aware Document Creation",
+            "description": "Creates different document types based on matter type and client preferences",
+            "configuration": {
+                "inputConfiguration": [
+                    {
+                        "preferredFormat": "template",
+                        "urgencyLevel": "normal"
+                    }
+                ],
+                "conditionalRules": [
+                    {
+                        "condition": {
+                            "path": "workItem.matter.type.systemName",
+                            "operator": "contains",
+                            "value": "litigation"
+                        },
+                        "targetBlade": "Sharedo.Core.Documents.CreateLitigationDocument",
+                        "configForTargetBlade": [
+                            {
+                                "matterId": "[workItem.matter.id]",
+                                "matterType": "[workItem.matter.type.systemName]",
+                                "clientId": "[workItem.roles.client.ods.id]",
+                                "clientName": "[workItem.roles.client.displayName]",
+                                "documentFormat": "{preferredFormat}",
+                                "urgency": "{urgencyLevel}",
+                                "templateCategory": "litigation",
+                                "autoSave": true,
+                                "createdBy": "$[$ui.pageContext.user.userid()]",
+                                "documentPrefix": "$[concat('LIT-', data['workItem.matter.reference'], '-')]"
+                            }
+                        ]
+                    },
+                    {
+                        "condition": {
+                            "path": "workItem.matter.type.systemName", 
+                            "operator": "contains",
+                            "value": "conveyancing"
+                        },
+                        "targetBlade": "Sharedo.Core.Documents.CreateConveyancingDocument",
+                        "configForTargetBlade": [
+                            {
+                                "matterId": "[workItem.matter.id]",
+                                "matterType": "[workItem.matter.type.systemName]",
+                                "clientId": "[workItem.roles.client.ods.id]",
+                                "clientName": "[workItem.roles.client.displayName]",
+                                "propertyAddress": "[workItem.customFields.propertyAddress]",
+                                "documentFormat": "{preferredFormat}",
+                                "urgency": "{urgencyLevel}",
+                                "templateCategory": "conveyancing",
+                                "autoSave": true,
+                                "createdBy": "$[$ui.pageContext.user.userid()]",
+                                "documentPrefix": "$[concat('CONV-', data['workItem.matter.reference'], '-')]"
+                            }
+                        ]
+                    }
+                ],
+                "defaultTargetBlade": "Sharedo.Core.Documents.CreateDocument",
+                "configForTargetBlade": [
+                    {
+                        "matterId": "[workItem.matter.id]",
+                        "matterType": "[workItem.matter.type.systemName]",
+                        "clientId": "[workItem.roles.client.ods.id]",
+                        "clientName": "[workItem.roles.client.displayName]",
+                        "documentFormat": "{preferredFormat}",
+                        "urgency": "{urgencyLevel}",
+                        "templateCategory": "general",
+                        "createdBy": "$[$ui.pageContext.user.userid()]",
+                        "documentPrefix": "$[concat('DOC-', data['workItem.matter.reference'], '-')]"
+                    }
+                ],
+                "tokenSources": ["workItem"],
+                "debugMode": false,
+                "autoRedirect": true
+            }
+        }
+    ],
+    "commonShortcutPatterns": {
+        "skipMultipleScreens": {
+            "description": "Use BladeBouncer to skip intermediate selection screens",
+            "example": "Instead of: Dashboard → Participants → Select Role → Add Person, go directly to Add Person with role pre-selected",
+            "benefit": "Saves 3-4 clicks and page loads"
+        },
+        "preFilledForms": {
+            "description": "Open forms with data already populated from current context",
+            "example": "Create documents with client name, matter reference, and dates pre-filled",
+            "benefit": "Reduces manual data entry and errors"
+        },
+        "roleBasedAccess": {
+            "description": "Direct access to role-specific functions",
+            "example": "Edit client directly without going through participant list",
+            "benefit": "Faster access to frequently used functions"
+        },
+        "workflowShortcuts": {
+            "description": "Quick access to workflow actions and blades",
+            "example": "Open advice management or workflow help directly",
+            "benefit": "Immediate access to workflow tools"
+        },
+        "contextAwareDefaults": {
+            "description": "Use current user and matter context for smart defaults",
+            "example": "Tasks automatically assigned to current user with matter context",
+            "benefit": "Intelligent defaults reduce configuration time"
+        }
+    },
+    "tokenPatterns": {
+        "bracketedTokens": {
+            "pattern": "[source.path.to.field]",
+            "description": "Tokens wrapped in square brackets for data retrieval (case-insensitive for workItem)",
+            "examples": [
+                "[workItem.id]",
+                "[workitem.id]",
+                "[WorkItem.id]",
+                "[workItem.matter.name]",
+                "[workItem.roles.client.displayName]",
+                "[workItem.customFields.fieldName]"
+            ]
+        },
+        "variableSubstitution": {
+            "pattern": "{variableName}",
+            "description": "Variables from inputConfiguration for substitution",
+            "examples": [
+                "{roleSystemName}",
+                "{documentType}",
+                "{priority}"
+            ]
+        },
+        "combinedTokens": {
+            "pattern": "[source.path.{variable}.field]",
+            "description": "Bracketed tokens with embedded variables",
+            "examples": [
+                "[workItem.roles.{roleSystemName}.ods.id]",
+                "[workItem.customFields.templates.{documentSection}]"
+            ]
+        },
+        "uiExpressions": {
+            "pattern": "$ui.context.method()",
+            "description": "UI context expressions evaluated at runtime",
+            "examples": [
+                "$ui.pageContext.sharedoId()",
+                "$ui.pageContext.userId()",
+                "$ui.pageContext.userName()"
+            ]
+        },
+        "executableJavaScript": {
+            "pattern": "$[javascript expression]",
+            "description": "Safe JavaScript execution within sandboxed context",
+            "examples": [
+                "$[$ui.pageContext.sharedoId()]",
+                "$[inputs.priority === 'high' ? 1 : 0]",
+                "$[new Date().toISOString()]",
+                "$[formatDate(new Date(), 'YYYY-MM-DD')]",
+                "$[concat('Matter-', data['workItem.matter.id'])]",
+                "$[getValue('workItem.roles.client.name', data)]",
+                "$[defaultValue(inputs.category, 'general')]",
+                "$[Math.random().toString(36).substring(7)]",
+                "$[inputs.roleType + '-' + $ui.pageContext.userId()]"
+            ],
+            "availableContext": {
+                "inputs": "Variables from inputConfiguration",
+                "data": "Enriched data from API calls",
+                "$ui.pageContext": "ShareDo UI context methods",
+                "getValue(path, obj)": "Safely get nested value",
+                "formatDate(date, format)": "Format date strings",
+                "concat(...args)": "Concatenate multiple values",
+                "defaultValue(value, default)": "Provide default if null/undefined",
+                "Math, Date, JSON": "Standard JavaScript objects",
+                "String, Number, Boolean": "Type conversion functions"
+            }
+        }
+    },
+    "configurationOptions": {
+        "targetBlade": {
+            "type": "string",
+            "required": false,
+            "description": "The blade ID to redirect to (required unless using conditionalRules)"
+        },
+        "inputConfiguration": {
+            "type": "array",
+            "required": false,
+            "description": "Array of objects containing variables for token substitution"
+        },
+        "configForTargetBlade": {
+            "type": "array",
+            "required": false,
+            "description": "Array of configuration objects to pass to target blade"
+        },
+        "conditionalRules": {
+            "type": "array",
+            "required": false,
+            "description": "Array of conditional rules for dynamic blade routing",
+            "structure": {
+                "condition": {
+                    "path": "Dot notation path to data field",
+                    "operator": "Comparison operator (equals, contains, exists, etc.)",
+                    "value": "Expected value for comparison"
+                },
+                "targetBlade": "Blade ID to open if condition matches",
+                "configForTargetBlade": "Optional configuration specific to this blade"
+            }
+        },
+        "defaultTargetBlade": {
+            "type": "string",
+            "required": false,
+            "description": "Fallback blade when no conditional rules match"
+        },
+        "tokenSources": {
+            "type": "array",
+            "required": false,
+            "default": ["workItem"],
+            "description": "Data sources to fetch for token replacement",
+            "validValues": ["workItem", "matter", "participant", "document", "task"]
+        },
+        "debugMode": {
+            "type": "boolean",
+            "required": false,
+            "default": false,
+            "description": "Enable debug mode to show configuration details"
+        },
+        "autoRedirect": {
+            "type": "boolean",
+            "required": false,
+            "default": true,
+            "description": "Automatically redirect to target blade on load"
+        },
+        "redirectDelay": {
+            "type": "number",
+            "required": false,
+            "default": 500,
+            "description": "Delay in milliseconds before redirecting (min: 0, max: 10000)"
+        },
+        "closeAfterRedirect": {
+            "type": "boolean",
+            "required": false,
+            "default": true,
+            "description": "Close the bouncer blade after redirecting"
+        }
+    },
+    "conditionalOperators": {
+        "equals": {
+            "aliases": ["==", "==="],
+            "description": "Exact match comparison",
+            "example": {"operator": "equals", "value": "people"}
+        },
+        "notEquals": {
+            "aliases": ["!=", "!=="],
+            "description": "Not equal comparison",
+            "example": {"operator": "notEquals", "value": "archived"}
+        },
+        "contains": {
+            "description": "String contains substring",
+            "example": {"operator": "contains", "value": "litigation"}
+        },
+        "startsWith": {
+            "description": "String starts with prefix",
+            "example": {"operator": "startsWith", "value": "family"}
+        },
+        "endsWith": {
+            "description": "String ends with suffix",
+            "example": {"operator": "endsWith", "value": "_draft"}
+        },
+        "in": {
+            "description": "Value is in array",
+            "example": {"operator": "in", "value": ["urgent", "high"]}
+        },
+        "notIn": {
+            "description": "Value is not in array",
+            "example": {"operator": "notIn", "value": ["closed", "archived"]}
+        },
+        "exists": {
+            "description": "Field exists and is not null",
+            "example": {"operator": "exists"}
+        },
+        "notExists": {
+            "description": "Field does not exist or is null",
+            "example": {"operator": "notExists"}
+        },
+        "greaterThan": {
+            "aliases": [">"],
+            "description": "Numeric greater than",
+            "example": {"operator": "greaterThan", "value": 100000}
+        },
+        "lessThan": {
+            "aliases": ["<"],
+            "description": "Numeric less than",
+            "example": {"operator": "lessThan", "value": 5000}
+        },
+        "greaterOrEqual": {
+            "aliases": [">="],
+            "description": "Numeric greater than or equal",
+            "example": {"operator": "greaterOrEqual", "value": 50}
+        },
+        "lessOrEqual": {
+            "aliases": ["<="],
+            "description": "Numeric less than or equal",
+            "example": {"operator": "lessOrEqual", "value": 100}
+        }
+    },
+    "errorScenarios": [
+        {
+            "error": "Either targetBlade or conditionalRules must be specified",
+            "cause": "No targetBlade or conditionalRules in configuration",
+            "solution": "Add either 'targetBlade' property or 'conditionalRules' array"
+        },
+        {
+            "error": "No target blade determined",
+            "cause": "No conditional rules matched and no defaultTargetBlade specified",
+            "solution": "Add 'defaultTargetBlade' as a fallback option"
+        },
+        {
+            "error": "Token not found in enriched data",
+            "cause": "Referenced token path doesn't exist in fetched data",
+            "solution": "Verify token path matches actual data structure"
+        },
+        {
+            "error": "Failed to evaluate expression",
+            "cause": "Invalid UI context expression",
+            "solution": "Use only supported UI context methods"
+        },
+        {
+            "error": "Invalid configuration structure",
+            "cause": "Configuration arrays are not properly formatted",
+            "solution": "Ensure inputConfiguration and configForTargetBlade are arrays of objects"
+        },
+        {
+            "error": "Unknown operator",
+            "cause": "Conditional rule uses an unsupported operator",
+            "solution": "Use supported operators: equals, notEquals, contains, exists, etc."
+        }
+    ]
+}

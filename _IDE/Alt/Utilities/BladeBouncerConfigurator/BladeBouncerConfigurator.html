@@ -1,0 +1,440 @@
+<div class="blade-bouncer-configurator" data-bind="with: model">
+    <!-- Header -->
+    <div class="configurator-header">
+        <div class="header-title">
+            <h2><i class="fa fa-directions"></i> BladeBouncer Configuration Builder</h2>
+            <p class="header-subtitle">Create dynamic blade routing configurations for ShareDo</p>
+        </div>
+        <div class="mode-toggle">
+            <button class="mode-btn" data-bind="click: setSimpleMode, css: { active: mode() === 'simple' }" 
+                    title="Basic blade redirection">
+                <i class="fa fa-magic"></i> Simple
+            </button>
+            <button class="mode-btn" data-bind="click: setAdvancedMode, css: { active: mode() === 'advanced' }" 
+                    title="Token-based configuration with variables">
+                <i class="fa fa-cogs"></i> Advanced
+            </button>
+            <button class="mode-btn" data-bind="click: setRulesMode, css: { active: mode() === 'rules' }" 
+                    title="Conditional routing based on data">
+                <i class="fa fa-code-branch"></i> Conditional
+            </button>
+        </div>
+    </div>
+
+    <!-- Portal Context Warning -->
+    <div class="portal-context-warning" data-bind="visible: !hasWorkItemContext()">
+        <div class="warning-icon">
+            <i class="fa fa-exclamation-triangle"></i>
+        </div>
+        <div class="warning-content">
+            <strong>Limited Context Available</strong>
+            <p>Running on a portal page without workItem context. Token replacements like <code>[workItem.*]</code> will not work.</p>
+            <div class="test-workitem-input">
+                <label>Optional: Test with workItem ID</label>
+                <input type="text" class="form-control" placeholder="Enter workItem ID (e.g., 12345)" 
+                       data-bind="textInput: testWorkItemId" />
+                <button class="btn-test-context" data-bind="click: loadTestWorkItem, enable: testWorkItemId">
+                    <i class="fa fa-flask"></i> Load Test Context
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Configuration Name and Load Section -->
+    <div class="config-section">
+        <div class="config-header-row">
+            <div class="config-name-section">
+                <label class="section-label">
+                    Configuration Name
+                    <span class="help-icon" data-bind="attr: { title: 'Give your configuration a descriptive name' }">?</span>
+                </label>
+                <input type="text" class="form-control" placeholder="e.g., Quick Edit Client" 
+                       data-bind="textInput: configName" />
+            </div>
+            
+            <!-- Load Saved Configuration -->
+            <div class="load-config-section" data-bind="visible: savedConfigurations().length > 0">
+                <label class="section-label">
+                    Load Saved
+                    <span class="help-icon" title="Load a previously saved configuration">?</span>
+                </label>
+                <div class="load-config-controls">
+                    <select class="form-control" data-bind="options: savedConfigurations, 
+                                                           optionsText: 'name',
+                                                           optionsValue: 'name',
+                                                           value: selectedSavedConfig,
+                                                           optionsCaption: 'Choose a configuration...'">
+                    </select>
+                    <button class="btn-action" data-bind="click: function() { loadConfiguration(selectedSavedConfig()) }, 
+                                                         enable: selectedSavedConfig">
+                        <i class="fa fa-folder-open"></i> Load
+                    </button>
+                    <button class="btn-action btn-danger" data-bind="click: function() { deleteConfiguration(selectedSavedConfig()) },
+                                                                    enable: selectedSavedConfig">
+                        <i class="fa fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Simple Mode -->
+    <div class="mode-content" data-bind="visible: mode() === 'simple'">
+        <div class="config-section">
+            <label class="section-label">
+                Target Blade
+                <span class="help-icon" title="The blade to open">?</span>
+            </label>
+            <div class="blade-selector">
+                <input type="text" class="form-control blade-input" 
+                       placeholder="e.g., Sharedo.Core.Case.Panels.Ods.AddEditPerson"
+                       data-bind="textInput: targetBlade, attr: { list: 'blade-suggestions' }"
+                       title="Type to see suggestions or enter custom blade ID" />
+                <button class="btn-search" data-bind="click: searchBlades" title="Open Blade Finder with documentation">
+                    <i class="fa fa-search"></i> Browse
+                </button>
+            </div>
+            <datalist id="blade-suggestions" data-bind="foreach: bladeSuggestions">
+                <option data-bind="value: $data"></option>
+            </datalist>
+            <div class="blade-hint">
+                <i class="fa fa-lightbulb"></i> 
+                Start typing for suggestions or click Browse to search all available blades
+            </div>
+        </div>
+
+        <div class="config-section">
+            <label class="section-label">
+                Quick Settings
+                <span class="help-icon" title="Common configuration options">?</span>
+            </label>
+            <div class="quick-settings">
+                <label class="checkbox-label">
+                    <input type="checkbox" data-bind="checked: autoRedirect" />
+                    Auto-redirect on load
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" data-bind="checked: closeAfterRedirect" />
+                    Close bouncer after redirect
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" data-bind="checked: debugMode" />
+                    Enable debug mode
+                </label>
+            </div>
+            <div class="delay-setting" data-bind="visible: autoRedirect">
+                <label>Redirect delay (ms):</label>
+                <input type="number" class="form-control-sm" min="0" max="10000" step="100"
+                       data-bind="value: redirectDelay" />
+            </div>
+        </div>
+    </div>
+
+    <!-- Advanced Mode -->
+    <div class="mode-content" data-bind="visible: mode() === 'advanced'">
+        <!-- Target Blade -->
+        <div class="config-section">
+            <label class="section-label">
+                Target Blade
+                <span class="help-icon" title="The blade to open with dynamic configuration">?</span>
+            </label>
+            <div class="blade-selector">
+                <input type="text" class="form-control blade-input" 
+                       placeholder="e.g., Sharedo.Core.Case.Panels.Ods.AddEditPerson"
+                       data-bind="textInput: targetBlade, attr: { list: 'blade-suggestions-advanced' }"
+                       title="Type to see suggestions or enter custom blade ID" />
+                <button class="btn-search" data-bind="click: searchBlades" title="Open Blade Finder with documentation">
+                    <i class="fa fa-search"></i> Browse
+                </button>
+            </div>
+            <datalist id="blade-suggestions-advanced" data-bind="foreach: bladeSuggestions">
+                <option data-bind="value: $data"></option>
+            </datalist>
+        </div>
+        
+        <!-- Input Configuration -->
+        <div class="config-section">
+            <label class="section-label">
+                Input Variables
+                <span class="help-icon" title="Variables for token substitution">?</span>
+            </label>
+            <div class="input-variables" data-bind="foreach: inputVariables">
+                <div class="variable-row">
+                    <input type="text" class="form-control-sm" placeholder="Variable name"
+                           data-bind="textInput: key" />
+                    <input type="text" class="form-control-sm" placeholder="Value"
+                           data-bind="textInput: value" />
+                    <button class="btn-remove" data-bind="click: $parent.removeInputVariable">
+                        <i class="fa fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <button class="btn-add" data-bind="click: addInputVariable">
+                <i class="fa fa-plus"></i> Add Variable
+            </button>
+        </div>
+
+        <!-- Target Configuration -->
+        <div class="config-section">
+            <label class="section-label">
+                Target Blade Configuration
+                <span class="help-icon" title="Configuration to pass to the target blade">?</span>
+            </label>
+            <div class="target-config" data-bind="foreach: targetConfigs">
+                <div class="config-row">
+                    <input type="text" class="form-control-sm" placeholder="Property name"
+                           data-bind="textInput: key" />
+                    <div class="value-input">
+                        <select class="value-type" data-bind="value: type" title="Choose value type">
+                            <option value="static">Static</option>
+                            <option value="token">Token [...]</option>
+                            <option value="variable">Variable {...}</option>
+                            <option value="expression">Expression $[...]</option>
+                        </select>
+                        <input type="text" class="form-control-sm value-field" 
+                               data-bind="textInput: value, attr: { placeholder: $parent.getPlaceholder(type()) }" />
+                    </div>
+                    <button class="btn-remove" data-bind="click: $parent.removeTargetConfig">
+                        <i class="fa fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <button class="btn-add" data-bind="click: addTargetConfig">
+                <i class="fa fa-plus"></i> Add Configuration
+            </button>
+        </div>
+
+        <!-- Token Sources -->
+        <div class="config-section">
+            <label class="section-label">
+                Token Sources
+                <span class="help-icon" title="Data sources for token replacement">?</span>
+            </label>
+            <div class="token-sources">
+                <label class="checkbox-label">
+                    <input type="checkbox" value="workItem" 
+                           data-bind="checked: tokenSources" /> Work Item
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" value="matter" 
+                           data-bind="checked: tokenSources" /> Matter
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" value="participant" 
+                           data-bind="checked: tokenSources" /> Participant
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conditional Rules Mode -->
+    <div class="mode-content" data-bind="visible: mode() === 'rules'">
+        <div class="config-section">
+            <label class="section-label">
+                Conditional Rules
+                <span class="help-icon" title="Define conditions for blade routing">?</span>
+            </label>
+            
+            <!-- Rules List -->
+            <div class="rules-list" data-bind="foreach: conditionalRules">
+                <div class="rule-card">
+                    <div class="rule-header">
+                        <span class="rule-number" data-bind="text: 'Rule ' + ($index() + 1)"></span>
+                        <button class="btn-remove" data-bind="click: $parent.removeRule">
+                            <i class="fa fa-trash"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="rule-condition">
+                        <div class="condition-row">
+                            <label>If</label>
+                            <input type="text" class="form-control-sm path-input" 
+                                   placeholder="Path (e.g., workItem.roles.client.ods.type.name)"
+                                   data-bind="textInput: path, attr: { list: 'path-suggestions-' + $index() }" />
+                            <datalist data-bind="attr: { id: 'path-suggestions-' + $index() }">
+                                <!-- WorkItem Core -->
+                                <option value="workItem.id"></option>
+                                <option value="workItem.reference"></option>
+                                <option value="workItem.status.systemName"></option>
+                                <option value="workItem.createdDate"></option>
+                                
+                                <!-- Matter Fields -->
+                                <option value="workItem.matter.id"></option>
+                                <option value="workItem.matter.name"></option>
+                                <option value="workItem.matter.reference"></option>
+                                <option value="workItem.matter.type.systemName"></option>
+                                <option value="workItem.matter.type.displayName"></option>
+                                <option value="workItem.matter.status.systemName"></option>
+                                <option value="workItem.matter.stage.displayName"></option>
+                                <option value="workItem.matter.closedDate"></option>
+                                
+                                <!-- Role Fields -->
+                                <option value="workItem.roles.client.ods.id"></option>
+                                <option value="workItem.roles.client.ods.type.name"></option>
+                                <option value="workItem.roles.client.displayName"></option>
+                                <option value="workItem.roles.client.ods.email"></option>
+                                <option value="workItem.roles.client.ods.isPrimary"></option>
+                                
+                                <option value="workItem.roles.opponentsolicitor.ods.id"></option>
+                                <option value="workItem.roles.opponentsolicitor.displayName"></option>
+                                
+                                <option value="workItem.roles.solicitor.ods.id"></option>
+                                <option value="workItem.roles.solicitor.displayName"></option>
+                                
+                                <!-- Custom Fields -->
+                                <option value="workItem.customFields.priority"></option>
+                                <option value="workItem.customFields.status"></option>
+                                <option value="workItem.customFields.claimAmount"></option>
+                                <option value="workItem.customFields.holdReason"></option>
+                                <option value="workItem.customFields.matterOutcome"></option>
+                                <option value="workItem.customFields.propertyAddress"></option>
+                                
+                                <!-- Flexible Role Pattern -->
+                                <option value="workItem.roles.{roleSystemName}.ods.id"></option>
+                                <option value="workItem.roles.{roleSystemName}.ods.type.name"></option>
+                                <option value="workItem.roles.{roleSystemName}.displayName"></option>
+                            </datalist>
+                        </div>
+                        <div class="condition-row">
+                            <select class="form-control-sm operator-select" data-bind="value: operator">
+                                <option value="equals">Equals (==)</option>
+                                <option value="notEquals">Not Equals (!=)</option>
+                                <option value="contains">Contains</option>
+                                <option value="startsWith">Starts With</option>
+                                <option value="endsWith">Ends With</option>
+                                <option value="exists">Exists</option>
+                                <option value="notExists">Not Exists</option>
+                                <option value="in">In Array</option>
+                                <option value="greaterThan">Greater Than (>)</option>
+                                <option value="lessThan">Less Than (<)</option>
+                                <option value="greaterOrEqual">Greater or Equal (>=)</option>
+                                <option value="lessOrEqual">Less or Equal (<=)</option>
+                            </select>
+                            
+                            <!-- Single value input -->
+                            <input type="text" class="form-control-sm value-input" placeholder="Value"
+                                   data-bind="textInput: value, 
+                                            visible: operator() !== 'exists' && operator() !== 'notExists' && operator() !== 'in'" />
+                            
+                            <!-- Array value input for 'in' operator -->
+                            <div class="array-value-input" data-bind="visible: operator() === 'in'">
+                                <div data-bind="foreach: arrayValues">
+                                    <div class="array-value-row">
+                                        <input type="text" class="form-control-sm" placeholder="Array value"
+                                               data-bind="value: $data" />
+                                        <button class="btn-remove-sm" data-bind="click: $parent.arrayValues.remove.bind($parent.arrayValues, $data)">
+                                            <i class="fa fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <button class="btn-add-sm" data-bind="click: function() { arrayValues.push(ko.observable('')) }">
+                                    <i class="fa fa-plus"></i> Add value
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="rule-action">
+                        <label>Then open:</label>
+                        <div class="blade-selector-inline">
+                            <input type="text" class="form-control" placeholder="Target blade"
+                                   data-bind="textInput: targetBlade, attr: { list: 'rule-blade-suggestions-' + $index() }" />
+                            <button class="btn-search-sm" data-bind="click: function() { $parent.searchBladesForRule($index()) }"
+                                    title="Browse blades">
+                                <i class="fa fa-search"></i>
+                            </button>
+                        </div>
+                        <datalist data-bind="attr: { id: 'rule-blade-suggestions-' + $index() }">
+                            <!-- ko foreach: $parent.bladeSuggestions -->
+                            <option data-bind="value: $data"></option>
+                            <!-- /ko -->
+                        </datalist>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="btn-add" data-bind="click: addRule">
+                <i class="fa fa-plus"></i> Add Rule
+            </button>
+            
+            <!-- Default Blade -->
+            <div class="default-blade">
+                <label class="section-label">
+                    Default Blade (when no rules match)
+                    <span class="help-icon" title="Fallback blade if no conditions are met">?</span>
+                </label>
+                <input type="text" class="form-control" placeholder="Default blade"
+                       data-bind="textInput: defaultTargetBlade" />
+            </div>
+        </div>
+    </div>
+
+    <!-- Templates Section -->
+    <div class="config-section templates-section">
+        <label class="section-label">
+            <i class="fa fa-rocket"></i> Quick Start Templates
+            <span class="help-icon" title="Load a pre-configured template to get started quickly">?</span>
+        </label>
+        <div class="templates">
+            <button class="template-btn" data-bind="click: loadEditClientTemplate" 
+                    title="Open client editor with automatic ID resolution">
+                <i class="fa fa-user-edit"></i>
+                <span>Edit Client</span>
+                <small>Auto-resolve client ID</small>
+            </button>
+            <button class="template-btn" data-bind="click: loadCreateTaskTemplate" 
+                    title="Create urgent task with pre-filled settings">
+                <i class="fa fa-tasks"></i>
+                <span>Create Task</span>
+                <small>Urgent with auto-assign</small>
+            </button>
+            <button class="template-btn" data-bind="click: loadConditionalOdsTemplate" 
+                    title="Route to different blades based on entity type">
+                <i class="fa fa-code-branch"></i>
+                <span>ODS Routing</span>
+                <small>Person vs Organisation</small>
+            </button>
+            <button class="template-btn" data-bind="click: loadDocumentTemplate" 
+                    title="Create document with template selection">
+                <i class="fa fa-file-alt"></i>
+                <span>Create Document</span>
+                <small>With template variables</small>
+            </button>
+        </div>
+    </div>
+
+    <!-- Preview Section -->
+    <div class="config-section preview-section">
+        <div class="preview-header">
+            <label class="section-label">Configuration Preview</label>
+            <div class="preview-actions">
+                <button class="btn-action" data-bind="click: formatJson">
+                    <i class="fa fa-indent"></i> Format
+                </button>
+                <button class="btn-action" data-bind="click: copyToClipboard">
+                    <i class="fa fa-copy"></i> Copy
+                </button>
+                <button class="btn-action" data-bind="click: testConfiguration">
+                    <i class="fa fa-play"></i> Test
+                </button>
+            </div>
+        </div>
+        <pre class="config-preview" data-bind="text: configurationJson"></pre>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+        <button class="btn btn-primary" data-bind="click: saveConfiguration">
+            <i class="fa fa-save"></i> Save Configuration
+        </button>
+        <button class="btn btn-secondary" data-bind="click: exportConfiguration">
+            <i class="fa fa-download"></i> Export as JSON
+        </button>
+        <button class="btn btn-secondary" data-bind="click: clearConfiguration">
+            <i class="fa fa-eraser"></i> Clear
+        </button>
+    </div>
+
+    <!-- Status Message -->
+    <div class="status-message" data-bind="visible: statusMessage, text: statusMessage, css: statusClass"></div>
+</div>

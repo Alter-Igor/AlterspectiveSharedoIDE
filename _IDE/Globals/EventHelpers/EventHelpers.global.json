@@ -1,0 +1,13 @@
+{
+    "scripts":
+    [
+        "/_ideFiles/Globals/EventHelpers/EventHelpers.js"
+    ],
+    "styles":
+    [
+        "/_ideFiles/Globals/EventHelpers/EventHelpers.css"
+    ],
+    "widgets":
+    [
+    ]
+}

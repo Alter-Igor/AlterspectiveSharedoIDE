@@ -54,10 +54,16 @@ Alt.AdviceManagement.AdviceBulkManager = function(element, configuration, baseMo
     // Get current context work type filter if available
     self.getCurrentWorkType = function() {
         // Try to get from $ui.pageContext (portal context)
-        if (window.$ui && window.$ui.pageContext && window.$ui.pageContext.matterSummary) {
-            var workType = window.$ui.pageContext.matterSummary.workType;
-            if (workType) {
-                return workType();
+        if (window.$ui && window.$ui.pageContext) {
+            // Check different possible locations for work type
+            if (window.$ui.pageContext.matterSummary && window.$ui.pageContext.matterSummary.workType) {
+                var workType = window.$ui.pageContext.matterSummary.workType;
+                return ko.isObservable(workType) ? workType() : workType;
+            }
+            // Check if there's a filter in the page context
+            if (window.$ui.pageContext.workTypeFilter) {
+                var filter = window.$ui.pageContext.workTypeFilter;
+                return ko.isObservable(filter) ? filter() : filter;
             }
         }
         return null;
@@ -81,6 +87,11 @@ Alt.AdviceManagement.AdviceBulkManager = function(element, configuration, baseMo
         // Work items
         workItems: ko.observableArray([]),
         isLoading: ko.observable(false),
+        loadingMessage: ko.observable('Loading work items...'),
+        errorMessage: ko.observable(''),
+        hasError: ko.observable(false),
+        retryCount: ko.observable(0),
+        maxRetries: 3,
         
         // Filtering
         filterStatus: ko.observable('all'),
@@ -102,6 +113,9 @@ Alt.AdviceManagement.AdviceBulkManager = function(element, configuration, baseMo
         showUndo: ko.observable(false),
         undoMessage: ko.observable(''),
         lastAction: null,
+        
+        // UI helpers
+        showKeyboardHelp: ko.observable(false),
         
         // Computed
         filteredItems: ko.pureComputed(function() {
@@ -224,8 +238,20 @@ Alt.AdviceManagement.AdviceBulkManager = function(element, configuration, baseMo
         return date.toLocaleDateString();
     };
     
-    // Load work items
-    self.loadWorkItems = function() {
+    // Load work items with retry logic
+    self.loadWorkItems = function(isRetry) {
+        // Reset error state
+        self.model.hasError(false);
+        self.model.errorMessage('');
+        
+        // Update loading message
+        if (isRetry) {
+            self.model.loadingMessage('Retrying... (Attempt ' + (self.model.retryCount() + 1) + ' of ' + self.model.maxRetries + ')');
+        } else {
+            self.model.loadingMessage('Loading work items...');
+            self.model.retryCount(0);
+        }
+        
         self.model.isLoading(true);
         self.model.workItems.removeAll();
         
@@ -243,10 +269,11 @@ Alt.AdviceManagement.AdviceBulkManager = function(element, configuration, baseMo
         
         // Build search criteria using correct FindByQuery structure
         var searchCriteria = {
-            // Filter for items with advice attributes
+            // Filter for items with advice attributes - using correct attribute filter structure
             attributes: [{
                 key: 'alt_ongoing_advice_enabled',
-                selectedValues: ['true', 'false'] // Get both active and paused
+                values: ['true', 'false'], // Changed from selectedValues to values
+                operator: 'in' // Explicitly specify operator
             }],
             
             // Include only open phases
@@ -306,22 +333,30 @@ Alt.AdviceManagement.AdviceBulkManager = function(element, configuration, baseMo
                         return $ajax.api.get('/api/v1/public/workItem/' + result.id)
                             .then(function(workItemResponse) {
                                 // Extract advice attributes from aspectData.formBuilder.formData
-                                var formData = workItemResponse.aspectData && 
-                                              workItemResponse.aspectData.formBuilder && 
-                                              workItemResponse.aspectData.formBuilder.formData || {};
+                                // Check multiple possible locations for attributes
+                                var formData = {};
+                                if (workItemResponse.aspectData && workItemResponse.aspectData.formBuilder && workItemResponse.aspectData.formBuilder.formData) {
+                                    formData = workItemResponse.aspectData.formBuilder.formData;
+                                } else if (workItemResponse.attributes) {
+                                    formData = workItemResponse.attributes;
+                                }
+                                
+                                // Safely extract workItem data
+                                var workItem = workItemResponse && workItemResponse.workItem ? workItemResponse.workItem : {};
                                 
                                 return {
                                     id: result.id,
                                     score: result.score,
-                                    title: workItemResponse.workItem ? workItemResponse.workItem.title : 'Untitled',
-                                    reference: workItemResponse.workItem ? workItemResponse.workItem.reference : '',
+                                    title: workItem.title || 'Untitled',
+                                    reference: workItem.reference || '',
                                     // Map formData attributes to expected structure
                                     'attributes.alt_ongoing_advice_enabled': formData.alt_ongoing_advice_enabled,
                                     'attributes.alt_ongoing_advice_paused_date': formData.alt_ongoing_advice_paused_date,
                                     'attributes.alt_ongoing_advice_resumed_date': formData.alt_ongoing_advice_resumed_date,
                                     'attributes.alt_ongoing_advice_pause_reason': formData.alt_ongoing_advice_pause_reason,
                                     'attributes.alt_ongoing_advice_paused_by': formData.alt_ongoing_advice_paused_by,
-                                    'attributes.alt_ongoing_advice_resumed_by': formData.alt_ongoing_advice_resumed_by
+                                    'attributes.alt_ongoing_advice_resumed_by': formData.alt_ongoing_advice_resumed_by,
+                                    createdDate: workItem.createdDate
                                 };
                             })
                             .catch(function(error) {
@@ -348,7 +383,13 @@ Alt.AdviceManagement.AdviceBulkManager = function(element, configuration, baseMo
                         };
                         
                         // Cache the enriched response
-                        Cache.set('bulkManager', cacheKey, transformedResponse, Constants.API.CACHE_TTL);
+                        // Cache with timestamp for smart invalidation
+                        var cacheData = {
+                            data: transformedResponse,
+                            timestamp: Date.now(),
+                            workType: self.getCurrentWorkType()
+                        };
+                        Cache.set('bulkManager', cacheKey, cacheData, 300000); // 5 minute TTL
                         self.processWorkItems(transformedResponse);
                         
                         console.log('[AdviceBulkManager] Fetched full details for ' + items.length + ' items');
@@ -390,21 +431,42 @@ Alt.AdviceManagement.AdviceBulkManager = function(element, configuration, baseMo
             var errorMessage = 'Failed to load work items';
             if (error.status === 401 || error.status === 403) {
                 errorMessage = 'You do not have permission to view these items';
+                self.model.hasError(true);
+                self.model.errorMessage(errorMessage);
             } else if (error.status === 400) {
-                errorMessage = 'Invalid search criteria';
+                errorMessage = 'Invalid search criteria. Please check your filters.';
+                self.model.hasError(true);
+                self.model.errorMessage(errorMessage);
+            } else if (error.status === 404) {
+                errorMessage = 'The requested resource was not found';
+                self.model.hasError(true);
+                self.model.errorMessage(errorMessage);
             } else if (error.status >= 500) {
-                errorMessage = 'Server error. Please try again later';
+                errorMessage = 'Server error. ';
+                // Implement retry logic for server errors
+                if (self.model.retryCount() < self.model.maxRetries) {
+                    self.model.retryCount(self.model.retryCount() + 1);
+                    errorMessage += 'Retrying in 3 seconds...';
+                    self.model.errorMessage(errorMessage);
+                    setTimeout(function() {
+                        self.loadWorkItems(true);
+                    }, 3000);
+                    return;
+                } else {
+                    errorMessage += 'Please try again later.';
+                    self.model.hasError(true);
+                    self.model.errorMessage(errorMessage);
+                }
+            } else if (error.status === 0) {
+                errorMessage = 'Network error. Please check your connection.';
+                self.model.hasError(true);
+                self.model.errorMessage(errorMessage);
             }
             
             EventBus.publish(Constants.EVENTS.ADVICE_ERROR, {
                 error: errorMessage,
                 details: error
             });
-            
-            // Show error to user
-            if (window.$ui && window.$ui.showError) {
-                window.$ui.showError(errorMessage);
-            }
         });
     };
     
@@ -466,7 +528,8 @@ Alt.AdviceManagement.AdviceBulkManager = function(element, configuration, baseMo
                     lastAction: lastAction,
                     daysActive: daysActive,
                     pausedReason: attributes['alt_ongoing_advice_pause_reason'] || '',
-                    assignee: item.assignee || item.Assignee || ''
+                    assignee: item.assignee || item.Assignee || '',
+                    createdDate: item.createdDate
                 });
             });
             
@@ -505,10 +568,15 @@ Alt.AdviceManagement.AdviceBulkManager = function(element, configuration, baseMo
     
     // Show bulk pause modal
     self.showBulkPauseModal = function() {
-        if (window.$ui && window.$ui.showModal) {
-            window.$ui.showModal('#bulkPauseModal');
-        } else {
-            $('#bulkPauseModal').modal('show');
+        // ShareDo doesn't use Bootstrap modals directly
+        // Use jQuery to show the modal manually
+        var modal = $('#bulkPauseModal');
+        if (modal.length > 0) {
+            modal.fadeIn(300);
+            // Add backdrop if not exists
+            if ($('.modal-backdrop').length === 0) {
+                $('body').append('<div class="modal-backdrop fade in"></div>');
+            }
         }
     };
     
@@ -546,7 +614,7 @@ Alt.AdviceManagement.AdviceBulkManager = function(element, configuration, baseMo
                     attributes: {
                         'alt_ongoing_advice_enabled': 'false',
                         'alt_ongoing_advice_paused_date': new Date().toISOString(),
-                        'alt_ongoing_advice_paused_by': window.$ui && window.$ui.currentUser ? window.$ui.currentUser.id : 'unknown',
+                        'alt_ongoing_advice_paused_by': window.$ui && window.$ui.pageContext && window.$ui.pageContext.user ? window.$ui.pageContext.user.userid() : 'unknown',
                         'alt_ongoing_advice_pause_reason': reason,
                         'alt_ongoing_advice_next_date': '' // Clear next date when pausing
                     }
@@ -555,11 +623,10 @@ Alt.AdviceManagement.AdviceBulkManager = function(element, configuration, baseMo
         });
         
         $.when.apply($, promises).done(function() {
-            if (window.$ui && window.$ui.hideModal) {
-                window.$ui.hideModal('#bulkPauseModal');
-            } else {
-                $('#bulkPauseModal').modal('hide');
-            }
+            // Hide modal manually
+            $('#bulkPauseModal').fadeOut(300);
+            $('.modal-backdrop').remove();
+            
             Cache.clear('bulkManager'); // Clear cache to force refresh
             self.loadWorkItems(); // Reload to get updated status
             
@@ -612,7 +679,7 @@ Alt.AdviceManagement.AdviceBulkManager = function(element, configuration, baseMo
                     attributes: {
                         'alt_ongoing_advice_enabled': 'true',
                         'alt_ongoing_advice_resumed_date': new Date().toISOString(),
-                        'alt_ongoing_advice_resumed_by': window.$ui && window.$ui.currentUser ? window.$ui.currentUser.id : 'unknown',
+                        'alt_ongoing_advice_resumed_by': window.$ui && window.$ui.pageContext && window.$ui.pageContext.user ? window.$ui.pageContext.user.userid() : 'unknown',
                         'alt_ongoing_advice_resume_reason': 'Bulk resume action'
                     }
                 })
@@ -810,10 +877,11 @@ Alt.AdviceManagement.AdviceBulkManager = function(element, configuration, baseMo
                 wildCardEnd: true
             },
             
-            // Filter for items with advice attributes
+            // Filter for items with advice attributes - using correct attribute filter structure
             attributes: [{
                 key: 'alt_ongoing_advice_enabled',
-                selectedValues: ['true', 'false'] // Get both active and paused
+                values: ['true', 'false'], // Changed from selectedValues to values
+                operator: 'in' // Explicitly specify operator
             }],
             
             // Include only open phases
@@ -868,9 +936,13 @@ Alt.AdviceManagement.AdviceBulkManager = function(element, configuration, baseMo
                     var detailPromises = response.results.map(function(result) {
                         return $ajax.api.get('/api/v1/public/workItem/' + result.id)
                             .then(function(workItemResponse) {
-                                var formData = workItemResponse.aspectData && 
-                                              workItemResponse.aspectData.formBuilder && 
-                                              workItemResponse.aspectData.formBuilder.formData || {};
+                                // Check multiple possible locations for attributes
+                                var formData = {};
+                                if (workItemResponse.aspectData && workItemResponse.aspectData.formBuilder && workItemResponse.aspectData.formBuilder.formData) {
+                                    formData = workItemResponse.aspectData.formBuilder.formData;
+                                } else if (workItemResponse.attributes) {
+                                    formData = workItemResponse.attributes;
+                                }
                                 
                                 return {
                                     id: result.id,
@@ -882,7 +954,8 @@ Alt.AdviceManagement.AdviceBulkManager = function(element, configuration, baseMo
                                     'attributes.alt_ongoing_advice_resumed_date': formData.alt_ongoing_advice_resumed_date,
                                     'attributes.alt_ongoing_advice_pause_reason': formData.alt_ongoing_advice_pause_reason,
                                     'attributes.alt_ongoing_advice_paused_by': formData.alt_ongoing_advice_paused_by,
-                                    'attributes.alt_ongoing_advice_resumed_by': formData.alt_ongoing_advice_resumed_by
+                                    'attributes.alt_ongoing_advice_resumed_by': formData.alt_ongoing_advice_resumed_by,
+                                    createdDate: workItem.createdDate
                                 };
                             })
                             .catch(function(error) {
@@ -945,7 +1018,7 @@ Alt.AdviceManagement.AdviceBulkManager = function(element, configuration, baseMo
         });
     };
     
-    // Export to CSV
+    // Export to CSV with progress indication
     self.exportSelected = function() {
         var items = self.model.selectedItems();
         if (items.length === 0) {
@@ -957,37 +1030,69 @@ Alt.AdviceManagement.AdviceBulkManager = function(element, configuration, baseMo
             return;
         }
         
-        // Create CSV content
-        var csv = 'ID,Title,Status,Last Action,Days Active,Paused Reason\n';
-        items.forEach(function(item) {
-            csv += '"' + item.id() + '",';
+        // Show export progress for large datasets
+        if (items.length > 50) {
+            self.model.loadingMessage('Preparing export for ' + items.length + ' items...');
+            self.model.isLoading(true);
+        }
+        
+        // Process in chunks for better performance
+        setTimeout(function() {
+            try {
+                // Create CSV content with BOM for Excel compatibility
+                var BOM = '\uFEFF';
+                var csv = BOM + 'ID,Title,Status,Last Action,Days Active,Paused Reason,Assigned To\n';
+                
+                items.forEach(function(item, index) {
+                    // Add progress update for large exports
+                    if (items.length > 50 && index % 20 === 0) {
+                        self.model.loadingMessage('Processing item ' + (index + 1) + ' of ' + items.length + '...');
+                    }
+                    
+                    csv += '"' + item.id() + '",';
             csv += '"' + item.title().replace(/"/g, '""') + '",';
             csv += '"' + item.status() + '",';
             csv += '"' + item.lastAction() + '",';
             csv += '"' + item.daysActive() + '",';
-            csv += '"' + (item.pausedReason() || '').replace(/"/g, '""') + '"\n';
-        });
-        
-        // Download CSV using $ui service
-        if (window.$ui && window.$ui.downloadFile) {
-            window.$ui.downloadFile({
-                content: csv,
-                filename: 'advice-items-' + new Date().toISOString().split('T')[0] + '.csv',
-                mimeType: 'text/csv'
-            });
-        } else {
-            // Fallback for older environments
-            var blob = new Blob([csv], { type: 'text/csv' });
-            var url = window.URL.createObjectURL(blob);
-            var a = window.$ui ? window.$ui.createElement('a') : document.createElement('a');
-            a.href = url;
-            a.download = 'advice-items-' + new Date().toISOString().split('T')[0] + '.csv';
-            var container = window.$ui && window.$ui.getContainer ? window.$ui.getContainer() : document.body;
-            container.appendChild(a);
-            a.click();
-            container.removeChild(a);
-            window.URL.revokeObjectURL(url);
-        }
+                    csv += '"' + (item.pausedReason() || '').replace(/"/g, '""') + '",';  
+                    csv += '"' + (item.assignee() || '').replace(/"/g, '""') + '"\n';
+                });
+                
+                // Download CSV using $ui service
+                if (window.$ui && window.$ui.downloadFile) {
+                    window.$ui.downloadFile({
+                        content: csv,
+                        filename: 'advice-items-' + new Date().toISOString().split('T')[0] + '.csv',
+                        mimeType: 'text/csv;charset=utf-8'
+                    });
+                } else {
+                    // Fallback for older environments with UTF-8 BOM
+                    var blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+                    var url = window.URL.createObjectURL(blob);
+                    var a = window.$ui ? window.$ui.createElement('a') : document.createElement('a');
+                    a.href = url;
+                    a.download = 'advice-items-' + new Date().toISOString().split('T')[0] + '.csv';
+                    var container = window.$ui && window.$ui.getContainer ? window.$ui.getContainer() : document.body;
+                    container.appendChild(a);
+                    a.click();
+                    container.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                }
+                
+                // Show success message
+                self.showUndoNotification('Exported ' + items.length + ' items to CSV', null);
+                
+            } catch (exportError) {
+                console.error('[AdviceBulkManager] Export failed:', exportError);
+                if (window.$ui && window.$ui.showError) {
+                    window.$ui.showError('Failed to export items. Please try again.');
+                }
+            } finally {
+                if (items.length > 50) {
+                    self.model.isLoading(false);
+                }
+            }
+        }, 10); // Small delay to show loading state
     };
 };
 
@@ -1038,6 +1143,9 @@ Alt.AdviceManagement.AdviceBulkManager.prototype.onDestroy = function() {
 Alt.AdviceManagement.AdviceBulkManager.prototype.loadAndBind = function() {
     var self = this;
     
+    // Initialize keyboard shortcuts
+    self.initializeKeyboardShortcuts();
+    
     // Publish widget loaded event
     var EventBus = Alt.AdviceManagement.Common.EventBus;
     var Constants = Alt.AdviceManagement.Common.Constants;
@@ -1063,7 +1171,10 @@ Alt.AdviceManagement.AdviceBulkManager.prototype.loadAndBind = function() {
     
     // Auto-load if configured
     if (self.options.autoLoad) {
-        self.loadWorkItems();
+        // Add a small delay to ensure DOM is ready
+        setTimeout(function() {
+            self.loadWorkItems();
+        }, 100);
     }
     
     // Subscribe to advice status change events using ShareDo native event system
@@ -1105,6 +1216,71 @@ Alt.AdviceManagement.AdviceBulkManager.prototype.initializeEventSubscriptions = 
 };
 
 /**
+ * Initialize keyboard shortcuts for accessibility
+ */
+Alt.AdviceManagement.AdviceBulkManager.prototype.initializeKeyboardShortcuts = function() {
+    var self = this;
+    
+    // Store the handler for cleanup
+    self.keyboardHandler = function(e) {
+        // Check if user is typing in an input field
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+            return;
+        }
+        
+        var handled = false;
+        
+        // Ctrl/Cmd + A: Select all visible items
+        if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+            e.preventDefault();
+            self.selectAll();
+            handled = true;
+        }
+        // Ctrl/Cmd + D: Deselect all
+        else if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+            e.preventDefault();
+            self.deselectAll();
+            handled = true;
+        }
+        // Ctrl/Cmd + E: Export selected
+        else if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
+            e.preventDefault();
+            self.exportSelected();
+            handled = true;
+        }
+        // R: Refresh/Reload
+        else if (e.key === 'r' && !e.ctrlKey && !e.metaKey) {
+            e.preventDefault();
+            self.loadWorkItems();
+            handled = true;
+        }
+        // P: Pause selected (opens modal)
+        else if (e.key === 'p' && !e.ctrlKey && !e.metaKey) {
+            if (self.model.canPause()) {
+                e.preventDefault();
+                self.showBulkPauseModal();
+                handled = true;
+            }
+        }
+        // U: Resume selected
+        else if (e.key === 'u' && !e.ctrlKey && !e.metaKey) {
+            if (self.model.canResume()) {
+                e.preventDefault();
+                self.bulkResume();
+                handled = true;
+            }
+        }
+        
+        if (handled) {
+            console.log('[AdviceBulkManager] Keyboard shortcut handled:', e.key);
+        }
+    };
+    
+    // Attach keyboard handler
+    $(document).on('keydown.adviceBulkManager', self.keyboardHandler);
+};
+
+/**
  * Clean up event subscriptions
  */
 Alt.AdviceManagement.AdviceBulkManager.prototype.cleanupEventSubscriptions = function() {
@@ -1119,4 +1295,9 @@ Alt.AdviceManagement.AdviceBulkManager.prototype.cleanupEventSubscriptions = fun
         console.log('[AdviceBulkManager] Cleaned up event subscriptions');
     }
     self.eventSubscriptions = [];
+    
+    // Clean up keyboard shortcuts
+    if (self.keyboardHandler) {
+        $(document).off('keydown.adviceBulkManager', self.keyboardHandler);
+    }
 };

@@ -1,0 +1,71 @@
+<div class="blade-bouncer-container">
+    <div class="blade-header">
+        <div class="flex-row">
+            <div class="column-auto">
+                <span class="fa fa-exchange header-icon"></span>
+            </div>
+            <div class="column-fit">
+                <h4 class="modal-title">Blade Bouncer</h4>
+                <div class="small" data-bind="text: 'Redirecting to: ' + model.targetBlade()"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="blade-bouncer-body">
+        <div class="processing-indicator" data-bind="visible: processing">
+            <div class="spinner-container">
+                <i class="fa fa-spinner fa-spin fa-3x"></i>
+                <div class="processing-message" data-bind="text: processingMessage"></div>
+            </div>
+        </div>
+
+        <!-- Configuration preview section -->
+        <div class="config-preview" data-bind="visible: showConfigPreview">
+            <div class="config-section">
+                <h5>Target Blade Configuration</h5>
+                <div class="config-details">
+                    <div class="config-item">
+                        <strong>Blade:</strong> <span data-bind="text: model.targetBlade"></span>
+                    </div>
+                    <div class="config-item" data-bind="visible: model.inputConfiguration().length > 0">
+                        <strong>Input Configuration:</strong>
+                        <pre data-bind="text: JSON.stringify(model.inputConfiguration(), null, 2)"></pre>
+                    </div>
+                    <div class="config-item" data-bind="visible: model.configForTargetBlade().length > 0">
+                        <strong>Target Configuration:</strong>
+                        <pre data-bind="text: JSON.stringify(model.configForTargetBlade(), null, 2)"></pre>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Debug Information -->
+            <div class="debug-section" data-bind="visible: debugInfo().length > 0">
+                <h5>Debug Information</h5>
+                <div class="debug-items" data-bind="foreach: debugInfo">
+                    <div class="debug-item">
+                        <div class="debug-header">
+                            <strong data-bind="text: type"></strong>
+                            <span class="debug-timestamp" data-bind="text: ' (' + timestamp + ')'"></span>
+                        </div>
+                        <pre class="debug-data" data-bind="text: data"></pre>
+                    </div>
+                </div>
+                
+                <!-- Manual close button in debug mode -->
+                <div class="debug-controls" data-bind="visible: model.debugMode() && !processing()">
+                    <button class="btn btn-primary" data-bind="click: function() { $ui.stacks.close($data); }">
+                        <i class="fa fa-times"></i> Close Debug Blade
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error display -->
+        <div class="error-container" data-bind="visible: errorMessage">
+            <div class="alert alert-danger">
+                <i class="fa fa-exclamation-triangle"></i>
+                <span data-bind="text: errorMessage"></span>
+            </div>
+        </div>
+    </div>
+</div>

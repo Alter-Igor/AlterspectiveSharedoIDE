@@ -1,0 +1,165 @@
+<div class="unified-ods-entity-picker">
+    <!-- Label -->
+    <!-- ko if: options.label -->
+    <label class="picker-label">
+        <span data-bind="text: options.label"></span>
+        <!-- ko if: options.required -->
+        <span class="required-indicator">*</span>
+        <!-- /ko -->
+    </label>
+    <!-- /ko -->
+    
+    <!-- Single Selection Mode -->
+    <!-- ko if: !options.allowMultiple -->
+    <div class="picker-single">
+        <div class="picker-input-group">
+            <!-- Selected Entity Display -->
+            <!-- ko if: hasValue() -->
+            <div class="selected-entity">
+                <!-- ko if: options.showIcon -->
+                <i class="entity-icon" data-bind="css: getEntityIcon(selectedEntity())"></i>
+                <!-- /ko -->
+                
+                <span class="entity-name" data-bind="text: getEntityDisplayName(selectedEntity())"></span>
+                
+                <!-- ko if: options.showEmail && selectedEntity() && selectedEntity().email -->
+                <span class="entity-detail">
+                    <i class="fa fa-envelope"></i>
+                    <span data-bind="text: selectedEntity().email"></span>
+                </span>
+                <!-- /ko -->
+                
+                <!-- ko if: options.showPhone && selectedEntity() && selectedEntity().phone -->
+                <span class="entity-detail">
+                    <i class="fa fa-phone"></i>
+                    <span data-bind="text: selectedEntity().phone"></span>
+                </span>
+                <!-- /ko -->
+                
+                <!-- ko if: options.showSource && selectedEntity() && selectedEntity().source -->
+                <span data-bind="html: getSourceBadge(selectedEntity())"></span>
+                <!-- /ko -->
+            </div>
+            <!-- /ko -->
+            
+            <!-- Placeholder -->
+            <!-- ko if: !hasValue() -->
+            <div class="picker-placeholder" data-bind="text: options.placeholder"></div>
+            <!-- /ko -->
+            
+            <!-- Action Buttons -->
+            <div class="picker-actions">
+                <!-- Search Button -->
+                <button type="button" 
+                        class="btn btn-sm btn-default picker-search-btn" 
+                        data-bind="click: openSearchBlade, disable: isSearching">
+                    <!-- ko if: isSearching() -->
+                    <i class="fa fa-spinner fa-spin"></i>
+                    <!-- /ko -->
+                    <!-- ko if: !isSearching() -->
+                    <i class="fa fa-search"></i>
+                    <!-- /ko -->
+                </button>
+                
+                <!-- Clear Button -->
+                <!-- ko if: options.allowClear && hasValue() -->
+                <button type="button" 
+                        class="btn btn-sm btn-default picker-clear-btn" 
+                        data-bind="click: clearSelection"
+                        title="Clear selection">
+                    <i class="fa fa-times"></i>
+                </button>
+                <!-- /ko -->
+            </div>
+        </div>
+    </div>
+    <!-- /ko -->
+    
+    <!-- Multiple Selection Mode -->
+    <!-- ko if: options.allowMultiple -->
+    <div class="picker-multiple">
+        <!-- Search Button -->
+        <div class="picker-search-section">
+            <button type="button" 
+                    class="btn btn-sm btn-primary" 
+                    data-bind="click: openSearchBlade, disable: isSearching">
+                <!-- ko if: isSearching() -->
+                <i class="fa fa-spinner fa-spin"></i> Searching...
+                <!-- /ko -->
+                <!-- ko if: !isSearching() -->
+                <i class="fa fa-search"></i> Search and Add
+                <!-- /ko -->
+            </button>
+            
+            <!-- ko if: options.allowClear && selectedEntities().length > 0 -->
+            <button type="button" 
+                    class="btn btn-sm btn-default" 
+                    data-bind="click: clearSelection">
+                <i class="fa fa-trash"></i> Clear All
+            </button>
+            <!-- /ko -->
+        </div>
+        
+        <!-- Selected Entities List -->
+        <!-- ko if: selectedEntities().length > 0 -->
+        <div class="selected-entities-list">
+            <div class="list-header">
+                Selected (<span data-bind="text: selectedEntities().length"></span>):
+            </div>
+            
+            <!-- ko foreach: selectedEntities -->
+            <div class="selected-entity-item">
+                <!-- ko if: $parent.options.showIcon -->
+                <i class="entity-icon" data-bind="css: $parent.getEntityIcon($data)"></i>
+                <!-- /ko -->
+                
+                <div class="entity-info">
+                    <span class="entity-name" data-bind="text: $parent.getEntityDisplayName($data)"></span>
+                    
+                    <!-- ko if: $parent.options.showEmail && email -->
+                    <span class="entity-detail">
+                        <i class="fa fa-envelope"></i>
+                        <span data-bind="text: email"></span>
+                    </span>
+                    <!-- /ko -->
+                    
+                    <!-- ko if: $parent.options.showPhone && phone -->
+                    <span class="entity-detail">
+                        <i class="fa fa-phone"></i>
+                        <span data-bind="text: phone"></span>
+                    </span>
+                    <!-- /ko -->
+                    
+                    <!-- ko if: $parent.options.showSource && source -->
+                    <span data-bind="html: $parent.getSourceBadge($data)"></span>
+                    <!-- /ko -->
+                </div>
+                
+                <button type="button" 
+                        class="btn btn-xs btn-link remove-entity-btn"
+                        data-bind="click: function() { $parent.removeEntity($data); }"
+                        title="Remove">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            <!-- /ko -->
+        </div>
+        <!-- /ko -->
+        
+        <!-- ko if: selectedEntities().length === 0 -->
+        <div class="no-selection">
+            <i class="fa fa-info-circle"></i>
+            <span data-bind="text: options.placeholder"></span>
+        </div>
+        <!-- /ko -->
+    </div>
+    <!-- /ko -->
+    
+    <!-- Validation Message -->
+    <!-- ko if: options.required && !isValid() -->
+    <div class="validation-message">
+        <i class="fa fa-exclamation-triangle"></i>
+        This field is required
+    </div>
+    <!-- /ko -->
+</div>

@@ -1,0 +1,26 @@
+{
+    "id": "Alt.PhaseManagement.PauseTasksDesigner",
+    "version": "1.0.0",
+    "type": "widget",
+    "priority": 6000,
+    "metadata": {
+        "name": "Pause Tasks Designer",
+        "description": "Designer widget for configuring the Pause Tasks workflow action",
+        "category": "Phase Management",
+        "author": "Alterspective"
+    },
+    "scripts": [
+        "/_ideFiles/Alt/PhaseManagement/Foundation/Helpers/namespace.js",
+        "/_ideFiles/Alt/PhaseManagement/Workflows/PauseTasks/Designer/PauseTasksDesigner.js"
+    ],
+    "styles": [
+        "/_ideFiles/Alt/PhaseManagement/Workflows/PauseTasks/Designer/PauseTasksDesigner.css"
+    ],
+    "templates": [
+        "/_ideFiles/Alt/PhaseManagement/Workflows/PauseTasks/Designer/PauseTasksDesigner.html"
+    ],
+    "dependencies": [
+        "jquery",
+        "knockout"
+    ]
+}

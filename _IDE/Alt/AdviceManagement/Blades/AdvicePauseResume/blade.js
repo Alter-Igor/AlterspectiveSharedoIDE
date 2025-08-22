@@ -187,18 +187,8 @@ Alt.AdviceManagement.AdvicePauseResumeBlade.prototype.loadAndBind = function() {
             })
     );
     
-    // Load advice tasks
-    promises.push(
-        self.apiService.getAdviceTasks(self.workItemId)
-            .done(function(tasks) {
-                console.log("Advice tasks loaded:", tasks);
-                self.model.updateAdviceTasks(tasks);
-            })
-            .fail(function(xhr, status, error) {
-                console.log("Failed to load advice tasks (this may be normal if diary API is not available):", error);
-                self.model.updateAdviceTasks([]);
-            })
-    );
+    // Task loading has been disabled - initialize with empty task list
+    self.model.updateAdviceTasks([]);
     
     // Wait for all promises to complete
     $.when.apply($, promises).always(function() {

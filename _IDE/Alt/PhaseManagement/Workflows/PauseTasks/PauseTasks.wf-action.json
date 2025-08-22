@@ -1,0 +1,131 @@
+{
+    "systemName": "PauseTasks",
+    "category": "Phase Management",
+    "name": "Pause Tasks",
+    "icon": "fa-pause-circle",
+    "description": "Finds and pauses child tasks by moving them to a paused phase",
+    "configWidget": "Alt.PhaseManagement.PauseTasksDesigner",
+    "factoryIncludes": [],
+    "factoryScript": "/_ideFiles/Alt/PhaseManagement/Workflows/PauseTasks/PauseTasks-factory.js",
+    "templateScript": "/_ideFiles/Alt/PhaseManagement/Workflows/PauseTasks/PauseTasks-template.js",
+    "helperScripts": [],
+    "requiredTypes": [],
+    "connections": [
+        {
+            "name": "success",
+            "displayName": "Success",
+            "description": "All tasks paused successfully",
+            "color": "#28a745"
+        },
+        {
+            "name": "partial",
+            "displayName": "Partial Success",
+            "description": "Some tasks paused, some failed",
+            "color": "#ffc107"
+        },
+        {
+            "name": "noTasks",
+            "displayName": "No Tasks",
+            "description": "No tasks found to pause",
+            "color": "#6c757d"
+        },
+        {
+            "name": "error",
+            "displayName": "Error",
+            "description": "Critical error occurred",
+            "color": "#dc3545"
+        }
+    ],
+    "configuration": {
+        "workItemIdVariable": {
+            "type": "variable",
+            "displayName": "Work Item ID Variable",
+            "description": "Variable containing the parent work item ID",
+            "required": true,
+            "variableType": "read"
+        },
+        "baseWorkType": {
+            "type": "string",
+            "displayName": "Base Work Type",
+            "description": "Base work type to search for (will include derived types)",
+            "default": "AbstractAdvice",
+            "required": false
+        },
+        "targetPhaseFeature": {
+            "type": "string",
+            "displayName": "Target Phase Feature",
+            "description": "Phase feature to move tasks to",
+            "default": "Paused",
+            "required": false
+        },
+        "targetPhaseSystemName": {
+            "type": "string",
+            "displayName": "Target Phase System Name",
+            "description": "Specific phase system name (overrides feature)",
+            "required": false
+        },
+        "saveOriginalState": {
+            "type": "boolean",
+            "displayName": "Save Original State",
+            "description": "Save the original phase for later restoration",
+            "default": true,
+            "required": false
+        },
+        "excludePhases": {
+            "type": "array",
+            "displayName": "Exclude Phases",
+            "description": "Phases to exclude from pausing",
+            "default": ["Completed", "Cancelled", "Removed"],
+            "required": false
+        },
+        "suppressEvents": {
+            "type": "boolean",
+            "displayName": "Suppress Events",
+            "description": "Suppress ShareDo events during phase change",
+            "default": false,
+            "required": false
+        },
+        "suppressGuards": {
+            "type": "boolean",
+            "displayName": "Suppress Guards",
+            "description": "Suppress phase guards and checks",
+            "default": false,
+            "required": false
+        },
+        "pauseReasonVariable": {
+            "type": "variable",
+            "displayName": "Pause Reason Variable",
+            "description": "Variable containing the reason for pausing",
+            "required": false,
+            "variableType": "read"
+        },
+        "pausedByVariable": {
+            "type": "variable",
+            "displayName": "Paused By Variable",
+            "description": "Variable containing who initiated the pause",
+            "required": false,
+            "variableType": "read"
+        },
+        "successVariable": {
+            "type": "variable",
+            "displayName": "Success Variable",
+            "description": "Variable to store success status",
+            "required": false,
+            "variableType": "write"
+        },
+        "pausedCountVariable": {
+            "type": "variable",
+            "displayName": "Paused Count Variable",
+            "description": "Variable to store count of paused items",
+            "required": false,
+            "variableType": "write"
+        },
+        "errorMessageVariable": {
+            "type": "variable",
+            "displayName": "Error Message Variable",
+            "description": "Variable to store error messages",
+            "required": false,
+            "variableType": "write"
+        }
+    }
+}

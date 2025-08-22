@@ -3,9 +3,9 @@
     "priority": 6000,
     "width": 600,
     "scripts": [
-        "/_ideFiles/Alt/AdviceManagement/Foundation/Helpers/namespace.js",
-        "/_ideFiles/Alt/AdviceManagement/Foundation/Models/OngoingAdviceModel.js",
-        "/_ideFiles/Alt/AdviceManagement/Foundation/Services/AttributeService.js",
+        "/_ideFiles/Alt/AdviceManagement/Blades/AdvicePauseResume/Helpers/namespace.js",
+        "/_ideFiles/Alt/AdviceManagement/Blades/AdvicePauseResume/Models/OngoingAdviceModel.js",        
+        "/_ideFiles/Alt/AdviceManagement/Blades/AdvicePauseResume/Services/AttributeApiService.js",
         "/_ideFiles/Alt/AdviceManagement/Blades/AdvicePauseResume/blade.js"
     ],
     "styles": [],

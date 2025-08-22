@@ -19,7 +19,8 @@
       "Bash(xcopy:*)",
       "Bash(robocopy:*)",
       "Bash(copy:*)",
-      "Bash(touch:*)"
+      "Bash(touch:*)",
+      "Bash(node:*)"
     ],
     "deny": []
   }

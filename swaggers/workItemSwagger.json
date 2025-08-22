@@ -1,0 +1,111 @@
+{
+  "swagger": "2.0",
+  "host": "mccabes-vnext.sharedo.tech",
+  "basePath": "/api/v1/public/workItem/",
+  "schemes": [ "https" ],
+  "consumes": [ "application/json" ],
+  "produces": [ "application/json" ],
+  "info": {
+    "title": "Create and update Work Items",
+    "version": "0",
+    "description": ""
+  },
+  "paths": {
+    "/": {
+      "post": {
+        "tags": [ "Work Items" ],
+        "summary": "Creates a new Work Item and its associated data.",
+        "description": "Note that the API caller must have the 'Create' permission for the Work Type being created.",
+        "operationId": "createWorkItem",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/WorkItemCreate" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success\n\nReturns the details for the created Work Item.",
+            "schema": { "$ref": "#/definitions/WorkItemCreate" }
+          },
+          "400": {
+            "description": "Bad Request.\n\nThe Work Item could not be created due to an invalid configuration specified in the request.\nFor example, the request specified a Work Type system name that does not exist.\n\nCheck the logs for more details."
+          },
+          "403": {
+            "description": "Forbidden.\n\nThe caller does not have the correct permission (see the response body for more information)."
+          },
+          "500": {
+            "description": "Error.\n\nSomething went wrong when trying to create the Work Item.\n\nCheck the logs for more details."
+          }
+        }
+      }
+    },
+    "/{workItemId}": {
+      "put": {
+        "tags": [ "Work Items" ],
+        "summary": "Updates a Work Item and its associated data.",
+        "description": "Note: If the caller is authenticated as a user, that user must have a role with the `core.sharedo.update` permission on the Work Item to be updated.\n\nIf the caller does not have a user context, the client must have the `core.sharedo.updateAny` system permission.",
+        "operationId": "updateWorkItem",
+        "parameters": [
+          {
+            "name": "workItemId",
+            "in": "path",
+            "description": "The ID of the Work Item to update.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/WorkItemSummary" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success\n\nReturns the details for the created Work Item.",
+            "schema": { "$ref": "#/definitions/WorkItemSummary" }
+          },
+          "400": {
+            "description": "Bad Request.\n\nThe Work Item could not be created due to an invalid configuration specified in the request.\nFor example, the request specified a Work Type system name that does not exist.\n\nCheck the logs for more details."
+          },
+          "403": {
+            "description": "Forbidden.\n\nThe caller does not have the correct permission (see the response body for more information)."
+          },
+          "500": {
+            "description": "Error.\n\nSomething went wrong when trying to create the Work Item.\n\nCheck the logs for more details."
+          }
+        }
+      },
+      "get": {
+        "tags": [ "Work Items" ],
+        "summary": "Gets a Work Item and its associated data.",
+        "operationId": "getWorkItem",
+        "parameters": [
+          {
+            "name": "workItemId",
+            "in": "path",
+            "description": "The ID of the Work Item to get.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success\n\nReturns a summary of the Work Item.",
+            "schema": { "$ref": "#/definitions/WorkItemSummary" }
+          },
+          "404": {
+            "description": "Not Found.\n\nA Work Item with this ID could not be found."
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "WorkItemCreate": { "$ref": "//mccabes-vnext.sharedo.tech/api/v1/public/workItem/createModels.swagger.json#/definitions/WorkItemCreateRequestResponse" },
+    "WorkItemSummary": { "$ref": "//mccabes-vnext.sharedo.tech/api/v1/public/workItem/updateModels.swagger.json#/definitions/WorkItemSummaryRequestResponse" }
+  }
+}

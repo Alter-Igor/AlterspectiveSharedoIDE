@@ -1,0 +1,28 @@
+{
+    "id":  "WorkflowActions.CustomProgressMilestoneDesigner",
+    "priority": 6000, 
+    "designer":
+    {
+        "allowInPortalDesigner": false,
+        "allowInSharedoPortalDesigner": false
+    },
+    "scripts":
+    [
+        "/_ideFiles/WorkflowActions/CustomProgressMilestone/Designer/CustomProgressMilestoneDesigner.js"
+    ],
+    "styles":
+    [
+        "/_ideFiles/WorkflowActions/CustomProgressMilestone/Designer/CustomProgressMilestoneDesigner.css"
+    ],
+    "templates":
+    [
+        "/_ideFiles/WorkflowActions/CustomProgressMilestone/Designer/CustomProgressMilestoneDesigner.html"
+    ],
+    "menuTemplates":
+    [
+    ],
+    "components":
+    [
+        "Sharedo.Core.Case.Components.SharedoTypePicker"
+    ]
+}

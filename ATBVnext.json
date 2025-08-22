@@ -1,0 +1,7 @@
+{
+  "url": "https://xxx.sharedo.co.uk/",
+  "clientId": "VSCodeAppClientCreds",
+  "clientSecret": "",
+  "impersonateUser": "",
+  "impersonateProvider": "idsrv/aad"
+}

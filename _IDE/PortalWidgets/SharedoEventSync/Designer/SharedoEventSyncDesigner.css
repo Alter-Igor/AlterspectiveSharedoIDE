@@ -1,0 +1,89 @@
+div.widgets-refresh-watcher-designer
+{
+    padding:20px;
+}
+
+.widgets-refresh-watcher-designer .formbuilder-editor-json {
+    margin-bottom: 20px;
+    height: calc(100% - 20px)
+}
+
+.widgets-refresh-watcher-designer .formbuilder-editor-json .form-control {
+    height: 100%;
+    min-height: 100%;
+}
+
+
+.widgets-refresh-watcher-designer .participants {
+    height: 300px;
+}
+
+.widgets-refresh-watcher-designer .key-dates {
+    height: 300px;
+}
+
+.widgets-refresh-watcher-designer .aspectData {
+    height: 300px;
+}
+
+.widgets-refresh-watcher-designer .work-item {
+    height: 300px;
+}
+
+.widgets-refresh-watcher-designer .form-def {
+    height: 800px;
+}
+
+.widgets-refresh-watcher-designer .modal-content,
+.widgets-refresh-watcher-designer .modal-dialog {
+    width: 100%;
+}
+
+.widgets-refresh-watcher-designer .modal-body {
+    padding: 10px;
+    ;
+}
+
+.widgets-refresh-watcher-designer .formio-builder-iframe {
+    opacity: 0.0;
+}
+
+.widgets-refresh-watcher-designer .formio-builder-iframe.loaded {
+    opacity: 1.0;
+    /* add fade in */
+    -webkit-transition: opacity 1s ease-in-out;
+    -moz-transition: opacity 1s ease-in-out;
+    -o-transition: opacity 1s ease-in-out;
+    transition: opacity 1s ease-in-out;
+}
+
+.widgets-refresh-watcher-designer.modal {
+    position: absolute;
+    z-index: 1000;
+    width: 100%;
+    top: 0px;
+}
+
+
+
+.widgets-refresh-watcher-designer .container {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    display: flex;
+}
+
+.widgets-refresh-watcher-designer .container div {
+    flex-grow: 1;
+    width: 100%;
+}
+.widgets-refresh-watcher-designer .formio-preview-area {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+}
+.widgets-refresh-watcher-designer .formio-preview-area.hidden{
+    display: none;
+}

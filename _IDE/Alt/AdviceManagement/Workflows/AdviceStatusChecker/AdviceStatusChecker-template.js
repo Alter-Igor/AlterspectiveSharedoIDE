@@ -1,6 +1,8 @@
 // Advice Status Checker - ShareDo Workflow Template
 // Checks work item advice status and branches based on result
-  log.Information("Starting Advice Status Checker");
+  log.Information("====================================");
+  log.Information("Starting Advice Status Checker v1.0");
+  log.Information("====================================");
 let connections = $model.Connections;
 
 // Get work item ID from the configured variable
@@ -186,6 +188,8 @@ if (!workItemId) {
         log.Error(`Error checking advice status for work item ${workItemId}: ${ex.message}`);
         // $endif
     }
-    log.Information("Advice Status Checker completed successfully... v1.0");
+    log.Information("====================================");
+    log.Information("Advice Status Checker completed successfully");
+    log.Information("====================================");
 }
 // $endif

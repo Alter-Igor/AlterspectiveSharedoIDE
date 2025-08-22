@@ -1,0 +1,269 @@
+{
+    "name": "Test Configuration - ODS Type Conditional Routing",
+    "description": "Test configuration for routing to different blades based on ODS entity type",
+    "testScenarios": [
+        {
+            "scenario": "Edit Client - People Type",
+            "expectedBlade": "Sharedo.Core.Case.Panels.Ods.AddEditPerson",
+            "configuration": {
+                "inputConfiguration": [
+                    {
+                        "roleSystemName": "client"
+                    }
+                ],
+                "conditionalRules": [
+                    {
+                        "condition": {
+                            "path": "workItem.roles.client.ods.type.name",
+                            "operator": "equals",
+                            "value": "people"
+                        },
+                        "targetBlade": "Sharedo.Core.Case.Panels.Ods.AddEditPerson",
+                        "configForTargetBlade": [
+                            {
+                                "id": "[workItem.roles.client.ods.id]",
+                                "sharedoId": "$[$ui.pageContext.sharedoId()]",
+                                "mode": "edit",
+                                "roleType": "client"
+                            }
+                        ]
+                    },
+                    {
+                        "condition": {
+                            "path": "workItem.roles.client.ods.type.name",
+                            "operator": "equals",
+                            "value": "organisation"
+                        },
+                        "targetBlade": "Sharedo.Core.Case.Panels.Ods.AddEditOrganisation",
+                        "configForTargetBlade": [
+                            {
+                                "id": "[workItem.roles.client.ods.id]",
+                                "sharedoId": "$[$ui.pageContext.sharedoId()]",
+                                "mode": "edit",
+                                "roleType": "client"
+                            }
+                        ]
+                    }
+                ],
+                "defaultTargetBlade": "Sharedo.Core.Case.Panels.Ods.ViewEntity",
+                "tokenSources": ["workItem"],
+                "debugMode": true,
+                "autoRedirect": false,
+                "redirectDelay": 1000
+            }
+        },
+        {
+            "scenario": "Edit Client - Organisation Type",
+            "expectedBlade": "Sharedo.Core.Case.Panels.Ods.AddEditOrganisation",
+            "configuration": {
+                "inputConfiguration": [
+                    {
+                        "roleSystemName": "client"
+                    }
+                ],
+                "conditionalRules": [
+                    {
+                        "condition": {
+                            "path": "workItem.roles.client.ods.type.name",
+                            "operator": "equals",
+                            "value": "people"
+                        },
+                        "targetBlade": "Sharedo.Core.Case.Panels.Ods.AddEditPerson"
+                    },
+                    {
+                        "condition": {
+                            "path": "workItem.roles.client.ods.type.name",
+                            "operator": "equals",
+                            "value": "organisation"
+                        },
+                        "targetBlade": "Sharedo.Core.Case.Panels.Ods.AddEditOrganisation"
+                    }
+                ],
+                "configForTargetBlade": [
+                    {
+                        "id": "[workItem.roles.client.ods.id]",
+                        "sharedoId": "$[$ui.pageContext.sharedoId()]",
+                        "mode": "edit"
+                    }
+                ],
+                "defaultTargetBlade": "Sharedo.Core.Case.Panels.Ods.ViewEntity",
+                "tokenSources": ["workItem"],
+                "debugMode": true,
+                "autoRedirect": false
+            }
+        },
+        {
+            "scenario": "Dynamic Role Routing",
+            "description": "Route to different blades based on any role's ODS type",
+            "configuration": {
+                "inputConfiguration": [
+                    {
+                        "roleSystemName": "opponentsolicitor"
+                    }
+                ],
+                "conditionalRules": [
+                    {
+                        "condition": {
+                            "path": "workItem.roles.{roleSystemName}.ods.type.name",
+                            "operator": "equals",
+                            "value": "people"
+                        },
+                        "targetBlade": "Sharedo.Core.Case.Panels.Ods.AddEditPerson",
+                        "configForTargetBlade": [
+                            {
+                                "id": "[workItem.roles.{roleSystemName}.ods.id]",
+                                "displayName": "[workItem.roles.{roleSystemName}.displayName]",
+                                "roleType": "{roleSystemName}"
+                            }
+                        ]
+                    },
+                    {
+                        "condition": {
+                            "path": "workItem.roles.{roleSystemName}.ods.type.name",
+                            "operator": "equals",
+                            "value": "organisation"
+                        },
+                        "targetBlade": "Sharedo.Core.Case.Panels.Ods.AddEditOrganisation",
+                        "configForTargetBlade": [
+                            {
+                                "id": "[workItem.roles.{roleSystemName}.ods.id]",
+                                "displayName": "[workItem.roles.{roleSystemName}.displayName]",
+                                "roleType": "{roleSystemName}"
+                            }
+                        ]
+                    }
+                ],
+                "defaultTargetBlade": "Sharedo.Core.Case.Panels.Ods.ViewEntity",
+                "tokenSources": ["workItem"],
+                "debugMode": true
+            }
+        },
+        {
+            "scenario": "Fallback to Default When No Match",
+            "expectedBlade": "Sharedo.Core.Case.Panels.Ods.ViewEntity",
+            "configuration": {
+                "conditionalRules": [
+                    {
+                        "condition": {
+                            "path": "workItem.roles.client.ods.type.name",
+                            "operator": "equals",
+                            "value": "people"
+                        },
+                        "targetBlade": "Sharedo.Core.Case.Panels.Ods.AddEditPerson"
+                    },
+                    {
+                        "condition": {
+                            "path": "workItem.roles.client.ods.type.name",
+                            "operator": "equals",
+                            "value": "organisation"
+                        },
+                        "targetBlade": "Sharedo.Core.Case.Panels.Ods.AddEditOrganisation"
+                    }
+                ],
+                "defaultTargetBlade": "Sharedo.Core.Case.Panels.Ods.ViewEntity",
+                "configForTargetBlade": [
+                    {
+                        "sharedoId": "$[$ui.pageContext.sharedoId()]",
+                        "viewMode": "readonly",
+                        "message": "Entity type not recognized, showing generic view"
+                    }
+                ],
+                "tokenSources": ["workItem"],
+                "debugMode": true
+            }
+        },
+        {
+            "scenario": "Multiple Conditions with Priority",
+            "description": "First matching rule wins",
+            "configuration": {
+                "conditionalRules": [
+                    {
+                        "condition": {
+                            "path": "workItem.roles.client.ods.isPrimary",
+                            "operator": "equals",
+                            "value": true
+                        },
+                        "targetBlade": "Sharedo.Core.Case.Panels.Ods.PrimaryContactView"
+                    },
+                    {
+                        "condition": {
+                            "path": "workItem.roles.client.ods.type.name",
+                            "operator": "equals",
+                            "value": "people"
+                        },
+                        "targetBlade": "Sharedo.Core.Case.Panels.Ods.AddEditPerson"
+                    },
+                    {
+                        "condition": {
+                            "path": "workItem.roles.client.ods.type.name",
+                            "operator": "equals",
+                            "value": "organisation"
+                        },
+                        "targetBlade": "Sharedo.Core.Case.Panels.Ods.AddEditOrganisation"
+                    }
+                ],
+                "defaultTargetBlade": "Sharedo.Core.Case.Panels.Ods.ViewEntity",
+                "tokenSources": ["workItem"],
+                "debugMode": true
+            }
+        }
+    ],
+    "testData": {
+        "peopleTypeExample": {
+            "workItem": {
+                "id": "12345",
+                "roles": {
+                    "client": {
+                        "ods": {
+                            "id": "ods-person-001",
+                            "type": {
+                                "name": "people"
+                            }
+                        },
+                        "displayName": "John Smith"
+                    }
+                }
+            }
+        },
+        "organisationTypeExample": {
+            "workItem": {
+                "id": "12345",
+                "roles": {
+                    "client": {
+                        "ods": {
+                            "id": "ods-org-001",
+                            "type": {
+                                "name": "organisation"
+                            }
+                        },
+                        "displayName": "Acme Corporation"
+                    }
+                }
+            }
+        },
+        "unknownTypeExample": {
+            "workItem": {
+                "id": "12345",
+                "roles": {
+                    "client": {
+                        "ods": {
+                            "id": "ods-unknown-001",
+                            "type": {
+                                "name": "trust"
+                            }
+                        },
+                        "displayName": "Smith Family Trust"
+                    }
+                }
+            }
+        }
+    },
+    "verificationSteps": [
+        "1. Enable debugMode: true to see detailed rule evaluation",
+        "2. Check console output for 'Evaluating condition' messages",
+        "3. Verify 'Rule Matched' or 'Default Blade' messages",
+        "4. Confirm correct targetBlade is determined",
+        "5. Check that configuration tokens are properly replaced",
+        "6. Verify the correct blade opens with expected configuration"
+    ]
+}

@@ -1,0 +1,36 @@
+{
+
+   
+
+    "id": "Alt.Utilities.BladeBouncerConfigurator",
+    "priority": 5000,
+    "designer": {
+        
+        "allowInPortalDesigner": true,
+        "allowInSharedoPortalDesigner": true,
+        "title": "BladeBouncer Configurator",
+        "icon": "fa-cogs",
+        "description": "Visual configuration builder for BladeBouncer blade routing",
+        "categories": [
+            "Utilities",
+            "Configuration Tools",
+            "Developer Tools"
+        ],
+        "isConfigurable": true,
+        "defaultConfiguration": {
+            "showTemplates": true,
+            "allowExport": true,
+            "enableBladeSearch": true
+        }
+    },
+    "scripts": [
+        "/_ideFiles/Alt/Utilities/BladeBouncerConfigurator/BladeBouncerConfigurator.js"
+    ],
+    "styles": [
+        "/_ideFiles/Alt/Utilities/BladeBouncerConfigurator/BladeBouncerConfigurator.css"
+    ],
+    "templates": [
+        "/_ideFiles/Alt/Utilities/BladeBouncerConfigurator/BladeBouncerConfigurator.html"
+    ],
+    "components": []
+}

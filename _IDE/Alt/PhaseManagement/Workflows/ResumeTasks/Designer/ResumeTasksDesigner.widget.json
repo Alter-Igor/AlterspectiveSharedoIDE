@@ -1,0 +1,26 @@
+{
+    "id": "Alt.PhaseManagement.ResumeTasksDesigner",
+    "version": "1.0.0",
+    "type": "widget",
+    "priority": 6000,
+    "metadata": {
+        "name": "Resume Tasks Designer",
+        "description": "Designer widget for configuring the Resume Tasks workflow action",
+        "category": "Phase Management",
+        "author": "Alterspective"
+    },
+    "scripts": [
+        "/_ideFiles/Alt/PhaseManagement/Foundation/Helpers/namespace.js",
+        "/_ideFiles/Alt/PhaseManagement/Workflows/ResumeTasks/Designer/ResumeTasksDesigner.js"
+    ],
+    "styles": [
+        "/_ideFiles/Alt/PhaseManagement/Workflows/ResumeTasks/Designer/ResumeTasksDesigner.css"
+    ],
+    "templates": [
+        "/_ideFiles/Alt/PhaseManagement/Workflows/ResumeTasks/Designer/ResumeTasksDesigner.html"
+    ],
+    "dependencies": [
+        "jquery",
+        "knockout"
+    ]
+}

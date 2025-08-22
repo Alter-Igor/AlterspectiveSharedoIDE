@@ -1,0 +1,320 @@
+.unified-ods-entity-picker {
+    position: relative;
+}
+
+/* Label */
+.unified-ods-entity-picker .picker-label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #333;
+    font-size: 13px;
+}
+
+.unified-ods-entity-picker .required-indicator {
+    color: #e74c3c;
+    margin-left: 3px;
+}
+
+/* Single Selection Mode */
+.unified-ods-entity-picker .picker-single {
+    position: relative;
+}
+
+.unified-ods-entity-picker .picker-input-group {
+    display: flex;
+    align-items: center;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: white;
+    min-height: 36px;
+    padding: 4px 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.unified-ods-entity-picker .picker-input-group:hover {
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+}
+
+.unified-ods-entity-picker .picker-placeholder {
+    flex: 1;
+    color: #999;
+    font-size: 14px;
+}
+
+.unified-ods-entity-picker .selected-entity {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+}
+
+.unified-ods-entity-picker .entity-icon {
+    color: #667eea;
+    font-size: 16px;
+}
+
+.unified-ods-entity-picker .entity-name {
+    font-weight: 500;
+    color: #333;
+}
+
+.unified-ods-entity-picker .entity-detail {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: #666;
+    font-size: 12px;
+    margin-left: 8px;
+}
+
+.unified-ods-entity-picker .entity-detail i {
+    font-size: 11px;
+    color: #999;
+}
+
+/* Source Badges */
+.unified-ods-entity-picker .source-badge {
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    margin-left: 8px;
+}
+
+.unified-ods-entity-picker .source-badge i {
+    font-size: 10px;
+}
+
+.unified-ods-entity-picker .source-badge.source-sharedo {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.unified-ods-entity-picker .source-badge.source-pms {
+    background: #e0e7ff;
+    color: #3730a3;
+}
+
+.unified-ods-entity-picker .source-badge.source-matched {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+/* Action Buttons */
+.unified-ods-entity-picker .picker-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.unified-ods-entity-picker .picker-search-btn,
+.unified-ods-entity-picker .picker-clear-btn {
+    padding: 4px 8px;
+    border: none;
+    background: transparent;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.unified-ods-entity-picker .picker-search-btn:hover,
+.unified-ods-entity-picker .picker-clear-btn:hover {
+    color: #667eea;
+    background: #f3f4f6;
+    border-radius: 3px;
+}
+
+.unified-ods-entity-picker .picker-search-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Multiple Selection Mode */
+.unified-ods-entity-picker .picker-multiple {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 12px;
+    background: #f9fafb;
+}
+
+.unified-ods-entity-picker .picker-search-section {
+    margin-bottom: 12px;
+    display: flex;
+    gap: 8px;
+}
+
+.unified-ods-entity-picker .selected-entities-list {
+    background: white;
+    border-radius: 4px;
+    padding: 8px;
+}
+
+.unified-ods-entity-picker .list-header {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 13px;
+}
+
+.unified-ods-entity-picker .selected-entity-item {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    margin-bottom: 4px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.unified-ods-entity-picker .selected-entity-item:hover {
+    background: white;
+    border-color: #d1d5db;
+}
+
+.unified-ods-entity-picker .selected-entity-item .entity-icon {
+    margin-right: 8px;
+}
+
+.unified-ods-entity-picker .selected-entity-item .entity-info {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.unified-ods-entity-picker .remove-entity-btn {
+    padding: 2px 6px;
+    color: #ef4444;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+}
+
+.unified-ods-entity-picker .remove-entity-btn:hover {
+    opacity: 1;
+}
+
+.unified-ods-entity-picker .no-selection {
+    text-align: center;
+    padding: 20px;
+    color: #9ca3af;
+    font-size: 14px;
+}
+
+.unified-ods-entity-picker .no-selection i {
+    margin-right: 6px;
+}
+
+/* Validation */
+.unified-ods-entity-picker .validation-message {
+    margin-top: 4px;
+    color: #ef4444;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.unified-ods-entity-picker .validation-message i {
+    font-size: 11px;
+}
+
+/* Button Styles */
+.unified-ods-entity-picker .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    line-height: 1.5;
+}
+
+.unified-ods-entity-picker .btn-primary {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+.unified-ods-entity-picker .btn-primary:hover {
+    background: #5a67d8;
+    border-color: #5a67d8;
+}
+
+.unified-ods-entity-picker .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.unified-ods-entity-picker .btn-default {
+    background: white;
+    color: #4b5563;
+    border-color: #d1d5db;
+}
+
+.unified-ods-entity-picker .btn-default:hover {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+}
+
+.unified-ods-entity-picker .btn-sm {
+    padding: 4px 10px;
+    font-size: 12px;
+}
+
+.unified-ods-entity-picker .btn-xs {
+    padding: 2px 6px;
+    font-size: 11px;
+}
+
+.unified-ods-entity-picker .btn-link {
+    background: transparent;
+    border: none;
+    color: #667eea;
+    padding: 0;
+}
+
+.unified-ods-entity-picker .btn-link:hover {
+    color: #5a67d8;
+}
+
+/* Loading State */
+.unified-ods-entity-picker .fa-spinner.fa-spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .unified-ods-entity-picker .entity-detail {
+        display: none;
+    }
+    
+    .unified-ods-entity-picker .source-badge {
+        font-size: 9px;
+        padding: 1px 4px;
+    }
+}

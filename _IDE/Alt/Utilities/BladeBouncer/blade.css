@@ -1,0 +1,259 @@
+.blade-bouncer-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: #f8f9fa;
+}
+
+.blade-bouncer-container .blade-header {
+    padding: 20px;
+    background: #fff;
+    border-bottom: 1px solid #dee2e6;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.blade-bouncer-container .blade-header .flex-row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.blade-bouncer-container .blade-header .header-icon {
+    font-size: 24px;
+    color: #007bff;
+}
+
+.blade-bouncer-container .blade-header .modal-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 500;
+    color: #212529;
+}
+
+.blade-bouncer-container .blade-header .small {
+    font-size: 14px;
+    color: #6c757d;
+    margin-top: 4px;
+}
+
+.blade-bouncer-body {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.processing-indicator {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+}
+
+.spinner-container {
+    text-align: center;
+}
+
+.spinner-container .fa-spinner {
+    color: #007bff;
+    margin-bottom: 15px;
+}
+
+.processing-message {
+    font-size: 16px;
+    color: #495057;
+    margin-top: 10px;
+}
+
+.config-preview {
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.config-preview h5 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #212529;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.config-details {
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+}
+
+.config-item {
+    margin-bottom: 15px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 3px;
+}
+
+.config-item strong {
+    display: block;
+    margin-bottom: 8px;
+    color: #495057;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.config-item pre {
+    margin: 0;
+    padding: 10px;
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 3px;
+    overflow-x: auto;
+    color: #212529;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.error-container {
+    margin-top: 20px;
+}
+
+.error-container .alert {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px;
+    border-radius: 4px;
+}
+
+.error-container .alert-danger {
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+}
+
+.error-container .fa-exclamation-triangle {
+    font-size: 18px;
+}
+
+/* Animation for the spinner */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.fa-spin {
+    animation: spin 1s linear infinite;
+}
+
+/* Debug section styles */
+.debug-section {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 2px solid #dee2e6;
+}
+
+.debug-section h5 {
+    margin-bottom: 15px;
+    color: #212529;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.debug-items {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.debug-item {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    padding: 15px;
+}
+
+.debug-header {
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.debug-header strong {
+    color: #007bff;
+    font-size: 14px;
+}
+
+.debug-timestamp {
+    font-size: 12px;
+    color: #6c757d;
+    font-style: italic;
+}
+
+.debug-data {
+    margin: 0;
+    padding: 10px;
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    color: #212529;
+}
+
+/* Debug controls */
+.debug-controls {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #dee2e6;
+    text-align: center;
+}
+
+.debug-controls .btn {
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.debug-controls .btn-primary {
+    background-color: #007bff;
+    color: white;
+}
+
+.debug-controls .btn-primary:hover {
+    background-color: #0056b3;
+}
+
+.debug-controls .btn i {
+    margin-right: 5px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .blade-bouncer-container .blade-header {
+        padding: 15px;
+    }
+    
+    .blade-bouncer-body {
+        padding: 15px;
+    }
+    
+    .config-preview {
+        padding: 15px;
+    }
+    
+    .debug-section {
+        margin-top: 15px;
+        padding-top: 15px;
+    }
+}

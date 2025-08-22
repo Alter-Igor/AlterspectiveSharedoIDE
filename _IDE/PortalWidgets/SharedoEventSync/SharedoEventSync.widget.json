@@ -1,0 +1,28 @@
+{
+    "id": "PortalWidgets.SharedoEventSync",
+    "designer": {
+        "allowInPortalDesigner": false,
+        "allowInSharedoPortalDesigner": true,
+        "title": "Sharedo-Event-Sync",
+        "icon": "fa-calendar",
+        "description": "Refreshes specified components on events or at specified intervals.",
+      "categories": [
+        "Custom",
+        "Refresh"
+      ],
+        "isConfigurable": true,
+        "configurationWidget": "PortalWidgets.SharedoEventSyncDesigner"
+    },
+    "scripts": [
+        "/_ideFiles/PortalWidgets/SharedoEventSync/SharedoEventSync.js"
+    ],
+    "styles": [
+        "/_ideFiles/PortalWidgets/SharedoEventSync/SharedoEventSync.css"
+    ],
+    "templates": [
+        "/_ideFiles/PortalWidgets/SharedoEventSync/SharedoEventSync.html"
+    ],
+    "menuTemplates": [
+       
+    ]
+}

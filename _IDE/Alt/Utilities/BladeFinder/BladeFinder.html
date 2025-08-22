@@ -1,0 +1,143 @@
+<div class="blade-finder">
+    <div class="finder-header">
+        <h2>ShareDo Blade Finder</h2>
+        <div class="search-controls">
+            <input type="text" class="search-input" placeholder="Search blades by name, category, or description..." 
+                   data-bind="textInput: searchQuery, valueUpdate: 'keyup'" />
+            <button class="btn-clear" data-bind="click: clearSearch, visible: searchQuery">
+                <i class="fa fa-times"></i>
+            </button>
+        </div>
+        <div class="filter-controls">
+            <select class="category-filter" data-bind="options: availableCategories, 
+                                                      value: selectedCategory,
+                                                      optionsCaption: 'All Categories'">
+            </select>
+            <span class="result-count" data-bind="text: resultCount"></span>
+        </div>
+    </div>
+
+    <div class="finder-content">
+        <!-- Search Results -->
+        <div class="results-panel">
+            <div class="results-list" data-bind="foreach: filteredPanels">
+                <div class="blade-item" data-bind="click: $parent.selectBlade, css: { selected: $parent.selectedBlade() === $data }">
+                    <div class="blade-header">
+                        <span class="blade-id" data-bind="text: id"></span>
+                        <span class="blade-category" data-bind="text: category"></span>
+                    </div>
+                    <div class="blade-title" data-bind="text: title"></div>
+                    <div class="blade-description" data-bind="text: description"></div>
+                </div>
+            </div>
+            
+            <!-- Loading State -->
+            <div class="loading-state" data-bind="visible: isLoading">
+                <i class="fa fa-spinner fa-spin"></i> Loading blade catalog...
+            </div>
+            
+            <!-- No Results -->
+            <div class="no-results" data-bind="visible: !isLoading() && filteredPanels().length === 0 && searchQuery()">
+                <i class="fa fa-search"></i>
+                <p>No blades found matching "<span data-bind="text: searchQuery"></span>"</p>
+            </div>
+        </div>
+
+        <!-- Detail Panel -->
+        <div class="detail-panel" data-bind="visible: selectedBlade">
+            <div data-bind="with: selectedBlade">
+                <div class="detail-header">
+                    <h3 data-bind="text: title"></h3>
+                    <button class="btn-use" data-bind="click: $parent.useSelectedBlade">
+                        <i class="fa fa-check"></i> Use This Blade
+                    </button>
+                </div>
+                
+                <div class="detail-content">
+                    <!-- Basic Info -->
+                    <div class="detail-section">
+                        <label>Blade ID</label>
+                        <div class="detail-value blade-id-full" data-bind="text: id"></div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <label>Description</label>
+                        <div class="detail-value" data-bind="text: description"></div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <label>Category</label>
+                        <div class="detail-value">
+                            <span class="category-badge" data-bind="text: category"></span>
+                            <span class="subcategory-badge" data-bind="text: subcategory, visible: subcategory"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Configuration Details -->
+                    <div class="detail-section" data-bind="visible: configuration">
+                        <label>Configuration</label>
+                        <div class="config-details" data-bind="with: configuration">
+                            <div class="config-item" data-bind="visible: width">
+                                <i class="fa fa-arrows-h"></i> Width: <span data-bind="text: width"></span>px
+                            </div>
+                            <div class="config-item" data-bind="visible: components && components.length > 0">
+                                <i class="fa fa-puzzle-piece"></i> Components:
+                                <ul class="component-list" data-bind="foreach: components">
+                                    <li data-bind="text: $data"></li>
+                                </ul>
+                            </div>
+                            <div class="config-item">
+                                <i class="fa fa-code"></i> 
+                                <span data-bind="visible: hasScripts">Has Scripts</span>
+                                <span data-bind="visible: hasTemplates">Has Templates</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- File Path -->
+                    <div class="detail-section" data-bind="visible: path">
+                        <label>File Path</label>
+                        <div class="detail-value path-value">
+                            <code data-bind="text: path"></code>
+                            <button class="btn-copy-path" data-bind="click: $parent.copyPath">
+                                <i class="fa fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Usage Example -->
+                    <div class="detail-section">
+                        <label>Usage Example</label>
+                        <div class="code-example">
+                            <pre><code>// JavaScript
+$ui.stacks.openPanel('<span data-bind="text: id"></span>', {
+    // Your configuration here
+});
+
+// BladeBouncer Configuration
+{
+    "targetBlade": "<span data-bind="text: id"></span>",
+    "configForTargetBlade": [
+        // Add configuration properties
+    ]
+}</code></pre>
+                            <button class="btn-copy-example" data-bind="click: $parent.copyExample">
+                                <i class="fa fa-copy"></i> Copy Example
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Actions -->
+    <div class="finder-footer">
+        <button class="btn btn-secondary" data-bind="click: close">
+            <i class="fa fa-times"></i> Cancel
+        </button>
+        <button class="btn btn-primary" data-bind="click: useSelectedBlade, enable: selectedBlade">
+            <i class="fa fa-check"></i> Select Blade
+        </button>
+    </div>
+</div>

@@ -1,0 +1,153 @@
+{
+    "id": "Alt.PhaseManagement.ResumeTasks",
+    "version": "1.0.0",
+    "type": "workflowAction",
+    "priority": 7000,
+    "metadata": {
+        "name": "Resume Tasks",
+        "description": "Finds paused tasks and restores them to their original or specified phase",
+        "category": "Phase Management",
+        "icon": "fa-play-circle",
+        "author": "Alterspective",
+        "documentation": "Resumes paused child tasks by restoring their original phase or moving to a specified phase with optional due date updates"
+    },
+    "designer": {
+        "allowInWorkflowDesigner": true,
+        "allowInVisualWorkflow": true,
+        "configurable": true,
+        "configurationComponent": "Alt.PhaseManagement.ResumeTasksDesigner",
+        "inputs": [
+            {
+                "name": "workItemId",
+                "type": "/Identifier/Work Item Identifier",
+                "required": true,
+                "description": "ID of the parent work item whose child tasks will be resumed"
+            },
+            {
+                "name": "baseWorkType",
+                "type": "/String",
+                "required": false,
+                "description": "Base work type to search for (default: AbstractAdvice)"
+            },
+            {
+                "name": "sourcePhaseFeature",
+                "type": "/String",
+                "required": false,
+                "description": "Phase feature to find paused tasks (default: Paused)"
+            },
+            {
+                "name": "sourcePhaseSystemName",
+                "type": "/String",
+                "required": false,
+                "description": "Specific paused phase name (overrides feature)"
+            },
+            {
+                "name": "newDueDate",
+                "type": "/Date",
+                "required": false,
+                "description": "New due date for resumed tasks"
+            },
+            {
+                "name": "resumeReason",
+                "type": "/String",
+                "required": false,
+                "description": "Reason for resuming tasks"
+            }
+        ],
+        "outputs": [
+            {
+                "name": "success",
+                "type": "/Boolean",
+                "description": "Boolean: true if all operations succeeded"
+            },
+            {
+                "name": "resumedCount",
+                "type": "/Number",
+                "description": "Number of tasks successfully resumed"
+            },
+            {
+                "name": "errorMessage",
+                "type": "/String",
+                "description": "Error messages if any operations failed"
+            }
+        ],
+        "connections": [
+            {
+                "name": "success",
+                "displayName": "Success",
+                "description": "All tasks resumed successfully"
+            },
+            {
+                "name": "partial",
+                "displayName": "Partial Success",
+                "description": "Some tasks resumed, some failed"
+            },
+            {
+                "name": "noTasks",
+                "displayName": "No Tasks",
+                "description": "No paused tasks found"
+            },
+            {
+                "name": "error",
+                "displayName": "Error",
+                "description": "Critical error occurred"
+            }
+        ]
+    },
+    "configuration": {
+        "workItemIdVariable": {
+            "type": "variable",
+            "displayName": "Work Item ID Variable",
+            "description": "Variable containing the parent work item ID",
+            "required": true
+        },
+        "baseWorkType": {
+            "type": "string",
+            "displayName": "Base Work Type",
+            "description": "Base work type to search for",
+            "default": "AbstractAdvice"
+        },
+        "sourcePhaseFeature": {
+            "type": "string",
+            "displayName": "Source Phase Feature",
+            "description": "Phase feature to find paused tasks",
+            "default": "Paused"
+        },
+        "sourcePhaseSystemName": {
+            "type": "string",
+            "displayName": "Source Phase System Name",
+            "description": "Specific paused phase name"
+        },
+        "restoreFromSaved": {
+            "type": "boolean",
+            "displayName": "Restore From Saved",
+            "description": "Restore to saved original phase",
+            "default": true
+        },
+        "defaultPhase": {
+            "type": "string",
+            "displayName": "Default Phase",
+            "description": "Default phase if no saved state",
+            "default": "InProgress"
+        },
+        "clearPauseMetadata": {
+            "type": "boolean",
+            "displayName": "Clear Pause Metadata",
+            "description": "Clear pause-related attributes",
+            "default": true
+        },
+        "adjustDueDateBy": {
+            "type": "number",
+            "displayName": "Adjust Due Date By",
+            "description": "Days to adjust due date"
+        }
+    },
+    "scripts": [
+        "/_ideFiles/Alt/PhaseManagement/Workflows/ResumeTasks/ResumeTasks-factory.js",
+        "/_ideFiles/Alt/PhaseManagement/Workflows/ResumeTasks/ResumeTasks-template.js"
+    ],
+    "dependencies": [
+        "jquery",
+        "knockout"
+    ]
+}

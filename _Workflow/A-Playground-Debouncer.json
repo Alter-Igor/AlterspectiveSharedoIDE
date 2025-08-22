@@ -1,0 +1,173 @@
+{
+  "systemName": "A-Playground--Debouncer",
+  "previousVersion": null,
+  "name": "A - Playground - Debouncer",
+  "description": "This process is responsible for implementing a debouncer for starting workflows that do the same things.",
+  "overrideNotifications": false,
+  "exceptionNotifications": true,
+  "exceptionNotificationEmailAddresses": "",
+  "isSystem": false,
+  "variables": [
+    {
+      "systemName": "planExecutionId",
+      "name": "Plan Execution Id",
+      "defaultValue": null,
+      "type": "/String",
+      "isCollection": false,
+      "isInputVariable": false,
+      "isMandatory": false
+    },
+    {
+      "systemName": "waitTime",
+      "name": "Wait Time",
+      "defaultValue": null,
+      "type": "/Date Time",
+      "isCollection": false,
+      "isInputVariable": false,
+      "isMandatory": false
+    },
+    {
+      "systemName": "workItemId",
+      "name": "Work Item Id",
+      "defaultValue": null,
+      "type": "/Identifier/Work Item Identifier",
+      "isCollection": false,
+      "isInputVariable": true,
+      "isMandatory": true
+    }
+  ],
+  "steps": [
+    {
+      "ideData": {
+        "x": 475,
+        "y": -25
+      },
+      "actions": [],
+      "systemName": "finish",
+      "name": "Plan complete",
+      "description": "The plan is complete",
+      "isStart": false,
+      "isEnd": true,
+      "isOptimal": true
+    },
+    {
+      "ideData": {
+        "x": 175,
+        "y": -150
+      },
+      "actions": [],
+      "systemName": "lost",
+      "name": "Lost",
+      "description": null,
+      "isStart": false,
+      "isEnd": false,
+      "isOptimal": false
+    },
+    {
+      "ideData": {
+        "x": -350,
+        "y": -25
+      },
+      "actions": [
+        {
+          "config": {
+            "script": "\nlet timeToWait = 4;\n//use a randmon to adjust the timeToWait\n\nlet waitTime = new Date(Date.now());\nwaitTime.setSeconds(waitTime.getSeconds()+4);\n\nctx.waitTime = waitTime;\n\n\n"
+          },
+          "connections": {},
+          "actionSystemName": "script",
+          "name": "JavaScript - Set Wait Time"
+        },
+        {
+          "config": {
+            "script": "log.Information(\"---- ev -----\")\nlog.Information(JSON.stringify(ev));\n\nlog.Information(\"---- ctx -----\")\nlog.Information(JSON.stringify(ctx));\n\n\nctx.planExecutionId = ev.PlanExecutionId"
+          },
+          "connections": {},
+          "actionSystemName": "script",
+          "name": "JavaScript - Create and Set GUID"
+        },
+        {
+          "config": {
+            "mode": "manual",
+            "workItemIdVariable": "workItemId",
+            "newValueVariable": "planExecutionId",
+            "newValue": null,
+            "attributeSystemName": "Debouncer_A-Playground--Debouncer",
+            "formId": null
+          },
+          "connections": {},
+          "actionSystemName": "UpdateAttribute",
+          "name": "Set the WF Debouncer "
+        },
+        {
+          "config": {
+            "now": false,
+            "startOnDateTimeVariable": "waitTime",
+            "startIn": 1,
+            "startInType": "Days",
+            "description": "Finish"
+          },
+          "connections": {
+            "execute": {
+              "step": "step5",
+              "port": "left3",
+              "points": []
+            }
+          },
+          "actionSystemName": "startStep",
+          "name": "Finish 🕐"
+        }
+      ],
+      "systemName": "main",
+      "name": "Main entry point",
+      "description": "The main entry point of the plan",
+      "isStart": true,
+      "isEnd": false,
+      "isOptimal": true
+    },
+    {
+      "ideData": {
+        "x": 0,
+        "y": 0
+      },
+      "actions": [
+        {
+          "config": {
+            "now": true,
+            "startOnDateTimeVariable": null,
+            "startIn": 1,
+            "startInType": "Days",
+            "description": "Start step"
+          },
+          "connections": {
+            "execute": {
+              "step": "finish",
+              "port": "left4",
+              "points": []
+            }
+          },
+          "actionSystemName": "startStep",
+          "name": "Start step"
+        }
+      ],
+      "systemName": "step5",
+      "name": "Step 5",
+      "description": null,
+      "isStart": false,
+      "isEnd": false,
+      "isOptimal": false
+    },
+    {
+      "ideData": {
+        "x": 175,
+        "y": 225
+      },
+      "actions": [],
+      "systemName": "won",
+      "name": "Won",
+      "description": null,
+      "isStart": false,
+      "isEnd": false,
+      "isOptimal": false
+    }
+  ]
+}

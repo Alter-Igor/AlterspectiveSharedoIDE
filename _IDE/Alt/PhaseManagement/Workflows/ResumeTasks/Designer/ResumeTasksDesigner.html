@@ -1,0 +1,221 @@
+<!-- Resume Tasks Designer -->
+<div class="resume-tasks-designer">
+    
+    <div data-bind="widgetChrome:{ icon: 'fa-play-circle', title: 'Resume Tasks Configuration' }">
+        <p class="help-block">
+            <i class="fa fa-info-circle"></i>
+            This action finds paused child tasks and restores them to their original or specified phase.
+            Optionally updates due dates for the resumed tasks.
+        </p>
+        
+        <!-- Work Item ID Input -->
+        <div class="form-group">
+            <label>Parent Work Item ID: <span class="text-danger">*</span></label>
+            <!-- ko component: { name: "core-wf-variable-selector", params: action.ui.workItemIdVariable } -->
+            <!-- /ko -->
+            <div class="help-block">Variable containing the parent work item ID whose child tasks will be resumed</div>
+            <!-- ko if: action.validation.workItemIdVariable -->
+            <div class="text-danger">
+                <i class="fa fa-exclamation-triangle"></i>
+                <span data-bind="text: action.validation.workItemIdVariable"></span>
+            </div>
+            <!-- /ko -->
+        </div>
+        
+        <!-- Base Work Type -->
+        <div class="form-group">
+            <label>Base Work Type:</label>
+            <input type="text" class="form-control" 
+                   data-bind="value: action.config.baseWorkType" 
+                   placeholder="AbstractAdvice" />
+            <div class="help-block">Base work type to search for (will include derived types). Default: AbstractAdvice</div>
+        </div>
+    </div>
+    
+    <div data-bind="widgetChrome:{ icon: 'fa-search', title: 'Source Phase Configuration' }">
+        <p class="help-block">
+            Configure which paused phase to search for tasks in. You can specify either a phase feature or a specific phase name.
+        </p>
+        
+        <!-- Source Phase Feature -->
+        <div class="form-group">
+            <label>Source Phase Feature:</label>
+            <input type="text" class="form-control" 
+                   data-bind="value: action.config.sourcePhaseFeature" 
+                   placeholder="Paused" />
+            <div class="help-block">Phase feature to search for paused tasks (e.g., "Paused"). Default: Paused</div>
+        </div>
+        
+        <!-- Source Phase System Name -->
+        <div class="form-group">
+            <label>Source Phase System Name:</label>
+            <input type="text" class="form-control" 
+                   data-bind="value: action.config.sourcePhaseSystemName" 
+                   placeholder="Optional - overrides feature" />
+            <div class="help-block">Specific paused phase system name (optional). If provided, this overrides the phase feature.</div>
+        </div>
+        
+        <!-- ko if: action.validation.sourcePhase -->
+        <div class="text-danger">
+            <i class="fa fa-exclamation-triangle"></i>
+            <span data-bind="text: action.validation.sourcePhase"></span>
+        </div>
+        <!-- /ko -->
+    </div>
+    
+    <div data-bind="widgetChrome:{ icon: 'fa-undo', title: 'Restoration Options' }">
+        <!-- Restore From Saved -->
+        <div class="form-group">
+            <label>
+                <input type="checkbox" data-bind="checked: action.config.restoreFromSaved" />
+                Restore to Original Phase
+            </label>
+            <div class="help-block">Restore tasks to their saved original phase (if available)</div>
+        </div>
+        
+        <!-- Default Phase -->
+        <div class="form-group">
+            <label>Default Phase:</label>
+            <input type="text" class="form-control" 
+                   data-bind="value: action.config.defaultPhase" 
+                   placeholder="InProgress" />
+            <div class="help-block">Phase to use if no saved state exists. Default: InProgress</div>
+        </div>
+        
+        <!-- Clear Pause Metadata -->
+        <div class="form-group">
+            <label>
+                <input type="checkbox" data-bind="checked: action.config.clearPauseMetadata" />
+                Clear Pause Metadata
+            </label>
+            <div class="help-block">Remove pause-related attributes after resuming tasks</div>
+        </div>
+    </div>
+    
+    <div data-bind="widgetChrome:{ icon: 'fa-calendar', title: 'Due Date Management' }">
+        <button type="button" class="btn btn-sm btn-link" data-bind="click: toggleDueDateOptions">
+            <i class="fa" data-bind="css: { 'fa-chevron-down': !showDueDateOptions(), 'fa-chevron-up': showDueDateOptions() }"></i>
+            <span data-bind="text: showDueDateOptions() ? 'Hide' : 'Show'"></span> Due Date Options
+        </button>
+        
+        <!-- ko if: showDueDateOptions -->
+        <div style="margin-top: 15px;">
+            <p class="help-block">
+                <i class="fa fa-warning text-warning"></i>
+                Choose only one due date option. Setting one will clear the other.
+            </p>
+            
+            <!-- New Due Date Variable -->
+            <div class="form-group">
+                <label>New Due Date:</label>
+                <!-- ko component: { name: "core-wf-variable-selector", params: action.ui.newDueDateVariable } -->
+                <!-- /ko -->
+                <div class="help-block">Variable containing new due date for resumed tasks (ISO format)</div>
+            </div>
+            
+            <p class="text-center">- OR -</p>
+            
+            <!-- Adjust Due Date By -->
+            <div class="form-group">
+                <label>Adjust Due Date By (days):</label>
+                <input type="number" class="form-control" 
+                       data-bind="value: action.config.adjustDueDateBy" 
+                       placeholder="Enter number of days (positive or negative)" />
+                <div class="help-block">Number of days to adjust the due date (e.g., 7 for one week later, -3 for three days earlier)</div>
+            </div>
+            
+            <!-- ko if: action.validation.dueDateAdjustment -->
+            <div class="text-danger">
+                <i class="fa fa-exclamation-triangle"></i>
+                <span data-bind="text: action.validation.dueDateAdjustment"></span>
+            </div>
+            <!-- /ko -->
+        </div>
+        <!-- /ko -->
+    </div>
+    
+    <div data-bind="widgetChrome:{ icon: 'fa-cog', title: 'Advanced Options' }">
+        <button type="button" class="btn btn-sm btn-link" data-bind="click: toggleAdvancedOptions">
+            <i class="fa" data-bind="css: { 'fa-chevron-down': !showAdvancedOptions(), 'fa-chevron-up': showAdvancedOptions() }"></i>
+            <span data-bind="text: showAdvancedOptions() ? 'Hide' : 'Show'"></span> Advanced Options
+        </button>
+        
+        <!-- ko if: showAdvancedOptions -->
+        <div style="margin-top: 15px;">
+            <!-- Resume Reason Variable -->
+            <div class="form-group">
+                <label>Resume Reason:</label>
+                <!-- ko component: { name: "core-wf-variable-selector", params: action.ui.resumeReasonVariable } -->
+                <!-- /ko -->
+                <div class="help-block">Variable containing the reason for resuming (optional)</div>
+            </div>
+            
+            <!-- Resumed By Variable -->
+            <div class="form-group">
+                <label>Resumed By:</label>
+                <!-- ko component: { name: "core-wf-variable-selector", params: action.ui.resumedByVariable } -->
+                <!-- /ko -->
+                <div class="help-block">Variable containing who initiated the resume (optional)</div>
+            </div>
+            
+            <!-- Suppress Options -->
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" data-bind="checked: action.config.suppressEvents" />
+                    Suppress Events
+                </label>
+                <div class="help-block">Suppress ShareDo events during phase changes</div>
+            </div>
+            
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" data-bind="checked: action.config.suppressGuards" />
+                    Suppress Guards
+                </label>
+                <div class="help-block">Suppress phase transition guards and checks</div>
+            </div>
+        </div>
+        <!-- /ko -->
+    </div>
+    
+    <div data-bind="widgetChrome:{ icon: 'fa-arrow-right', title: 'Output Variables (Optional)' }">
+        <p class="help-block">Configure which variables to populate with results:</p>
+        
+        <!-- Success Variable -->
+        <div class="form-group">
+            <label>Success Status:</label>
+            <!-- ko component: { name: "core-wf-variable-selector", params: action.ui.successVariable } -->
+            <!-- /ko -->
+            <div class="help-block">Will be set to true if all operations succeeded</div>
+        </div>
+        
+        <!-- Resumed Count Variable -->
+        <div class="form-group">
+            <label>Resumed Count:</label>
+            <!-- ko component: { name: "core-wf-variable-selector", params: action.ui.resumedCountVariable } -->
+            <!-- /ko -->
+            <div class="help-block">Number of tasks successfully resumed</div>
+        </div>
+        
+        <!-- Error Message Variable -->
+        <div class="form-group">
+            <label>Error Message:</label>
+            <!-- ko component: { name: "core-wf-variable-selector", params: action.ui.errorMessageVariable } -->
+            <!-- /ko -->
+            <div class="help-block">Will contain error messages if any operations fail</div>
+        </div>
+    </div>
+    
+    <div data-bind="widgetChrome:{ icon: 'fa-code-fork', title: 'Output Branches' }">
+        <div class="alert alert-info">
+            <p><strong>This action will branch to one of the following:</strong></p>
+            <ul class="list-unstyled">
+                <li><span class="label label-success">Success</span> - All eligible tasks were resumed successfully</li>
+                <li><span class="label label-warning">Partial Success</span> - Some tasks resumed, some failed</li>
+                <li><span class="label label-default">No Tasks</span> - No paused tasks found to resume</li>
+                <li><span class="label label-danger">Error</span> - Critical error occurred</li>
+            </ul>
+        </div>
+    </div>
+    
+</div>

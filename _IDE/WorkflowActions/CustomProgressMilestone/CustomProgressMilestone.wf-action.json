@@ -1,0 +1,32 @@
+{
+    // The system name for the type of node
+    "systemName": "WorkflowActions.CustomProgressMilestone",
+
+    // The category to show this in the toolbox
+    "category": "Actions",
+
+    // The display info
+    "name": "Custom Dynamic Progress milestone",
+    "icon": "fa-forward",
+    "description": "Transition a work item to another phase with Dynamic values",
+
+    // The widget used to configure this node type
+    "configWidget": "WorkflowActions.CustomProgressMilestoneDesigner",
+
+    // Any other scripts to include that are used by the factory
+    "factoryIncludes": [],
+
+    // The factory for creating a node of this type
+    "factoryScript": "/_ideFiles/WorkflowActions/CustomProgressMilestone/CustomProgressMilestone-factory.js",
+
+    // The template for generating the code for this type
+    "templateScript": "/_ideFiles/WorkflowActions/CustomProgressMilestone/CustomProgressMilestone-template.js",
+
+    // Any additional helper scripts to load and run before the main generated script runs
+    "helperScripts": [ "PhaseHelpers", "StringHelpers" ],
+
+    // Declare any required variable types your step expects to use - e.g. /Identifier or /Identifier/Ods Entity Identifier
+    "requiredTypes":  [
+        "/Identifier/Work Type Identifier"
+    ] 
+}

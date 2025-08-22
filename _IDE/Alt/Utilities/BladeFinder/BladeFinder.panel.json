@@ -1,0 +1,28 @@
+{
+    "id": "Alt.Utilities.BladeFinder",
+    "priority": 5000,
+    "width": 1000,
+    "height": 600,
+    "title": "ShareDo Blade Finder",
+    "description": "Search and browse ShareDo blades with documentation",
+    "scripts": [
+        "/_ideFiles/Alt/Utilities/BladeFinder/BladeFinder.js"
+    ],
+    "styles": [
+        "/_ideFiles/Alt/Utilities/BladeFinder/BladeFinder.css"
+    ],
+    "templates": [
+        "/_ideFiles/Alt/Utilities/BladeFinder/BladeFinder.html"
+    ],
+    "components": [],
+    "configuration": {
+        "onBladeSelected": {
+            "type": "function",
+            "description": "Callback function when a blade is selected"
+        },
+        "initialSearch": {
+            "type": "string",
+            "description": "Initial search query to filter blades"
+        }
+    }
+}

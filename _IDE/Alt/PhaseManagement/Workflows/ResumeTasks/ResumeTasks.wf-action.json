@@ -1,0 +1,151 @@
+{
+    "systemName": "ResumeTasks",
+    "category": "Phase Management",
+    "name": "Resume Tasks",
+    "icon": "fa-play-circle",
+    "description": "Finds paused tasks and restores them to their original or specified phase",
+    "configWidget": "Alt.PhaseManagement.ResumeTasksDesigner",
+    "factoryIncludes": [],
+    "factoryScript": "/_ideFiles/Alt/PhaseManagement/Workflows/ResumeTasks/ResumeTasks-factory.js",
+    "templateScript": "/_ideFiles/Alt/PhaseManagement/Workflows/ResumeTasks/ResumeTasks-template.js",
+    "helperScripts": [],
+    "requiredTypes": [],
+    "connections": [
+        {
+            "name": "success",
+            "displayName": "Success",
+            "description": "All tasks resumed successfully",
+            "color": "#28a745"
+        },
+        {
+            "name": "partial",
+            "displayName": "Partial Success",
+            "description": "Some tasks resumed, some failed",
+            "color": "#ffc107"
+        },
+        {
+            "name": "noTasks",
+            "displayName": "No Tasks",
+            "description": "No paused tasks found to resume",
+            "color": "#6c757d"
+        },
+        {
+            "name": "error",
+            "displayName": "Error",
+            "description": "Critical error occurred",
+            "color": "#dc3545"
+        }
+    ],
+    "configuration": {
+        "workItemIdVariable": {
+            "type": "variable",
+            "displayName": "Work Item ID Variable",
+            "description": "Variable containing the parent work item ID",
+            "required": true,
+            "variableType": "read"
+        },
+        "baseWorkType": {
+            "type": "string",
+            "displayName": "Base Work Type",
+            "description": "Base work type to search for (will include derived types)",
+            "default": "AbstractAdvice",
+            "required": false
+        },
+        "sourcePhaseFeature": {
+            "type": "string",
+            "displayName": "Source Phase Feature",
+            "description": "Phase feature to find paused tasks",
+            "default": "Paused",
+            "required": false
+        },
+        "sourcePhaseSystemName": {
+            "type": "string",
+            "displayName": "Source Phase System Name",
+            "description": "Specific paused phase name (overrides feature)",
+            "required": false
+        },
+        "restoreFromSaved": {
+            "type": "boolean",
+            "displayName": "Restore From Saved",
+            "description": "Restore tasks to their saved original phase",
+            "default": true,
+            "required": false
+        },
+        "defaultPhase": {
+            "type": "string",
+            "displayName": "Default Phase",
+            "description": "Default phase to use if no saved state exists",
+            "default": "InProgress",
+            "required": false
+        },
+        "newDueDateVariable": {
+            "type": "variable",
+            "displayName": "New Due Date Variable",
+            "description": "Variable containing new due date for resumed tasks",
+            "required": false,
+            "variableType": "read"
+        },
+        "adjustDueDateBy": {
+            "type": "number",
+            "displayName": "Adjust Due Date By",
+            "description": "Number of days to adjust due date (positive or negative)",
+            "required": false
+        },
+        "clearPauseMetadata": {
+            "type": "boolean",
+            "displayName": "Clear Pause Metadata",
+            "description": "Clear pause-related attributes after resuming",
+            "default": true,
+            "required": false
+        },
+        "suppressEvents": {
+            "type": "boolean",
+            "displayName": "Suppress Events",
+            "description": "Suppress ShareDo events during phase change",
+            "default": false,
+            "required": false
+        },
+        "suppressGuards": {
+            "type": "boolean",
+            "displayName": "Suppress Guards",
+            "description": "Suppress phase guards and checks",
+            "default": false,
+            "required": false
+        },
+        "resumeReasonVariable": {
+            "type": "variable",
+            "displayName": "Resume Reason Variable",
+            "description": "Variable containing the reason for resuming",
+            "required": false,
+            "variableType": "read"
+        },
+        "resumedByVariable": {
+            "type": "variable",
+            "displayName": "Resumed By Variable",
+            "description": "Variable containing who initiated the resume",
+            "required": false,
+            "variableType": "read"
+        },
+        "successVariable": {
+            "type": "variable",
+            "displayName": "Success Variable",
+            "description": "Variable to store success status",
+            "required": false,
+            "variableType": "write"
+        },
+        "resumedCountVariable": {
+            "type": "variable",
+            "displayName": "Resumed Count Variable",
+            "description": "Variable to store count of resumed items",
+            "required": false,
+            "variableType": "write"
+        },
+        "errorMessageVariable": {
+            "type": "variable",
+            "displayName": "Error Message Variable",
+            "description": "Variable to store error messages",
+            "required": false,
+            "variableType": "write"
+        }
+    }
+}
