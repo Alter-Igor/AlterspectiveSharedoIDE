@@ -3,19 +3,72 @@ namespace("Alt.UnifiedDataSearch.Services");
 Alt.UnifiedDataSearch.Services.MockPmsService = function() {
     var self = this;
     
-    // Initialize mock data from localStorage or defaults
+    // Store loaded data
+    self.mockPersons = [];
+    self.mockOrganisations = [];
+    self.dataLoaded = false;
+    self.loadingPromise = null;
+    
+    // Initialize mock data from JSON files or localStorage
     self.initializeMockData = function() {
+        // If already loading, return the existing promise
+        if (self.loadingPromise) {
+            return self.loadingPromise;
+        }
+        
+        // Check localStorage first for any custom data
         var stored = localStorage.getItem('alt.unifiedSearch.mockPmsData');
         if (stored) {
             try {
                 var data = JSON.parse(stored);
-                self.mockPersons = data.persons || [];
-                self.mockOrganisations = data.organisations || [];
-                return;
+                if (data.persons && data.persons.length > 0) {
+                    self.mockPersons = data.persons;
+                    self.mockOrganisations = data.organisations || [];
+                    self.dataLoaded = true;
+                    return $.Deferred().resolve().promise();
+                }
             } catch(e) {
-                console.error("Failed to parse mock PMS data", e);
+                console.log("Failed to parse localStorage mock data, loading from files", e);
             }
         }
+        
+        // Load from JSON files
+        self.loadingPromise = self.loadMockDataFromFiles();
+        return self.loadingPromise;
+    };
+    
+    // Load mock data from JSON files
+    self.loadMockDataFromFiles = function() {
+        var personsPromise = $.ajax({
+            url: "/_ideFiles/Alt/UnifiedDataSearch/Blades/UnifiedOdsPmsSearch/mockPersonPmsData.json",
+            dataType: "json"
+        }).done(function(data) {
+            self.mockPersons = data;
+            console.log("Loaded " + data.length + " mock persons from JSON file");
+        }).fail(function(error) {
+            console.warn("Failed to load mock persons data, using fallback", error);
+            self.loadFallbackPersons();
+        });
+        
+        var orgsPromise = $.ajax({
+            url: "/_ideFiles/Alt/UnifiedDataSearch/Blades/UnifiedOdsPmsSearch/mockOrganisationPmsData.json",
+            dataType: "json"
+        }).done(function(data) {
+            self.mockOrganisations = data;
+            console.log("Loaded " + data.length + " mock organisations from JSON file");
+        }).fail(function(error) {
+            console.warn("Failed to load mock organisations data, using fallback", error);
+            self.loadFallbackOrganisations();
+        });
+        
+        return $.when(personsPromise, orgsPromise).always(function() {
+            self.dataLoaded = true;
+            // Don't save to localStorage automatically - only save if user makes changes
+        });
+    };
+    
+    // Fallback data if JSON files can't be loaded
+    self.loadFallbackPersons = function() {
         
         // Default mock data - some will match ODS data for testing conflicts
         self.mockPersons = [
@@ -197,7 +250,10 @@ Alt.UnifiedDataSearch.Services.MockPmsService = function() {
                 odsType: "person"
             }
         ];
-        
+    };
+    
+    // Fallback organisations if JSON file can't be loaded
+    self.loadFallbackOrganisations = function() {
         self.mockOrganisations = [
             {
                 id: "PMS-O001",
@@ -358,8 +414,6 @@ Alt.UnifiedDataSearch.Services.MockPmsService = function() {
                 odsType: "organisation"
             }
         ];
-        
-        self.saveMockData();
     };
     
     self.saveMockData = function() {
@@ -374,57 +428,68 @@ Alt.UnifiedDataSearch.Services.MockPmsService = function() {
     self.search = function(type, query, page) {
         var deferred = $.Deferred();
         
+        // Ensure data is loaded before searching
+        var loadPromise = self.dataLoaded ? $.Deferred().resolve().promise() : self.initializeMockData();
+        
         // Simulate network delay (300-700ms)
         var delay = 300 + Math.random() * 400;
         
-        setTimeout(function() {
-            try {
-                var dataset = type === "persons" ? self.mockPersons : self.mockOrganisations;
-                var results = [];
-                
-                if (query && query.trim()) {
-                    var searchTerm = query.toLowerCase();
-                    results = dataset.filter(function(item) {
-                        // Search in relevant fields based on type
-                        if (type === "persons") {
-                            return (
-                                (item.firstName && item.firstName.toLowerCase().indexOf(searchTerm) > -1) ||
-                                (item.lastName && item.lastName.toLowerCase().indexOf(searchTerm) > -1) ||
-                                (item.email && item.email.toLowerCase().indexOf(searchTerm) > -1) ||
-                                (item.phone && item.phone.indexOf(searchTerm) > -1)
-                            );
-                        } else {
-                            return (
-                                (item.name && item.name.toLowerCase().indexOf(searchTerm) > -1) ||
-                                (item.tradingName && item.tradingName.toLowerCase().indexOf(searchTerm) > -1) ||
-                                (item.abn && item.abn.indexOf(searchTerm) > -1) ||
-                                (item.email && item.email.toLowerCase().indexOf(searchTerm) > -1)
-                            );
-                        }
+        loadPromise.done(function() {
+            setTimeout(function() {
+                try {
+                    var dataset = type === "persons" ? self.mockPersons : self.mockOrganisations;
+                    var results = [];
+                    
+                    if (query && query.trim()) {
+                        var searchTerm = query.toLowerCase();
+                        results = dataset.filter(function(item) {
+                            // Search in relevant fields based on type
+                            if (type === "persons") {
+                                return (
+                                    (item.firstName && item.firstName.toLowerCase().indexOf(searchTerm) > -1) ||
+                                    (item.lastName && item.lastName.toLowerCase().indexOf(searchTerm) > -1) ||
+                                    (item.email && item.email.toLowerCase().indexOf(searchTerm) > -1) ||
+                                    (item.phone && item.phone.indexOf(searchTerm) > -1)
+                                );
+                            } else {
+                                return (
+                                    (item.name && item.name.toLowerCase().indexOf(searchTerm) > -1) ||
+                                    (item.organisationName && item.organisationName.toLowerCase().indexOf(searchTerm) > -1) ||
+                                    (item.tradingName && item.tradingName.toLowerCase().indexOf(searchTerm) > -1) ||
+                                    (item.abn && item.abn.indexOf(searchTerm) > -1) ||
+                                    (item.email && item.email.toLowerCase().indexOf(searchTerm) > -1)
+                                );
+                            }
+                        });
+                    } else {
+                        results = dataset;
+                    }
+                    
+                    // Paginate results
+                    var pageSize = 20; // Increased page size for better demonstration
+                    var startIndex = (page || 0) * pageSize;
+                    var paged = results.slice(startIndex, startIndex + pageSize);
+                    
+                    deferred.resolve({
+                        success: true,
+                        results: paged,
+                        totalResults: results.length,
+                        page: page || 0,
+                        hasMore: results.length > startIndex + pageSize
                     });
-                } else {
-                    results = dataset;
+                } catch(e) {
+                    deferred.reject({
+                        success: false,
+                        error: e.message
+                    });
                 }
-                
-                // Paginate results
-                var pageSize = 10;
-                var startIndex = (page || 0) * pageSize;
-                var paged = results.slice(startIndex, startIndex + pageSize);
-                
-                deferred.resolve({
-                    success: true,
-                    results: paged,
-                    totalResults: results.length,
-                    page: page || 0,
-                    hasMore: results.length > startIndex + pageSize
-                });
-            } catch(e) {
-                deferred.reject({
-                    success: false,
-                    error: e.message
-                });
-            }
-        }, delay);
+            }, delay);
+        }).fail(function(error) {
+            deferred.reject({
+                success: false,
+                error: "Failed to load mock data: " + error
+            });
+        });
         
         return deferred.promise();
     };
@@ -451,11 +516,20 @@ Alt.UnifiedDataSearch.Services.MockPmsService = function() {
     self.clearMockData = function() {
         self.mockPersons = [];
         self.mockOrganisations = [];
+        self.dataLoaded = false;
+        self.loadingPromise = null;
         localStorage.removeItem('alt.unifiedSearch.mockPmsData');
     };
     
-    // Initialize on creation
-    self.initializeMockData();
+    // Method to reload data from files
+    self.reloadFromFiles = function() {
+        self.dataLoaded = false;
+        self.loadingPromise = null;
+        localStorage.removeItem('alt.unifiedSearch.mockPmsData');
+        return self.initializeMockData();
+    };
+    
+    // Don't auto-initialize - let it load on first search
 };
 
 // Create singleton instance
