@@ -58,11 +58,11 @@
             }
         }
         
-        // Clear mock data
+        // Clear mock data from memory
         function clearMockData() {
             if (typeof Alt !== 'undefined' && Alt.UnifiedDataSearch && Alt.UnifiedDataSearch.Services) {
                 Alt.UnifiedDataSearch.Services.mockPmsService.clearMockData();
-                console.log("Mock data cleared. Refresh to reload default data.");
+                console.log("Mock data cleared from memory. Will reload from JSON files on next search.");
             }
         }
         

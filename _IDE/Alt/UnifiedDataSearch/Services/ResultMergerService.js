@@ -6,6 +6,7 @@ Alt.UnifiedDataSearch.Services.ResultMergerService = function() {
     self.mergeResults = function(odsResults, pmsResults) {
         var merged = [];
         var matchMap = {};
+        var referenceMap = {}; // Map ODS records by their Reference field
         
         // Process ODS results first
         if (odsResults && (odsResults.results || odsResults.length)) {
@@ -27,9 +28,16 @@ Alt.UnifiedDataSearch.Services.ResultMergerService = function() {
                     matchKey: key,
                     icon: self.getIcon(item),
                     hasConflicts: false,
-                    conflicts: []
+                    conflicts: [],
+                    reference: item.reference || item.Reference || null
                 };
                 matchMap[key] = result;
+                
+                // Also track by Reference field if it exists
+                if (result.reference) {
+                    referenceMap[result.reference] = result;
+                }
+                
                 merged.push(result);
             });
         }
@@ -38,17 +46,31 @@ Alt.UnifiedDataSearch.Services.ResultMergerService = function() {
         if (pmsResults && pmsResults.results) {
             pmsResults.results.forEach(function(item) {
                 var key = self.generateMatchKey(item);
+                var matchedByKey = matchMap[key];
+                var matchedByReference = referenceMap[item.id]; // Check if PMS ID is in an ODS Reference field
                 
-                if (matchMap[key]) {
+                // Determine which match to use (Reference match takes priority)
+                var matchedRecord = matchedByReference || matchedByKey;
+                
+                if (matchedRecord) {
                     // Found a match - update existing record
-                    matchMap[key].source = "matched";
-                    matchMap[key].pmsId = item.id;
-                    matchMap[key].pmsData = item;
+                    matchedRecord.source = "matched";
+                    matchedRecord.pmsId = item.id;
+                    matchedRecord.pmsData = item;
                     
                     // Check for conflicts
-                    var conflicts = self.getConflictDetails(matchMap[key].data, item);
-                    matchMap[key].hasConflicts = conflicts.length > 0;
-                    matchMap[key].conflicts = conflicts;
+                    var conflicts = self.getConflictDetails(matchedRecord.data, item);
+                    matchedRecord.hasConflicts = conflicts.length > 0;
+                    matchedRecord.conflicts = conflicts;
+                    
+                    // If matched by reference but not by key, add a note
+                    if (matchedByReference && !matchedByKey) {
+                        matchedRecord.matchType = "reference";
+                        console.log("Matched by Reference field:", matchedRecord.odsId, "->", item.id);
+                    } else if (matchedByReference && matchedByKey && matchedByReference !== matchedByKey) {
+                        // Reference and key match point to different records - log warning
+                        console.warn("Conflict: PMS record", item.id, "matches different ODS records by key and reference");
+                    }
                 } else {
                     // PMS only record
                     merged.push({

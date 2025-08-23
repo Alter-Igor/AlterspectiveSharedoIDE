@@ -147,6 +147,9 @@
                         <!-- /ko -->
                         <!-- ko if: source === 'matched' -->
                         <i class="fa fa-link"></i> Matched
+                            <!-- ko if: matchType === 'reference' -->
+                            <span class="ref-indicator" title="Matched by Reference field">(Ref)</span>
+                            <!-- /ko -->
                         <!-- /ko -->
                     </span>
                 </div>

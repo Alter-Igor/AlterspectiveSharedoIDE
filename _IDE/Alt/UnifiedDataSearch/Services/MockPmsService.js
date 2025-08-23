@@ -9,27 +9,16 @@ Alt.UnifiedDataSearch.Services.MockPmsService = function() {
     self.dataLoaded = false;
     self.loadingPromise = null;
     
-    // Initialize mock data from JSON files or localStorage
+    // Initialize mock data from JSON files
     self.initializeMockData = function() {
         // If already loading, return the existing promise
         if (self.loadingPromise) {
             return self.loadingPromise;
         }
         
-        // Check localStorage first for any custom data
-        var stored = localStorage.getItem('alt.unifiedSearch.mockPmsData');
-        if (stored) {
-            try {
-                var data = JSON.parse(stored);
-                if (data.persons && data.persons.length > 0) {
-                    self.mockPersons = data.persons;
-                    self.mockOrganisations = data.organisations || [];
-                    self.dataLoaded = true;
-                    return $.Deferred().resolve().promise();
-                }
-            } catch(e) {
-                console.log("Failed to parse localStorage mock data, loading from files", e);
-            }
+        // If already loaded, return resolved promise
+        if (self.dataLoaded) {
+            return $.Deferred().resolve().promise();
         }
         
         // Load from JSON files
@@ -63,7 +52,6 @@ Alt.UnifiedDataSearch.Services.MockPmsService = function() {
         
         return $.when(personsPromise, orgsPromise).always(function() {
             self.dataLoaded = true;
-            // Don't save to localStorage automatically - only save if user makes changes
         });
     };
     
@@ -416,15 +404,6 @@ Alt.UnifiedDataSearch.Services.MockPmsService = function() {
         ];
     };
     
-    self.saveMockData = function() {
-        var data = {
-            persons: self.mockPersons,
-            organisations: self.mockOrganisations,
-            lastUpdated: new Date().toISOString()
-        };
-        localStorage.setItem('alt.unifiedSearch.mockPmsData', JSON.stringify(data));
-    };
-    
     self.search = function(type, query, page) {
         var deferred = $.Deferred();
         
@@ -494,38 +473,48 @@ Alt.UnifiedDataSearch.Services.MockPmsService = function() {
         return deferred.promise();
     };
     
-    // Add/update mock data methods for testing
+    // Add mock data methods for testing (in-memory only)
     self.addMockPerson = function(person) {
-        person.id = "PMS-P" + (self.mockPersons.length + 1).toString().padStart(3, '0');
+        // Ensure data is loaded first
+        if (!self.dataLoaded) {
+            console.warn("Mock data not loaded yet. Call initializeMockData() first.");
+            return null;
+        }
+        person.id = "PMS-P" + (self.mockPersons.length + 1).toString().padStart(5, '0');
         person.source = "pms";
         person.odsType = "person";
         self.mockPersons.push(person);
-        self.saveMockData();
         return person;
     };
     
     self.addMockOrganisation = function(organisation) {
-        organisation.id = "PMS-O" + (self.mockOrganisations.length + 1).toString().padStart(3, '0');
+        // Ensure data is loaded first
+        if (!self.dataLoaded) {
+            console.warn("Mock data not loaded yet. Call initializeMockData() first.");
+            return null;
+        }
+        organisation.id = "PMS-O" + (self.mockOrganisations.length + 1).toString().padStart(5, '0');
         organisation.source = "pms";
         organisation.odsType = "organisation";
         self.mockOrganisations.push(organisation);
-        self.saveMockData();
         return organisation;
     };
     
     self.clearMockData = function() {
+        // Clear in-memory data only
         self.mockPersons = [];
         self.mockOrganisations = [];
         self.dataLoaded = false;
         self.loadingPromise = null;
-        localStorage.removeItem('alt.unifiedSearch.mockPmsData');
     };
     
     // Method to reload data from files
     self.reloadFromFiles = function() {
+        // Clear and reload from JSON files
+        self.mockPersons = [];
+        self.mockOrganisations = [];
         self.dataLoaded = false;
         self.loadingPromise = null;
-        localStorage.removeItem('alt.unifiedSearch.mockPmsData');
         return self.initializeMockData();
     };
     

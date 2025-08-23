@@ -675,6 +675,7 @@ Alt.UnifiedDataSearch.Blades.UnifiedOdsPmsSearch.prototype.searchPms = function(
 Alt.UnifiedDataSearch.Blades.UnifiedOdsPmsSearch.prototype.selectEntity = function(entity) {
     var self = this;
     
+    console.log("Entity selected:", entity);
     self.selectedEntity(entity);
     
     if (self.options.mode === "select") {
@@ -683,11 +684,13 @@ Alt.UnifiedDataSearch.Blades.UnifiedOdsPmsSearch.prototype.selectEntity = functi
     } else if (self.options.mode === "addParticipant") {
         // Handle based on source
         if (entity.source === "pms") {
+            console.log("PMS entity selected, checking for auto-create settings...");
             // Check settings for action blade
             if (self.options.promptOnPmsAdd) {
                 self.checkSettingsAndAddPmsEntity(entity);
             } else {
-                self.importPmsEntity(entity);
+                // Default behavior: check settings first, which will auto-create if no action blade configured
+                self.checkSettingsAndAddPmsEntity(entity);
             }
         } else if (entity.source === "matched" && entity.hasConflicts) {
             // Handle conflicts
@@ -740,6 +743,8 @@ Alt.UnifiedDataSearch.Blades.UnifiedOdsPmsSearch.prototype.checkSettingsAndAddPm
         "alt.ods.person.external.search.actionBlade" : 
         "alt.ods.organisation.external.search.actionBlade";
     
+    console.log("Checking for action blade setting:", settingName);
+    
     var checkSetting = function() {
         if (window.$ajax && window.$ajax.get) {
             return $ajax.get("/api/v2/public/settings/" + settingName);
@@ -755,14 +760,17 @@ Alt.UnifiedDataSearch.Blades.UnifiedOdsPmsSearch.prototype.checkSettingsAndAddPm
     checkSetting()
         .done(function(setting) {
             if (setting && setting.value) {
+                console.log("Action blade configured:", setting.value);
                 // Open configured blade
                 self.openActionBlade(setting.value, entity);
             } else {
+                console.log("No action blade configured, auto-creating in ODS...");
                 // Auto-add to ODS
                 self.importPmsEntity(entity);
             }
         })
-        .fail(function() {
+        .fail(function(error) {
+            console.log("Settings check failed, defaulting to auto-create:", error);
             // Default: auto-add
             self.importPmsEntity(entity);
         });
@@ -771,6 +779,8 @@ Alt.UnifiedDataSearch.Blades.UnifiedOdsPmsSearch.prototype.checkSettingsAndAddPm
 // Import PMS entity to ODS
 Alt.UnifiedDataSearch.Blades.UnifiedOdsPmsSearch.prototype.importPmsEntity = function(entity) {
     var self = this;
+    
+    console.log("Importing PMS entity to ShareDo ODS:", entity);
     
     // Create ODS entity from PMS data
     var odsEntity = {
@@ -789,7 +799,8 @@ Alt.UnifiedDataSearch.Blades.UnifiedOdsPmsSearch.prototype.importPmsEntity = fun
         abn: entity.data.abn,
         acn: entity.data.acn,
         tradingName: entity.data.tradingName,
-        dateOfBirth: entity.data.dateOfBirth
+        dateOfBirth: entity.data.dateOfBirth,
+        reference: entity.pmsId || entity.data.id  // Store PMS ID in Reference field
     };
     
     // Remove null/undefined values
@@ -815,8 +826,12 @@ Alt.UnifiedDataSearch.Blades.UnifiedOdsPmsSearch.prototype.importPmsEntity = fun
         }
     };
     
+    console.log("Creating ODS entity with data:", odsEntity);
+    
     importRequest()
         .done(function(created) {
+            console.log("Successfully created ODS entity:", created);
+            
             // Update entity with ODS ID
             entity.odsId = created.id;
             entity.source = "sharedo";

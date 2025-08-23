@@ -139,7 +139,7 @@
 }
 
 .system-status-compact.completed {
-    color: #22c55e;
+    color: #36b541;
 }
 
 .system-status-compact.error {
@@ -207,7 +207,7 @@
 
 .search-system.completed {
     background: #f0fdf4;
-    border-color: #22c55e;
+    border-color: #36b541;
 }
 
 .search-system.error {
@@ -222,7 +222,7 @@
 }
 
 .search-system.completed .system-icon {
-    color: #22c55e;
+    color: #36b541;
 }
 
 .search-system.error .system-icon {
@@ -250,7 +250,7 @@
 }
 
 .checkmark {
-    color: #22c55e;
+    color: #36b541;
     font-size: 20px;
     animation: checkmarkPop 0.4s ease;
 }
@@ -429,8 +429,8 @@
 }
 
 .source-badge.source-sharedo {
-    background: #dbeafe;
-    color: #1e40af;
+    background: #d4f5d6;
+    color: #36b541;
 }
 
 .source-badge.source-pms {
@@ -440,7 +440,14 @@
 
 .source-badge.source-matched {
     background: #d1fae5;
-    color: #065f46;
+    color: #059212;
+}
+
+.ref-indicator {
+    font-size: 10px;
+    font-weight: normal;
+    opacity: 0.8;
+    margin-left: 2px;
 }
 
 /* Result Details */
@@ -523,7 +530,7 @@
 }
 
 .ods-value {
-    color: #1e40af;
+    color: #36b541;
 }
 
 .pms-value {
