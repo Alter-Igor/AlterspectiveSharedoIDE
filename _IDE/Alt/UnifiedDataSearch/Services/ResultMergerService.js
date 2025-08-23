@@ -72,10 +72,11 @@ Alt.UnifiedDataSearch.Services.ResultMergerService = function() {
     
     self.generateMatchKey = function(item) {
         // Generate unique key for matching
-        if (item.odsType === "person" || item.firstName || item.lastName) {
-            // Person matching
+        if (item.odsEntityType === "person" || item.odsType === "person" || 
+            item.firstName || item.lastName || item.surname) {
+            // Person matching - ShareDo uses 'surname', mock PMS uses 'lastName'
             var first = (item.firstName || "").toLowerCase().trim();
-            var last = (item.lastName || "").toLowerCase().trim();
+            var last = (item.surname || item.lastName || "").toLowerCase().trim();
             var dob = item.dateOfBirth || "";
             
             // If we have DOB, use it for precise matching
@@ -88,10 +89,10 @@ Alt.UnifiedDataSearch.Services.ResultMergerService = function() {
             return "person:" + first + ":" + last + ":" + email;
         } else {
             // Organisation matching
-            var name = (item.name || item.organisationName || "").toLowerCase().trim();
-            var abn = (item.abn || "").replace(/\s/g, "");
+            var name = (item.name || item.organisationName || item.registeredName || "").toLowerCase().trim();
+            var abn = (item.abn || item.companyNumber || "").replace(/\s/g, "");
             
-            // If we have ABN, use it for precise matching
+            // If we have ABN/company number, use it for precise matching
             if (abn) {
                 return "org:abn:" + abn;
             }
@@ -102,17 +103,22 @@ Alt.UnifiedDataSearch.Services.ResultMergerService = function() {
     };
     
     self.getDisplayName = function(item) {
-        if (item.firstName || item.lastName) {
+        // For persons, check both lastName and surname (ShareDo uses 'surname')
+        if (item.firstName || item.lastName || item.surname) {
             var parts = [];
             if (item.firstName) parts.push(item.firstName);
-            if (item.lastName) parts.push(item.lastName);
+            // ShareDo uses 'surname' field, PMS might use 'lastName'
+            if (item.surname || item.lastName) parts.push(item.surname || item.lastName);
             return parts.join(" ") || "Unknown Person";
         }
-        return item.name || item.organisationName || item.tradingName || "Unknown Organisation";
+        // For organisations, check multiple name fields
+        return item.name || item.organisationName || item.registeredName || item.tradingName || "Unknown Organisation";
     };
     
     self.getIcon = function(item) {
-        if (item.odsType === "person" || item.firstName || item.lastName) {
+        // Check odsEntityType (ShareDo) or odsType, plus name fields
+        if (item.odsEntityType === "person" || item.odsType === "person" || 
+            item.firstName || item.lastName || item.surname) {
             return "fa-user";
         }
         return "fa-building";

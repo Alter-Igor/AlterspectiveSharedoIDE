@@ -410,20 +410,78 @@ Alt.UnifiedDataSearch.Blades.UnifiedOdsPmsSearch.prototype.searchOds = function(
         .done(function(data) {
             console.log("ODS API raw response:", data);
             
+            // Parse the ShareDo response format
+            var results = [];
+            
+            // ShareDo returns data in rows property with result as JSON string
+            if (data.rows && Array.isArray(data.rows)) {
+                data.rows.forEach(function(row) {
+                    try {
+                        // Parse the JSON string in the result property
+                        var entity = JSON.parse(row.result);
+                        // Add the ID and entity type from the row
+                        entity.id = entity.id || row.id;
+                        entity.odsId = entity.id || row.id;
+                        entity.odsEntityType = entity.odsEntityType || row.odsEntityType;
+                        
+                        // Extract contact details if they're in aspectData
+                        if (entity.aspectData && entity.aspectData.ContactDetails) {
+                            var contacts = entity.aspectData.ContactDetails;
+                            // Find primary email
+                            var emailContact = contacts.find(function(c) {
+                                return c.contactTypeSystemName === "email" && c.isPrimary;
+                            }) || contacts.find(function(c) {
+                                return c.contactTypeSystemName === "email";
+                            });
+                            if (emailContact) {
+                                entity.email = emailContact.contactValue;
+                            }
+                            
+                            // Find primary phone
+                            var phoneContact = contacts.find(function(c) {
+                                return (c.contactTypeSystemName === "mobile" || c.contactTypeSystemName === "direct-line") && c.isPrimary;
+                            }) || contacts.find(function(c) {
+                                return c.contactTypeSystemName === "mobile";
+                            }) || contacts.find(function(c) {
+                                return c.contactTypeSystemName === "direct-line";
+                            });
+                            if (phoneContact) {
+                                entity.phone = phoneContact.contactValue;
+                            }
+                        }
+                        
+                        // Extract location/address if available
+                        if (entity.locations && entity.locations.length > 0) {
+                            var location = entity.locations[0];
+                            entity.address = location.addressLine1;
+                            entity.suburb = location.town;
+                            entity.postcode = location.postCode;
+                            entity.state = location.county;
+                            entity.country = location.country;
+                        }
+                        
+                        results.push(entity);
+                    } catch(e) {
+                        console.error("Failed to parse ODS result row:", e, row);
+                    }
+                });
+            } else if (data.results) {
+                // Handle if results are already parsed
+                results = data.results;
+            } else if (Array.isArray(data)) {
+                // Handle if data is directly an array
+                results = data;
+            }
+            
             // Transform the response to match our expected format
             var transformed = {
                 success: true,
-                results: data.results || data.items || data,
-                totalResults: data.totalCount || data.total || (data.results ? data.results.length : 0),
+                results: results,
+                totalResults: data.totalRows || data.totalCount || results.length,
                 page: page || 0,
-                hasMore: data.hasMore || false
+                hasMore: data.totalPages ? (data.endPage < data.totalPages) : false,
+                totalPages: data.totalPages || 1
             };
-            
-            // If data is directly an array, wrap it
-            if (Array.isArray(data)) {
-                transformed.results = data;
-                transformed.totalResults = data.length;
-            }
             
             console.log("ODS API transformed response:", transformed);
             deferred.resolve(transformed);
