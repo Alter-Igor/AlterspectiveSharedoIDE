@@ -10,9 +10,8 @@
                 
                 $ui.stacks.openPanel("Alt.UnifiedDataSearch.Blades.UnifiedOdsPmsSearch", {
                     sharedoId: "TEST-001",
-                    mode: "addParticipant",
-                    useMockPms: true,
-                    useMockOds: true  // Use mock for both systems
+                    mode: "addParticipant"
+                    // Note: ODS always uses real API, PMS always uses mock data
                 }, function() {
                     console.log("Blade closed");
                 });
@@ -26,9 +25,8 @@
         function testSelectMode() {
             if (typeof $ui !== 'undefined' && $ui.stacks && $ui.stacks.openPanel) {
                 $ui.stacks.openPanel("Alt.UnifiedDataSearch.Blades.UnifiedOdsPmsSearch", {
-                    mode: "select",
-                    useMockPms: true,
-                    useMockOds: true
+                    mode: "select"
+                    // Note: ODS always uses real API, PMS always uses mock data
                 });
             }
         }
@@ -145,12 +143,10 @@
         <h2>Console Commands</h2>
         <p>You can also run these commands in the browser console:</p>
         <pre>
-// Open the blade
+// Open the blade (ODS uses real API, PMS uses mock)
 $ui.stacks.openPanel("Alt.UnifiedDataSearch.Blades.UnifiedOdsPmsSearch", {
     sharedoId: "WI-123",
-    mode: "addParticipant",
-    useMockPms: true,
-    useMockOds: true
+    mode: "addParticipant"
 });
 
 // Test mock PMS service

@@ -17,8 +17,7 @@ Alt.UnifiedDataSearch.Blades.UnifiedOdsPmsSearch = function(element, configurati
         addNewParticipantsToSharedoId: null,
         mode: "addParticipant", // "select" or "addParticipant"
         entityTypes: ["person", "organisation"],
-        useMockPms: true, // Default to mock for development
-        useMockOds: false, // Use real ODS API by default (will fallback to mock if API fails)
+        useMockPms: true, // Always use mock for PMS (no real PMS integration yet)
         pmsTimeout: 5000,
         allowAddNew: true,
         tryAutoAddParticipant: false,
@@ -199,9 +198,6 @@ Alt.UnifiedDataSearch.Blades.UnifiedOdsPmsSearch.prototype.onDestroy = function(
 Alt.UnifiedDataSearch.Blades.UnifiedOdsPmsSearch.prototype.loadAndBind = function() {
     var self = this;
     
-    // Check PMS provider availability
-    self.checkPmsProvider();
-    
     // Subscribe to search query changes
     self.searchQuery.subscribe(function(newValue) {
         if (newValue && newValue.length >= 2) {
@@ -229,32 +225,14 @@ Alt.UnifiedDataSearch.Blades.UnifiedOdsPmsSearch.prototype.loadAndBind = functio
     }
 };
 
-// Check if PMS provider is available
+// Note: PMS provider check removed - always using mock PMS data
+// In future, when real PMS integration is available, uncomment and update this method
+/*
 Alt.UnifiedDataSearch.Blades.UnifiedOdsPmsSearch.prototype.checkPmsProvider = function() {
     var self = this;
-    
-    // Try to check if external search provider exists
-    if (window.$ajax && window.$ajax.get) {
-        $ajax.get("/api/ods/externalSearch/providers")
-            .done(function(providers) {
-                self.pmsProviderAvailable = providers && providers.some(function(p) {
-                    return p.systemName === "pms";
-                });
-                
-                if (!self.pmsProviderAvailable) {
-                    console.log("PMS provider not configured, using mock service");
-                    self.options.useMockPms = true;
-                }
-            })
-            .fail(function() {
-                console.log("Could not check PMS providers, using mock service");
-                self.options.useMockPms = true;
-            });
-    } else {
-        // Fallback if $ajax not available
-        self.options.useMockPms = true;
-    }
+    // Implementation for checking real PMS provider would go here
 };
+*/
 
 // Execute search
 Alt.UnifiedDataSearch.Blades.UnifiedOdsPmsSearch.prototype.executeSearch = function() {
@@ -372,14 +350,9 @@ Alt.UnifiedDataSearch.Blades.UnifiedOdsPmsSearch.prototype.executeSearch = funct
         });
 };
 
-// Search ODS
+// Search ODS - Always use real ShareDo API
 Alt.UnifiedDataSearch.Blades.UnifiedOdsPmsSearch.prototype.searchOds = function(query, page) {
     var self = this;
-    
-    // If using mock ODS, return mock data
-    if (self.options.useMockOds) {
-        return self.getMockOdsData(query, page);
-    }
     
     // Build search payload for ShareDo ODS _search endpoint
     var payload = {
@@ -623,42 +596,21 @@ Alt.UnifiedDataSearch.Blades.UnifiedOdsPmsSearch.prototype.searchPmsWithTimeout 
     return deferred.promise();
 };
 
-// Search PMS
+// Search PMS - Always use mock data (no real PMS integration available)
 Alt.UnifiedDataSearch.Blades.UnifiedOdsPmsSearch.prototype.searchPms = function(query, page) {
     var self = this;
     
-    // Determine entity type
+    // Determine entity type for mock search
     var type = "persons";
     if (self.searchEntityType() === "organisation") {
         type = "organisations";
     } else if (self.searchEntityType() === "all") {
-        // For "all", we need to search both - for now just search persons
-        // In production, this would require two separate calls
+        // For "all", search persons (in a real implementation, would search both)
         type = "persons";
     }
     
-    // Use mock or real PMS
-    if (self.options.useMockPms || !self.pmsProviderAvailable) {
-        return self.mockPmsService.search(type, query, page);
-    } else {
-        // Use real PMS provider if configured in ShareDo
-        if (window.$ajax && window.$ajax.get) {
-            return $ajax.get("/api/ods/externalSearch/providers/pms/" + type, {
-                q: query,
-                page: page || 0
-            });
-        } else {
-            return $.ajax({
-                url: "/api/ods/externalSearch/providers/pms/" + type,
-                method: "GET",
-                data: {
-                    q: query,
-                    page: page || 0
-                },
-                dataType: "json"
-            });
-        }
-    }
+    // Always use mock PMS service
+    return self.mockPmsService.search(type, query, page);
 };
 
 // Handle entity selection
