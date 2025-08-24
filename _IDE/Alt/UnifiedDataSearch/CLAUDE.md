@@ -19,6 +19,340 @@ This guide provides complete instructions for implementing the UnifiedDataSearch
 - Use `$ajax` or `$ajaxMutex` for API calls
 - Follow existing file path patterns with `/_ideFiles/`
 
+## ⚠️ CRITICAL API USAGE PATTERNS - MUST READ
+
+### Creating ODS Entities via API
+
+#### 1. Correct API Endpoints
+```javascript
+// CORRECT endpoints for creating ODS entities:
+var personEndpoint = "/api/aspects/ods/people/";        // Note: plural "people"
+var orgEndpoint = "/api/aspects/ods/organisations/";    // Note: plural "organisations"
+
+// WRONG endpoints (these will return 404):
+// "/api/ods/person"  ❌
+// "/api/ods/organisation"  ❌
+```
+
+#### 2. Contact Details Format - CRITICAL
+
+**⚠️ COMMON ERROR**: "Invalid contact detail type specified for new contact details"
+
+Contact details MUST use specific `contactTypeCategoryId` and `contactTypeSystemName` combinations:
+
+**For PERSONS:**
+```javascript
+// Email contact for persons
+{
+    contactTypeCategoryId: 2100,
+    contactTypeSystemName: "email",
+    contactValue: "john@example.com",
+    isActive: true,
+    isPrimary: true
+}
+
+// Phone contact for persons - MUST use "mobile" or "direct-line", NOT "phone"
+{
+    contactTypeCategoryId: 2101,
+    contactTypeSystemName: "mobile",  // ✅ CORRECT for persons
+    // contactTypeSystemName: "phone",  // ❌ WRONG - will cause error
+    contactValue: "0412345678",
+    isActive: true,
+    isPrimary: false
+}
+```
+
+**For ORGANISATIONS:**
+```javascript
+// Email contact for organisations
+{
+    contactTypeCategoryId: 2100,
+    contactTypeSystemName: "email",
+    contactValue: "info@company.com",
+    isActive: true,
+    isPrimary: true
+}
+
+// Phone contact for organisations - MUST use "phone"
+{
+    contactTypeCategoryId: 2102,  // Note: Different category ID than persons
+    contactTypeSystemName: "phone",  // ✅ CORRECT for organisations
+    contactValue: "0298765432",
+    isActive: true,
+    isPrimary: false
+}
+```
+
+#### 3. Date Format Requirements
+
+**⚠️ COMMON ERROR**: "InvalidPureDateException"
+
+ShareDo dates MUST be in PureDate format (YYYYMMDD as integer):
+
+```javascript
+// CORRECT date conversion:
+function convertDateToShareDoFormat(dateString) {
+    // Input: "1980-01-15"
+    var parts = dateString.split('-');
+    var year = parts[0];
+    var month = parts[1].padStart(2, '0');
+    var day = parts[2].padStart(2, '0');
+    
+    // Output: 19800115 (as integer)
+    return parseInt(year + month + day, 10);
+}
+
+// WRONG formats that will cause errors:
+// dateOfBirth: "1980-01-15"  ❌ String format
+// dateOfBirth: { day: 15, month: 1, year: 1980 }  ❌ Object format
+// dateOfBirth: new Date("1980-01-15")  ❌ Date object
+```
+
+#### 4. Foreign Key Constraints
+
+**⚠️ COMMON ERROR**: "Foreign key constraint violation"
+
+Do NOT use invalid `sourceSystem` values:
+
+```javascript
+// WRONG - will cause foreign key constraint error:
+{
+    sourceSystem: "PMS",  // ❌ Not a valid external data source
+    // ...
+}
+
+// CORRECT - omit the field or use valid value:
+{
+    // sourceSystem field omitted
+    reference: "PMS-ID-123",  // ✅ Store PMS ID in reference field instead
+    externalReference: "PMS-ID-123",
+    // ...
+}
+```
+
+#### 5. Complete Working Example - Creating a Person
+
+```javascript
+var contactDetails = [];
+
+// Add email (required format for persons)
+if (entity.data.email) {
+    contactDetails.push({
+        contactTypeCategoryId: 2100,
+        contactTypeSystemName: "email",
+        contactValue: entity.data.email,
+        isActive: true,
+        isPrimary: true
+    });
+}
+
+// Add phone (MUST use "mobile" for persons, not "phone")
+if (entity.data.phone) {
+    contactDetails.push({
+        contactTypeCategoryId: 2101,
+        contactTypeSystemName: "mobile",  // Critical: use "mobile" not "phone"
+        contactValue: entity.data.phone,
+        isActive: true,
+        isPrimary: !entity.data.email
+    });
+}
+
+var personPayload = {
+    tags: ["client"],
+    aspectData: {
+        formBuilder: JSON.stringify({
+            formData: {
+                firstNationsPerson: false,
+                "gdpr-communication-consent-details-sms-consent": false,
+                "gdpr-communication-consent-details-email-consent": false
+            },
+            formIds: [],
+            formId: null
+        }),
+        contactDetails: JSON.stringify(contactDetails),  // Must be stringified
+        contactPreferences: JSON.stringify({
+            contactHoursFrom: null,
+            contactHoursTo: null
+        })
+    },
+    // DO NOT include sourceSystem: "PMS" - will cause foreign key error
+    reference: entity.pmsId || entity.data.id,
+    externalReference: entity.pmsId || entity.data.id,
+    
+    // Name fields
+    firstName: entity.data.firstName,
+    surname: entity.data.lastName,  // Note: API uses "surname" not "lastName"
+    middleNameOrInitial: entity.data.middleName,
+    preferredName: entity.data.preferredName || entity.data.firstName,
+    
+    // Date must be in PureDate format (YYYYMMDD as integer)
+    dateOfBirth: convertDateToShareDoFormat(entity.data.dateOfBirth),
+    
+    // Address fields
+    postalAddress: entity.data.address,
+    postalSuburb: entity.data.suburb,
+    postalState: entity.data.state,
+    postalPostcode: entity.data.postcode,
+    postalCountry: entity.data.country || "Australia"
+};
+
+// Make the API call
+$ajax.post("/api/aspects/ods/people/", personPayload)
+    .done(function(created) {
+        console.log("Person created with ID:", created.id);
+    })
+    .fail(function(error) {
+        console.error("Failed to create person:", error);
+    });
+```
+
+### ResultMergerService - Reference Field Matching
+
+The ResultMergerService checks for matches in TWO ways:
+
+1. **Data matching** - Matches by name, email, DOB, ABN, etc.
+2. **Reference field matching** - Checks if PMS ID is stored in ODS Reference field
+
+```javascript
+// The service maintains two maps for matching:
+var matchMap = {};      // Map by generated match keys (name+email, etc)
+var referenceMap = {};   // Map ODS records by their Reference field
+
+// Process ODS results
+odsData.forEach(function(item) {
+    var key = self.generateMatchKey(item);
+    var result = {
+        // ... result properties
+        reference: item.reference || item.Reference || null
+    };
+    matchMap[key] = result;
+    
+    // Track by Reference field if it exists
+    if (result.reference) {
+        referenceMap[result.reference] = result;
+    }
+});
+
+// Process PMS results
+pmsResults.results.forEach(function(item) {
+    var key = self.generateMatchKey(item);
+    var matchedByKey = matchMap[key];
+    var matchedByReference = referenceMap[item.id];  // Check if PMS ID is in ODS Reference
+    
+    // Reference match takes priority
+    var matchedRecord = matchedByReference || matchedByKey;
+    
+    if (matchedRecord) {
+        // Found a match - mark as matched
+        matchedRecord.source = "matched";
+        matchedRecord.pmsId = item.id;
+        matchedRecord.pmsData = item;
+    }
+});
+```
+
+### Mode Configuration
+
+The blade supports two modes:
+
+1. **"select"** - Just returns the selected entity without creating ODS records
+2. **"auto"** - Automatically creates ODS entities from PMS records when selected
+
+```javascript
+// Widget configuration should specify the mode:
+$ui.stacks.openPanel("Alt.UnifiedDataSearch.Blades.UnifiedOdsPmsSearch", {
+    mode: "auto",  // or "select"
+    // ... other config
+});
+```
+
+## Widget Integration with ShareDo OdsEntityPicker Component
+
+### Research Findings
+
+The ShareDo `sharedo-core-case-ods-entity-picker` component has **hardcoded blade opening logic** and cannot be configured to open custom blades. The component:
+- Opens `Sharedo.Core.Case.Panels.Participants.AddEditParticipant` for existing participants
+- Opens `Sharedo.Core.Case.Panels.Ods.AddEditPerson` or `AddEditOrganisation` for ODS entities
+- Does NOT support custom blade configuration through parameters
+- Uses `$ui.stacks.openPanel()` internally for blade management (not `$ui.showBlade()` which doesn't exist)
+
+### Our Solution: Hybrid Approach
+
+The UnifiedOdsEntityPicker widget now supports two display modes:
+
+#### 1. Simple Mode (Default)
+Uses our custom UI with direct blade opening:
+```javascript
+{
+    useShareDoComponent: false,  // Default
+    displayMode: "simple"
+}
+```
+
+#### 2. Component Mode (Advanced)
+Uses ShareDo component for display but overrides search:
+```javascript
+{
+    useShareDoComponent: true,
+    displayMode: "component",
+    roleSystemName: "client",
+    roleLabel: "Client",
+    viewMode: "card",  // or "list"
+    // Our blade opens instead of standard search
+    bladeName: "Alt.UnifiedDataSearch.Blades.UnifiedOdsPmsSearch"
+}
+```
+
+### Component Mode Features
+
+When using `useShareDoComponent: true`:
+
+1. **Visual Integration**: Uses ShareDo's standard entity display (card/list view)
+2. **Custom Search Override**: Replaces standard ODS search with our unified search blade
+3. **Event Interception**: Attempts to intercept component search events (if supported)
+4. **Fallback Button**: Provides prominent "Unified Search" button as primary action
+
+### Configuration Example
+
+```javascript
+// Aspect widget configuration for component mode
+{
+    "_host": {
+        "model": "@parent",
+        "blade": "@blade",
+        "enabled": true
+    },
+    "useShareDoComponent": true,
+    "roleSystemName": "client",
+    "roleLabel": "Select Client",
+    "viewMode": "card",
+    "required": true,
+    "allowMultiple": false,
+    "mode": "auto",  // Auto-import PMS to ODS
+    "fieldName": "clientOdsId",
+    "returnField": "odsId"
+}
+```
+
+### Limitations
+
+- Cannot override entity click behavior in ShareDo component (opens standard blades)
+- Search interception depends on component event support
+- Component mode requires ShareDo component to be available in the environment
+
+### Recommendation
+
+Use **Simple Mode** for most cases as it provides:
+- Full control over search behavior
+- Consistent unified search experience
+- No dependency on ShareDo component internals
+- Predictable blade opening behavior
+
+Use **Component Mode** only when:
+- Visual consistency with other ShareDo pickers is critical
+- You need the card/list view layouts
+- Standard entity viewing (click to open) is acceptable
+
 ## Implementation Instructions
 
 ### Step 1: Create Directory Structure
@@ -1062,8 +1396,8 @@ service.search("persons", "john", 0).done(function(results) {
 ```javascript
 // CORRECT: Use $ui.stacks.openPanel (NOT $ui.showBlade which doesn't exist!)
 $ui.stacks.openPanel("Alt.UnifiedDataSearch.Blades.UnifiedOdsPmsSearch", {
-    sharedoId: "{{sharedoId}}",
-    mode: "addParticipant",
+    sharedoId: "{{sharedoId}}",  // Optional: work item ID
+    mode: "auto",  // "auto" = auto-import PMS to ODS, "select" = just return selection
     entityTypes: ["person", "organisation"], // What entity types to search
     useMockPms: true,  // Use mock PMS data
     useMockOds: true   // Use mock ODS data (when API not available)
@@ -1102,8 +1436,8 @@ $ui.events.subscribe("Alt.UnifiedDataSearch.ParticipantAdded", function(data) {
 ### Blade Configuration
 ```javascript
 {
-    sharedoId: "WI-123",              // Work item ID
-    mode: "addParticipant",           // or "select"
+    sharedoId: "WI-123",              // Optional: Work item ID
+    mode: "auto",                      // "auto" or "select"
     useMockPms: true,                  // Use mock data
     pmsTimeout: 5000,                  // Timeout in ms
     entityTypes: ["person", "organisation"],
